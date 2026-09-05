@@ -6,6 +6,7 @@ import Tag from '../components/Tag';
 
 export default function ProductDetail({ product, onBack, onSave }) {
   const { t } = useTranslation();
+  const [sku, setSku] = useState(product?.sku || '');
   const [name, setName] = useState(product?.name || '');
   const [category, setCategory] = useState(product?.category || 'SaaS Licenses');
   const [price, setPrice] = useState(product?.price || 0);
@@ -23,9 +24,9 @@ export default function ProductDetail({ product, onBack, onSave }) {
 
   const [pricelists, _setPricelists] = useState(
     product?.pricelists || [
-      { tier: 'Bronze', currency: 'USD', priceRule: 'Standard Annual Rate' },
-      { tier: 'Silver', currency: 'USD', priceRule: 'Tier Credit Applied' },
-      { tier: 'Gold', currency: 'USD', priceRule: 'Contractual Partner Cap' },
+      { tier: 'Bronze', currency: 'INR', priceRule: 'Standard Annual Rate' },
+      { tier: 'Silver', currency: 'INR', priceRule: 'Tier Credit Applied' },
+      { tier: 'Gold', currency: 'INR', priceRule: 'Contractual Partner Cap' },
     ]
   );
 
@@ -40,6 +41,7 @@ export default function ProductDetail({ product, onBack, onSave }) {
     e.preventDefault();
     const updated = {
       id: product?.id || `prod-${Date.now()}`,
+      sku: sku || `DF-${Date.now()}`,
       name,
       category,
       price: parseFloat(price) || 0,
@@ -109,6 +111,20 @@ export default function ProductDetail({ product, onBack, onSave }) {
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            <div>
+              <label className="block font-label-caps text-xs uppercase text-text-secondary mb-1.5">
+                SKU *
+              </label>
+              <input
+                type="text"
+                required
+                value={sku}
+                onChange={(e) => setSku(e.target.value)}
+                className="w-full aether-input font-mono"
+                placeholder="e.g. AETHER-X4"
+                disabled={Boolean(product?.id)}
+              />
+            </div>
             <div className="sm:col-span-2">
               <label className="block font-label-caps text-xs uppercase text-text-secondary mb-1.5">
                 Product Title *
@@ -141,7 +157,7 @@ export default function ProductDetail({ product, onBack, onSave }) {
 
             <div>
               <label className="block font-label-caps text-xs uppercase text-text-secondary mb-1.5">
-                Base Price ($) *
+                Base Price (₹) *
               </label>
               <input
                 type="number"
@@ -291,7 +307,7 @@ export default function ProductDetail({ product, onBack, onSave }) {
                       </div>
                     </td>
                     <td className="py-3 text-right font-mono text-status-live font-semibold">
-                      +${v.extraPrice.toLocaleString()}
+                      +₹{v.extraPrice.toLocaleString()}
                     </td>
                   </tr>
                 ))}
@@ -332,7 +348,7 @@ export default function ProductDetail({ product, onBack, onSave }) {
                     <td className="py-3 font-mono text-text-secondary">{pl.currency}</td>
                     <td className="py-3 text-text-primary font-medium">{pl.priceRule}</td>
                     <td className="py-3 text-right font-mono font-bold text-accent-blue">
-                      ${(price * (pl.tier === 'Gold' ? 0.92 : pl.tier === 'Silver' ? 0.96 : 1)).toLocaleString()}
+                      ₹{(price * (pl.tier === 'Gold' ? 0.92 : pl.tier === 'Silver' ? 0.96 : 1)).toLocaleString()}
                     </td>
                   </tr>
                 ))}

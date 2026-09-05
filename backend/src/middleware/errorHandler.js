@@ -1,10 +1,11 @@
 import { logger } from '../utils/logger.js';
-import { isAppError, isOperationalError, AppError } from '../errors/AppError.js';
+import { isAppError, isOperationalError } from '../errors/AppError.js';
 import config from '../config/index.js';
 
-export function errorHandler(err, req, res, next) {
+export function errorHandler(err, req, res, _next) {
   const requestLogger = req.log || logger;
   const reqId = req.headers['x-request-id'] || req.id;
+  const isProduction = config.NODE_ENV === 'production';
 
   if (isAppError(err)) {
     requestLogger.warn(
@@ -70,8 +71,6 @@ export function errorHandler(err, req, res, next) {
   if (!isProduction && !isOperationalError(err)) {
     console.error('💥 Unhandled error:', err);
   }
-
-  const isProduction = config.NODE_ENV === 'production';
 
   return res.status(500).json({
     error: {

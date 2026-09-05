@@ -145,7 +145,7 @@ export default function ReportingDashboard() {
             label="QUOTES CREATED"
             delta="+24.2% vs last period"
             deltaType="positive"
-            subtitle="Pipeline aggregate: $14.8M"
+                subtitle="Pipeline aggregate: ₹14.8M"
           />
         </Card>
 
@@ -168,7 +168,7 @@ export default function ReportingDashboard() {
           </div>
           <div className="mt-3 flex items-center justify-between">
             <span className="font-mono-tag text-xs text-text-secondary">Attach Rate: 68.4%</span>
-            <Tag variant="pink">+$384k Margin</Tag>
+                <Tag variant="pink">+₹384k Margin</Tag>
           </div>
         </Card>
       </div>
@@ -198,10 +198,10 @@ export default function ReportingDashboard() {
             </thead>
             <tbody className="divide-y divide-border-subtle/60">
               {[
-                { seg: 'Strategic Global Accounts', deals: 28, book: '$6.42M', disc: '14.2%', dual: '32%', margin: '34.8%' },
-                { seg: 'Enterprise Mid-Market', deals: 64, book: '$5.18M', disc: '8.6%', dual: '11%', margin: '41.2%' },
-                { seg: 'Public Sector & Defense', deals: 19, book: '$2.85M', disc: '18.4%', dual: '58%', margin: '28.4%' },
-                { seg: 'Emerging Cloud Native', deals: 31, book: '$1.94M', disc: '6.1%', dual: '4%', margin: '48.9%' },
+                { seg: 'Strategic Global Accounts', deals: 28, book: '₹6.42M', disc: '14.2%', dual: '32%', margin: '34.8%' },
+                { seg: 'Enterprise Mid-Market', deals: 64, book: '₹5.18M', disc: '8.6%', dual: '11%', margin: '41.2%' },
+                { seg: 'Public Sector & Defense', deals: 19, book: '₹2.85M', disc: '18.4%', dual: '58%', margin: '28.4%' },
+                { seg: 'Emerging Cloud Native', deals: 31, book: '₹1.94M', disc: '6.1%', dual: '4%', margin: '48.9%' },
               ].map((row, idx) => (
                 <tr key={idx} className="hover:bg-surface-interactive/30">
                   <td className="py-3.5 font-semibold text-text-primary">{row.seg}</td>

@@ -19,8 +19,9 @@ import ProductDetail from './screens/ProductDetail';
 import DiscountConfig from './screens/DiscountConfig';
 import CustomerPortal from './screens/CustomerPortal';
 import LoginScreen from './screens/LoginScreen';
+import ProfileScreen from './screens/ProfileScreen';
+import { clearSession, createProduct, createProductVariant, deleteProduct, recoverSession, signIn, signUp, updateProduct } from './auth/authApi';
 import { createProductTour, hasCompletedProductTour } from './tour/productTour';
-import { getWorkspace, login, registerCustomer, registerInternal } from './api/client';
 
 import { INITIAL_QUOTATIONS } from './data/mockData';
 
@@ -31,17 +32,21 @@ const pageVariants = {
   transition: { duration: 0.3, ease: [0.2, 0.8, 0.2, 1] },
 };
 
+const ROLE_TABS = {
+  customer: ['dashboard', 'quotations', 'customer-portal', 'invoices', 'profile'],
+  rep: ['dashboard', 'quotations', 'quotation-builder', 'products', 'product-detail', 'fulfillment', 'subscriptions', 'invoices', 'deal-health', 'profile'],
+  manager: ['dashboard', 'quotations', 'approvals', 'deal-health', 'reports', 'profile'],
+  finance: ['dashboard', 'approvals', 'subscriptions', 'invoices', 'reports', 'profile'],
+  admin: ['dashboard', 'products', 'product-detail', 'discounts', 'approvals', 'reports', 'profile'],
+};
+
 export default function App() {
   const { t } = useTranslation();
   const viewport = useViewport();
   const [activeTab, setActiveTab] = useState('login');
-  const [userRole, setUserRole] = useState('rep');
-  const [authToken, setAuthToken] = useState(() => localStorage.getItem('dealflow360-token'));
-  const [currentUser, setCurrentUser] = useState({
-    name: 'Marcus Vance',
-    email: 'marcus.vance@dealflow360.io',
-    role: 'rep',
-  });
+  const [authStatus, setAuthStatus] = useState('checking');
+  const [authError, setAuthError] = useState('');
+  const [currentUser, setCurrentUser] = useState(null);
   const [scrolled, setScrolled] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [theme, setTheme] = useState(() => {
@@ -55,22 +60,48 @@ export default function App() {
   const [quotations, setQuotations] = useState(INITIAL_QUOTATIONS);
   const [selectedQuotation, setSelectedQuotation] = useState(null);
   const [selectedProduct, setSelectedProduct] = useState(null);
+  const [productReloadKey, setProductReloadKey] = useState(0);
   const [toastMessage, setToastMessage] = useState(null);
   const tourRef = useRef(null);
   const autoTourStartedRef = useRef(false);
+
+  useEffect(() => {
+    recoverSession().then((user) => {
+      setCurrentUser(user);
+      setAuthStatus(user ? 'authenticated' : 'anonymous');
+      if (user) {
+        const requestedTab = window.location.hash.replace('#', '');
+        const allowedTabs = ROLE_TABS[user.role] || [];
+        const nextTab = requestedTab && allowedTabs.includes(requestedTab) ? requestedTab : 'dashboard';
+        window.location.hash = `#${nextTab}`;
+        setActiveTab(nextTab);
+      } else {
+        window.location.hash = '#login';
+        setActiveTab('login');
+      }
+    });
+  }, []);
 
   // Sync hash routing
   useEffect(() => {
     const handleHash = () => {
       const hash = window.location.hash.replace('#', '');
       if (hash) {
-        setActiveTab(hash);
+        if (authStatus !== 'authenticated') {
+          setActiveTab('login');
+          return;
+        }
+        const allowedTabs = ROLE_TABS[currentUser?.role] || [];
+        setActiveTab(allowedTabs.includes(hash) ? hash : 'dashboard');
+        if (!allowedTabs.includes(hash)) {
+          window.location.hash = '#dashboard';
+        }
       }
     };
     window.addEventListener('hashchange', handleHash);
     handleHash();
     return () => window.removeEventListener('hashchange', handleHash);
-  }, []);
+  }, [authStatus, currentUser]);
 
   // Track scroll for utility bar shadow
   useEffect(() => {
@@ -94,42 +125,17 @@ export default function App() {
     setTimeout(() => setToastMessage(null), 3500);
   };
 
-  useEffect(() => {
-    if (!authToken) return undefined;
-
-    getWorkspace(authToken)
-      .then(({ quotations: liveQuotations }) => {
-        if (liveQuotations.length > 0) setQuotations(liveQuotations);
-        setActiveTab((currentTab) => (currentTab === 'login' ? 'dashboard' : currentTab));
-      })
-      .catch((error) => showToast(`Backend sync unavailable: ${error.message}`));
-
-    return undefined;
-  }, [authToken]);
-
-  const handleBackendLogin = async ({ email, password, role, name, isSignup }) => {
-    try {
-      const session = isSignup
-        ? role === 'customer'
-          ? await registerCustomer({ email, fullName: name, companyName: `${name}'s Company` })
-          : await registerInternal({ email, password, fullName: name, role })
-        : await login(email, password);
-      const backendUser = session.user || { email, role, fullName: name };
-      localStorage.setItem('dealflow360-token', session.token);
-      setAuthToken(session.token);
-      setCurrentUser({
-        name: backendUser.fullName || backendUser.name || name,
-        email: backendUser.email || email,
-        role: backendUser.role || role,
-      });
-      setUserRole(backendUser.role || role);
-      handleTabChange('dashboard');
-      showToast(isSignup ? 'Account created successfully' : `Authenticated as ${backendUser.fullName || name}`);
-    } catch (error) {
-      showToast(`Authentication failed: ${error.message}`);
-    }
-  };
   const handleTabChange = (tab) => {
+    if (authStatus !== 'authenticated') {
+      setActiveTab('login');
+      window.location.hash = 'login';
+      return;
+    }
+    const allowedTabs = ROLE_TABS[currentUser?.role] || [];
+    if (!allowedTabs.includes(tab)) {
+      showToast('You are not authorized to access that area.');
+      tab = 'dashboard';
+    }
     setActiveTab(tab);
     window.location.hash = tab;
     // Don't scroll to top on mobile - let content scroll naturally
@@ -139,6 +145,16 @@ export default function App() {
     if (viewport.isMobile) {
       setMobileMenuOpen(false);
     }
+  };
+
+  const handleLogout = () => {
+    clearSession();
+    setCurrentUser(null);
+    setAuthStatus('anonymous');
+    setMobileMenuOpen(false);
+    setActiveTab('login');
+    window.location.hash = 'login';
+    showToast('You have been signed out.');
   };
 
   const startProductTour = () => {
@@ -167,6 +183,7 @@ export default function App() {
   useEffect(() => {
     if (
       activeTab !== 'dashboard' ||
+      viewport.isMobile ||
       hasCompletedProductTour() ||
       autoTourStartedRef.current
     ) {
@@ -190,6 +207,51 @@ export default function App() {
     handleTabChange('quotation-builder');
   };
 
+  const handleSaveProduct = async (product) => {
+    try {
+      const payload = {
+        sku: product.sku,
+        name: product.name,
+        category: product.category,
+        description: product.description,
+        base_price: product.price,
+        unit_of_measure: product.unit,
+        is_recurring_eligible: product.isSubscription,
+        is_active: true,
+      };
+      const response = selectedProduct?.id
+        ? await updateProduct(selectedProduct.id, payload)
+        : await createProduct(payload);
+      const savedProduct = response.data;
+
+      if (!selectedProduct?.id && product.variants?.length) {
+        await Promise.all(product.variants.map((variant, index) => createProductVariant(savedProduct.id, {
+          sku: `${product.sku}-V${index + 1}`,
+          name: variant.attribute || `Variant ${index + 1}`,
+          attributes: { values: variant.values || [] },
+          price_adjustment: variant.extraPrice || 0,
+        })));
+      }
+
+      setProductReloadKey((value) => value + 1);
+      showToast(`Product SKU ${savedProduct.sku} saved to the catalog.`);
+      handleTabChange('products');
+    } catch (error) {
+      showToast(error.message);
+    }
+  };
+
+  const handleDeleteProduct = async (product) => {
+    if (!window.confirm(`Delete ${product.name}? This will hide it from the catalog.`)) return;
+    try {
+      await deleteProduct(product.id);
+      setProductReloadKey((value) => value + 1);
+      showToast(`Product SKU ${product.sku} deleted.`);
+    } catch (error) {
+      showToast(error.message);
+    }
+  };
+
   const handleSaveDraft = (quote) => {
     setQuotations((prev) => {
       const idx = prev.findIndex((q) => q.id === quote.id);
@@ -209,11 +271,11 @@ export default function App() {
       ...quote,
       status: 'pending_approval',
       stage: 'Sales Manager Review',
-      assignedTo: currentUser.name,
+      assignedTo: currentUser.fullName || currentUser.full_name || currentUser.name,
       createdAt: new Date().toISOString().slice(0, 10),
       auditTrails: [
         {
-          user: `${currentUser.name} (${userRole.toUpperCase()})`,
+          user: `${currentUser.fullName || currentUser.full_name || currentUser.name} (${currentUser.role.toUpperCase()})`,
           action: 'Submitted Quotation for Governance Review',
           date: new Date().toISOString().replace('T', ' ').slice(0, 16),
           note: `Risk score ${quote.blended_risk_score}/100. Dual signoff required: ${
@@ -258,7 +320,7 @@ export default function App() {
     (q) => q.status === 'pending_approval'
   ).length;
 
-  const isAuthScreen = activeTab === 'login';
+  const isAuthScreen = authStatus !== 'authenticated' || activeTab === 'login';
   const isPortalScreen = activeTab === 'customer-portal';
 
   // Compute sidebar width for content margin
@@ -267,6 +329,10 @@ export default function App() {
     if (viewport.isTablet) return 72;
     return 260;
   };
+
+  if (authStatus === 'checking') {
+    return <div className="min-h-screen flex items-center justify-center bg-surface-base canvas-dot-bg text-text-secondary font-mono-tag">Checking authentication...</div>;
+  }
 
   return (
     <div className="min-h-screen bg-surface-base canvas-dot-bg text-text-primary selection:bg-accent-blue selection:text-surface-base font-sans">
@@ -291,25 +357,17 @@ export default function App() {
       )}
 
       {/* Navbar Sidebar */}
-      {!isAuthScreen && !isPortalScreen && (
+      {authStatus === 'authenticated' && !isPortalScreen && (
         <Navbar
           activeTab={activeTab}
           setActiveTab={handleTabChange}
-          userRole={userRole}
-          setUserRole={(role) => {
-            setUserRole(role);
-            if (role === 'customer') {
-              handleTabChange('customer-portal');
-            } else {
-              showToast(`Switched active role perspective to ${role.toUpperCase()}`);
-            }
-          }}
           pendingApprovalsCount={pendingApprovalsCount}
           onNewQuotation={handleNewQuotation}
           currentUser={currentUser}
           mobileMenuOpen={mobileMenuOpen}
           setMobileMenuOpen={setMobileMenuOpen}
           viewport={viewport}
+          onLogout={handleLogout}
         />
       )}
 
@@ -321,14 +379,14 @@ export default function App() {
         }}
       >
         {/* Sticky Utility Bar */}
-        {!isAuthScreen && !isPortalScreen && (
+        {authStatus === 'authenticated' && !isPortalScreen && (
           <motion.div
             initial={{ y: -100, opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
             className="sticky top-0 z-30 bg-surface-card/80 backdrop-blur-xl border-b border-border-subtle transition-all duration-300"
             style={{ boxShadow: scrolled ? '0 10px 30px rgb(0 0 0 / 0.22)' : 'none' }}
           >
-            <div className="max-w-max-width mx-auto px-page-padding-mobile md:px-page-padding py-3 flex items-center justify-between gap-4">
+            <div className="max-w-max-width mx-auto px-page-padding-mobile pl-16 md:px-page-padding py-3 flex items-center justify-between gap-4">
               {/* Search */}
               <div className="relative flex-1 max-w-md hidden sm:block">
                 <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-[18px] text-text-secondary">
@@ -415,17 +473,63 @@ export default function App() {
               exit="exit"
               className="w-full"
             >
-              {activeTab === 'login' && (
+              {authStatus !== 'checking' && authStatus !== 'authenticated' && (
                 <LoginScreen
-                  onLoginSuccess={handleBackendLogin}
+                  error={authError}
+                  loading={authStatus === 'authenticating'}
+                  onLoginSuccess={async ({ email, password }) => {
+                    setAuthError('');
+                    setAuthStatus('authenticating');
+                    try {
+                      const user = await signIn(email, password);
+                      setCurrentUser(user);
+                      setAuthStatus('authenticated');
+                      window.location.hash = '#dashboard';
+                      setActiveTab('dashboard');
+                    } catch (error) {
+                      setAuthError(error.message);
+                      setAuthStatus('anonymous');
+                    }
+                  }}
+                  onSignup={async (payload) => {
+                    if (payload.error) {
+                      setAuthError(payload.error);
+                      return;
+                    }
+                    setAuthError('');
+                    setAuthStatus('authenticating');
+                    try {
+                      const user = await signUp(payload.name, payload.email, payload.password);
+                      setCurrentUser(user);
+                      setAuthStatus('authenticated');
+                      window.location.hash = '#dashboard';
+                      setActiveTab('dashboard');
+                    } catch (error) {
+                      setAuthError(error.message);
+                      setAuthStatus('anonymous');
+                    }
+                  }}
                 />
               )}
 
-              {activeTab === 'dashboard' && (
+              {authStatus === 'authenticated' && activeTab === 'dashboard' && currentUser?.role === 'customer' && (
+                <CustomerPortal onReturnToInternal={() => handleTabChange('dashboard')} />
+              )}
+
+              {authStatus === 'authenticated' && activeTab === 'dashboard' && currentUser?.role !== 'customer' && (
                 <SalesDashboard
                   onNavigate={handleTabChange}
                   quotations={quotations}
                   pendingApprovalsCount={pendingApprovalsCount}
+                />
+              )}
+
+              {authStatus === 'authenticated' && activeTab === 'profile' && (
+                <ProfileScreen
+                  user={currentUser}
+                  onUserUpdated={(user) => setCurrentUser(user)}
+                  onLogout={handleLogout}
+                  showToast={showToast}
                 />
               )}
 
@@ -467,6 +571,9 @@ export default function App() {
 
               {activeTab === 'products' && (
                 <ProductCatalog
+                  reloadKey={productReloadKey}
+                  canDelete={currentUser?.role === 'admin'}
+                  onDeleteProduct={handleDeleteProduct}
                   onSelectProduct={(prod) => {
                     setSelectedProduct(prod);
                     handleTabChange('product-detail');
@@ -482,19 +589,7 @@ export default function App() {
                 <ProductDetail
                   product={selectedProduct}
                   onBack={() => handleTabChange('products')}
-                  onSave={(updated) => {
-                    setQuotations((prev) => {
-                      const idx = prev.findIndex((p) => p.id === updated.id);
-                      if (idx >= 0) {
-                        const copy = [...prev];
-                        copy[idx] = updated;
-                        return copy;
-                      }
-                      return [updated, ...prev];
-                    });
-                    showToast(`Product SKU ${updated.name} updated.`);
-                    handleTabChange('products');
-                  }}
+                  onSave={handleSaveProduct}
                 />
               )}
 
@@ -503,7 +598,6 @@ export default function App() {
               {activeTab === 'customer-portal' && (
                 <CustomerPortal
                   onReturnToInternal={() => {
-                    setUserRole('rep');
                     handleTabChange('dashboard');
                   }}
                 />

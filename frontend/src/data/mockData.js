@@ -52,9 +52,9 @@ export const INITIAL_PRODUCTS = [
       { attribute: 'Storage', values: ['2TB NVMe Gen5', '8TB NVMe Enterprise'], extraPrice: 2400 },
     ],
     pricelists: [
-      { tier: 'Bronze', currency: 'USD', priceRule: 'List Price ($14,500)' },
-      { tier: 'Silver', currency: 'USD', priceRule: '4% Volume Rebate ($13,920)' },
-      { tier: 'Gold', currency: 'USD', priceRule: '8% Tier Preferred ($13,340)' },
+      { tier: 'Bronze', currency: 'INR', priceRule: 'List Price (₹14,500)' },
+      { tier: 'Silver', currency: 'INR', priceRule: '4% Volume Rebate (₹13,920)' },
+      { tier: 'Gold', currency: 'INR', priceRule: '8% Tier Preferred (₹13,340)' },
     ],
   },
   {
@@ -73,9 +73,9 @@ export const INITIAL_PRODUCTS = [
       { attribute: 'Dedicated Pod', values: ['Shared VPC', 'Isolated Sovereign Pod'], extraPrice: 12000 },
     ],
     pricelists: [
-      { tier: 'Bronze', currency: 'USD', priceRule: 'Standard Annual Rate' },
-      { tier: 'Silver', currency: 'USD', priceRule: 'Tier Credit Applied ($34,200)' },
-      { tier: 'Gold', currency: 'USD', priceRule: 'Contractual Partner Cap ($31,500)' },
+      { tier: 'Bronze', currency: 'INR', priceRule: 'Standard Annual Rate' },
+      { tier: 'Silver', currency: 'INR', priceRule: 'Tier Credit Applied (₹34,200)' },
+      { tier: 'Gold', currency: 'INR', priceRule: 'Contractual Partner Cap (₹31,500)' },
     ],
   },
   {
@@ -91,9 +91,9 @@ export const INITIAL_PRODUCTS = [
     description: 'In-line margin prediction and natural language risk explanation for deal desks.',
     variants: [],
     pricelists: [
-      { tier: 'Bronze', currency: 'USD', priceRule: '$400/mo equivalent' },
-      { tier: 'Silver', currency: 'USD', priceRule: '$360/mo equivalent' },
-      { tier: 'Gold', currency: 'USD', priceRule: '$320/mo equivalent' },
+      { tier: 'Bronze', currency: 'INR', priceRule: '₹400/mo equivalent' },
+      { tier: 'Silver', currency: 'INR', priceRule: '₹360/mo equivalent' },
+      { tier: 'Gold', currency: 'INR', priceRule: '₹320/mo equivalent' },
     ],
   },
   {
@@ -110,9 +110,9 @@ export const INITIAL_PRODUCTS = [
       { attribute: 'Timeline', values: ['Standard (4 Weeks)', 'Accelerated Blitz (2 Weeks)'], extraPrice: 8500 },
     ],
     pricelists: [
-      { tier: 'Bronze', currency: 'USD', priceRule: 'Fixed Sprint Rate' },
-      { tier: 'Silver', currency: 'USD', priceRule: '10% Packaged Credit' },
-      { tier: 'Gold', currency: 'USD', priceRule: 'Preferred Partner Flat Rate' },
+      { tier: 'Bronze', currency: 'INR', priceRule: 'Fixed Sprint Rate' },
+      { tier: 'Silver', currency: 'INR', priceRule: '10% Packaged Credit' },
+      { tier: 'Gold', currency: 'INR', priceRule: 'Preferred Partner Flat Rate' },
     ],
   },
   {
@@ -128,9 +128,9 @@ export const INITIAL_PRODUCTS = [
     description: 'Sub-10ms active-active cross-continental synchronised database mesh.',
     variants: [],
     pricelists: [
-      { tier: 'Bronze', currency: 'USD', priceRule: '$2,400/mo' },
-      { tier: 'Silver', currency: 'USD', priceRule: '$2,160/mo' },
-      { tier: 'Gold', currency: 'USD', priceRule: '$1,920/mo' },
+      { tier: 'Bronze', currency: 'INR', priceRule: '₹2,400/mo' },
+      { tier: 'Silver', currency: 'INR', priceRule: '₹2,160/mo' },
+      { tier: 'Gold', currency: 'INR', priceRule: '₹1,920/mo' },
     ],
   },
 ];
@@ -283,7 +283,7 @@ export const INITIAL_QUOTATIONS = [
     ],
     auditTrails: [
       { user: 'Devon Miles (Rep)', action: 'Submitted Counter-Proposal', date: '2026-09-01 16:45', note: 'Counter offer received from customer buyer desk.' },
-      { user: 'Negotiation Engine', action: 'Round 3 Computed', date: '2026-09-03 10:12', note: 'Approaching convergence zone (delta $3,300).' },
+      { user: 'Negotiation Engine', action: 'Round 3 Computed', date: '2026-09-03 10:12', note: 'Approaching convergence zone (delta ₹3,300).' },
     ],
   },
   {
@@ -419,9 +419,9 @@ export const FULFILLMENT_ORDERS = [
     backorderProduct: 'AETHER Edge Compute Node X4',
     warehouses: ['Austin Central (Hub A)', 'Berlin East (Hub B)'],
     splitDetail: [
-      { warehouse: 'Austin Central Facility', qtyFulfilled: 7, estShipments: '2 Business Days', cost: '$1,420', status: 'Allocated' },
-      { warehouse: 'Berlin East Logistics Hub', qtyFulfilled: 3, estShipments: '4 Business Days', cost: '$2,850', status: 'Allocated' },
-      { warehouse: 'Factory Backorder (Austin Line 2)', qtyFulfilled: 2, estShipments: '12 Business Days (T-12)', cost: '$450', status: 'Backorder' },
+      { warehouse: 'Austin Central Facility', qtyFulfilled: 7, estShipments: '2 Business Days', cost: '₹1,420', status: 'Allocated' },
+      { warehouse: 'Berlin East Logistics Hub', qtyFulfilled: 3, estShipments: '4 Business Days', cost: '₹2,850', status: 'Allocated' },
+      { warehouse: 'Factory Backorder (Austin Line 2)', qtyFulfilled: 2, estShipments: '12 Business Days (T-12)', cost: '₹450', status: 'Backorder' },
     ],
   },
   {
@@ -433,7 +433,7 @@ export const FULFILLMENT_ORDERS = [
     backorderQty: 0,
     warehouses: ['Austin Central Facility'],
     splitDetail: [
-      { warehouse: 'Austin Central Facility', qtyFulfilled: 6, estShipments: 'Delivered', cost: '$980', status: 'Completed' },
+      { warehouse: 'Austin Central Facility', qtyFulfilled: 6, estShipments: 'Delivered', cost: '₹980', status: 'Completed' },
     ],
   },
   {
@@ -446,9 +446,9 @@ export const FULFILLMENT_ORDERS = [
     backorderProduct: 'AETHER Edge Compute Node X4',
     warehouses: ['Austin Central Facility', 'Tokyo Logistics Bay'],
     splitDetail: [
-      { warehouse: 'Austin Central Facility', qtyFulfilled: 6, estShipments: '1 Business Day', cost: '$1,100', status: 'Allocated' },
-      { warehouse: 'Tokyo Logistics Bay', qtyFulfilled: 5, estShipments: '5 Business Days', cost: '$3,600', status: 'Allocated' },
-      { warehouse: 'Global Backorder Queue', qtyFulfilled: 5, estShipments: '14 Business Days', cost: '$600', status: 'Backorder' },
+      { warehouse: 'Austin Central Facility', qtyFulfilled: 6, estShipments: '1 Business Day', cost: '₹1,100', status: 'Allocated' },
+      { warehouse: 'Tokyo Logistics Bay', qtyFulfilled: 5, estShipments: '5 Business Days', cost: '₹3,600', status: 'Allocated' },
+      { warehouse: 'Global Backorder Queue', qtyFulfilled: 5, estShipments: '14 Business Days', cost: '₹600', status: 'Backorder' },
     ],
   },
 ];
@@ -608,7 +608,7 @@ export const DEAL_HEALTH_ANOMALIES = [
     flaggedDate: '2026-08-22',
     severity: 'MEDIUM',
     summary: 'Stalled in Pending Approval for 14 days without stakeholder touchpoint',
-    detail: 'Quote value $240,000. Customer contact engaged 3 competitors in procurement portal.',
+    detail: 'Quote value ₹240,000. Customer contact engaged 3 competitors in procurement portal.',
     stalledDays: 14,
     actionNeeded: 'Nudge Rep & Resend Procurement Link',
   },

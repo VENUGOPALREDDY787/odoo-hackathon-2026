@@ -33,6 +33,51 @@ CREATE INDEX `idx_users_role` ON `users` (`role`);
 CREATE INDEX `idx_users_active` ON `users` (`is_active`);
 CREATE INDEX `idx_users_deleted` ON `users` (`deleted_at`);
 
+-- Authentication support tables
+CREATE TABLE `login_attempts` (
+    `id` CHAR(36) NOT NULL DEFAULT (UUID()),
+    `email` VARCHAR(255),
+    `ip_address` VARCHAR(45),
+    `success` TINYINT(1) NOT NULL DEFAULT 0,
+    `user_agent` VARCHAR(500),
+    `created_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (`id`),
+    INDEX `idx_login_attempts_email_created` (`email`, `created_at`),
+    INDEX `idx_login_attempts_ip_created` (`ip_address`, `created_at`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE `refresh_tokens` (
+    `id` CHAR(36) NOT NULL DEFAULT (UUID()),
+    `user_id` CHAR(36) NOT NULL,
+    `token_hash` VARCHAR(255) NOT NULL,
+    `ip_address` VARCHAR(45),
+    `user_agent` VARCHAR(500),
+    `expires_at` DATETIME NOT NULL,
+    `revoked_at` DATETIME,
+    `created_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (`id`),
+    UNIQUE KEY `uk_refresh_tokens_hash` (`token_hash`),
+    CONSTRAINT `fk_refresh_tokens_user` FOREIGN KEY (`user_id`) REFERENCES `users`(`id`) ON DELETE CASCADE,
+    INDEX `idx_refresh_tokens_user` (`user_id`),
+    INDEX `idx_refresh_tokens_expiry` (`expires_at`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE `magic_links` (
+    `id` CHAR(36) NOT NULL DEFAULT (UUID()),
+    `customer_id` CHAR(36) NOT NULL,
+    `token_hash` VARCHAR(255) NOT NULL,
+    `email` VARCHAR(255) NOT NULL,
+    `expires_at` DATETIME NOT NULL,
+    `used_at` DATETIME,
+    `user_agent` VARCHAR(500),
+    `ip_address` VARCHAR(45),
+    `created_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (`id`),
+    UNIQUE KEY `uk_magic_links_hash` (`token_hash`),
+    INDEX `idx_magic_links_customer` (`customer_id`),
+    INDEX `idx_magic_links_expiry` (`expires_at`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
 -- Customers table
 CREATE TABLE `customers` (
     `id` CHAR(36) NOT NULL DEFAULT (UUID()),

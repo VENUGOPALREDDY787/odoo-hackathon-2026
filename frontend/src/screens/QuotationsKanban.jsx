@@ -172,7 +172,7 @@ export default function QuotationsKanban({
 
                           <div className="my-3 flex items-baseline justify-between">
                             <span className="font-kpi-value text-2xl font-bold text-text-primary">
-                              ${(totals.total / 1000).toFixed(1)}k
+                              ₹{(totals.total / 1000).toFixed(1)}k
                             </span>
                             <span className="font-mono-tag text-xs text-text-secondary">
                               {q.lines.length} {q.lines.length === 1 ? 'line' : 'lines'}
@@ -263,7 +263,7 @@ export default function QuotationsKanban({
                         </span>
                       </td>
                       <td className="py-4 px-6 font-mono-data font-semibold text-text-primary">
-                        ${totals.total.toLocaleString()}
+                                ₹{totals.total.toLocaleString()}
                       </td>
                       <td className="py-4 px-6 text-text-secondary">{q.assignedTo}</td>
                       <td className="py-4 px-6 text-right">
