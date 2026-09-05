@@ -1,9 +1,13 @@
 import React, { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import Card from '../components/Card';
 import PillButton from '../components/PillButton';
 import Tag from '../components/Tag';
+import StatusBadge from '../components/StatusBadge';
+import LanguageSwitcher from '../components/LanguageSwitcher';
 
 export default function CustomerPortal({ onReturnToInternal }) {
+  const { t } = useTranslation();
   const [activePortalTab, setActivePortalTab] = useState('quotation');
   const [counterDiscount, setCounterDiscount] = useState(18.5);
   const [deliveryDate, setDeliveryDate] = useState('2026-10-15');
@@ -41,36 +45,45 @@ export default function CustomerPortal({ onReturnToInternal }) {
   return (
     <div className="w-full max-w-max-width mx-auto space-y-6 animate-in fade-in duration-300">
       {/* Simplified Customer Portal Top Bar */}
-      <div className="bg-surface-card border border-border-subtle rounded-full px-6 py-3 flex items-center justify-between shadow-lg">
+      <div className="bg-surface-card border border-border-subtle rounded-full px-6 py-3 flex items-center justify-between shadow-lg gap-3">
         <div className="flex items-center gap-3">
           <img src="/brand-mark.svg" alt="DealFlow360" className="h-7 w-auto" />
           <span className="font-mono-tag text-xs text-text-secondary border-l border-border-subtle pl-3 hidden sm:inline">
-            Client Commercial Portal
+            {t('portal.title', 'Client Commercial Portal')}
           </span>
         </div>
 
         {/* Portal Nav: My Quotation / Messages / Profile */}
         <div className="flex items-center gap-2">
-          {['quotation', 'messages', 'profile'].map((tab) => (
+          {[
+            { id: 'quotation', label: t('portal.myQuotation', 'My Quotation') },
+            { id: 'messages', label: t('portal.messages', 'Messages') },
+            { id: 'profile', label: t('portal.profile', 'Profile') },
+          ].map((tab) => (
             <button
-              key={tab}
-              onClick={() => setActivePortalTab(tab)}
-              className={`px-3 py-1.5 rounded-full text-xs font-medium capitalize transition-colors ${
-                activePortalTab === tab
+              key={tab.id}
+              onClick={() => setActivePortalTab(tab.id)}
+              className={`px-3 py-1.5 rounded-full text-xs font-medium transition-colors ${
+                activePortalTab === tab.id
                   ? 'bg-accent-blue text-surface-base font-bold'
                   : 'text-text-secondary hover:text-white'
               }`}
             >
-              {tab === 'quotation' ? 'My Quotation' : tab}
+              {tab.label}
             </button>
           ))}
         </div>
 
-        {onReturnToInternal && (
-          <PillButton variant="outline" size="sm" onClick={onReturnToInternal}>
-            Return to Internal Workspace →
-          </PillButton>
-        )}
+        <div className="flex items-center gap-3">
+          {/* Language Switcher for Portal */}
+          <LanguageSwitcher />
+
+          {onReturnToInternal && (
+            <PillButton variant="outline" size="sm" onClick={onReturnToInternal}>
+              {t('portal.returnToInternal', 'Return to Internal Workspace →')}
+            </PillButton>
+          )}
+        </div>
       </div>
 
       {submittedMessage && (
@@ -91,7 +104,7 @@ export default function CustomerPortal({ onReturnToInternal }) {
                   <span className="font-mono-tag text-xs text-accent-blue font-semibold">
                     QT-2026-8837
                   </span>
-                  <Tag variant="blue">Under Negotiation</Tag>
+                  <Tag variant="blue">{t('status.negotiation', 'Under Negotiation')}</Tag>
                 </div>
                 <h2 className="font-headline-sm text-2xl font-bold text-text-primary">
                   Solaria Cyber Defense — Commercial Proposal
@@ -103,7 +116,7 @@ export default function CustomerPortal({ onReturnToInternal }) {
 
               <div className="text-right">
                 <span className="font-label-caps text-xs text-text-secondary uppercase">
-                  Proposed Value
+                  {t('portal.proposedValue', 'Proposed Value')}
                 </span>
                 <div className="font-kpi-value text-3xl font-bold text-text-primary mt-0.5">
                   $76,800
@@ -116,12 +129,12 @@ export default function CustomerPortal({ onReturnToInternal }) {
               <table className="w-full text-left text-xs">
                 <thead>
                   <tr className="border-b border-border-subtle font-label-caps text-text-secondary uppercase text-[10px]">
-                    <th className="py-2.5">Item Description</th>
-                    <th className="py-2.5 text-center">Billing</th>
-                    <th className="py-2.5 text-center">Qty</th>
-                    <th className="py-2.5 text-right">List Price</th>
-                    <th className="py-2.5 text-right">Offer Price</th>
-                    <th className="py-2.5 pl-4">Buyer Comment / Condition</th>
+                    <th className="py-2.5">{t('portal.itemDescription', 'Item Description')}</th>
+                    <th className="py-2.5 text-center">{t('portal.billing', 'Billing')}</th>
+                    <th className="py-2.5 text-center">{t('builder.quantity', 'Qty')}</th>
+                    <th className="py-2.5 text-right">{t('builder.unitPrice', 'List Price')}</th>
+                    <th className="py-2.5 text-right">{t('portal.offerPrice', 'Offer Price')}</th>
+                    <th className="py-2.5 pl-4">{t('portal.buyerComment', 'Buyer Comment / Condition')}</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-border-subtle/50">
@@ -174,13 +187,13 @@ export default function CustomerPortal({ onReturnToInternal }) {
             {/* Counter Offer Form */}
             <form onSubmit={handleSubmitCounter} className="mt-8 pt-6 border-t border-border-subtle space-y-4">
               <h3 className="font-headline-sm text-base font-bold text-text-primary">
-                Submit Client Counter-Proposal
+                {t('portal.submitCounter', 'Submit Client Counter-Proposal')}
               </h3>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <label className="block font-label-caps text-xs uppercase text-text-secondary mb-1.5">
-                    Target Counter Discount %
+                    {t('portal.targetCounterDiscount', 'Target Counter Discount %')}
                   </label>
                   <div className="relative">
                     <input
@@ -200,7 +213,7 @@ export default function CustomerPortal({ onReturnToInternal }) {
 
                 <div>
                   <label className="block font-label-caps text-xs uppercase text-text-secondary mb-1.5">
-                    Requested Delivery / Go-Live Date
+                    {t('portal.requestedDeliveryDate', 'Requested Delivery / Go-Live Date')}
                   </label>
                   <input
                     type="date"
@@ -213,7 +226,7 @@ export default function CustomerPortal({ onReturnToInternal }) {
 
               <div>
                 <label className="block font-label-caps text-xs uppercase text-text-secondary mb-1.5">
-                  Commercial Conditions / Procurement Comment
+                  {t('portal.commercialConditions', 'Commercial Conditions / Procurement Comment')}
                 </label>
                 <textarea
                   value={customerComment}
@@ -225,14 +238,12 @@ export default function CustomerPortal({ onReturnToInternal }) {
               {/* Critical Policy Note */}
               <div className="p-3.5 bg-surface-interactive border border-border-subtle rounded-xl text-xs text-text-secondary leading-relaxed">
                 <strong className="text-text-primary">Governance Notice: </strong>
-                Confirming quotation terms exceeding standard discount ceilings will automatically
-                route through internal Sales Manager & Finance signoff rather than instant order
-                confirmation.
+                {t('portal.governanceNotice', 'Confirming quotation terms exceeding standard discount ceilings will automatically route through internal Sales Manager & Finance signoff rather than instant order confirmation.')}
               </div>
 
               <div className="flex flex-wrap items-center justify-end gap-3 pt-2">
                 <PillButton type="submit" variant="secondary" size="md">
-                  Submit Counter Request
+                  {t('portal.submitCounterBtn', 'Submit Counter Request')}
                 </PillButton>
                 <PillButton
                   type="button"
@@ -240,7 +251,7 @@ export default function CustomerPortal({ onReturnToInternal }) {
                   size="md"
                   onClick={handleConfirmQuotation}
                 >
-                  Confirm Quotation Terms
+                  {t('portal.confirmQuotationBtn', 'Confirm Quotation Terms')}
                 </PillButton>
               </div>
             </form>
@@ -253,10 +264,10 @@ export default function CustomerPortal({ onReturnToInternal }) {
             <div className="flex items-center justify-between pb-3 border-b border-border-subtle mb-4">
               <div>
                 <h3 className="font-headline-sm text-base font-bold text-text-primary">
-                  Negotiation Log
+                  {t('portal.negotiationLog', 'Negotiation Log')}
                 </h3>
                 <p className="text-body-sm text-text-secondary text-xs">
-                  Autonomous convergence rounds
+                  {t('portal.negotiationSubtitle', 'Autonomous convergence rounds')}
                 </p>
               </div>
               <Tag variant="blue">ROUND 3/5</Tag>
@@ -269,12 +280,12 @@ export default function CustomerPortal({ onReturnToInternal }) {
                   className="p-3 bg-surface-interactive/80 border border-border-subtle rounded-xl space-y-1.5"
                 >
                   <div className="flex items-center justify-between font-mono text-xs">
-                    <span className="font-bold text-text-primary">Round {nr.round}</span>
+                    <span className="font-bold text-text-primary">{t('portal.round', 'Round')} {nr.round}</span>
                     <span className="text-accent-blue">{nr.status}</span>
                   </div>
                   <div className="flex items-center justify-between text-xs text-text-secondary font-mono">
-                    <span>Buyer: {nr.buyerOffer}</span>
-                    <span>Seller: {nr.sellerOffer}</span>
+                    <span>{t('portal.buyer', 'Buyer')}: {nr.buyerOffer}</span>
+                    <span>{t('portal.seller', 'Seller')}: {nr.sellerOffer}</span>
                   </div>
                 </div>
               ))}

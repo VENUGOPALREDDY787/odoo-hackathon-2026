@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import Card from '../components/Card';
 import PillButton from '../components/PillButton';
 import StatusBadge from '../components/StatusBadge';
@@ -7,6 +8,7 @@ import ListItem from '../components/ListItem';
 import { FULFILLMENT_ORDERS } from '../data/mockData';
 
 export default function FulfillmentHub() {
+  const { t } = useTranslation();
   const [orders, setOrders] = useState(FULFILLMENT_ORDERS);
   const [selectedOrder, setSelectedOrder] = useState(null);
   const [showOverrideModal, setShowOverrideModal] = useState(false);
@@ -55,10 +57,10 @@ export default function FulfillmentHub() {
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
           <h1 className="font-headline-lg text-3xl font-bold tracking-tight text-text-primary">
-            Fulfillment & Logistics Engine
+            {t('fulfillment.title', 'Fulfillment & Logistics Engine')}
           </h1>
           <p className="text-body-sm text-text-secondary mt-1">
-            Real-time warehouse stock balancing, multi-facility splits, and backorder orchestration
+            {t('fulfillment.subtitle', 'Real-time warehouse stock balancing, multi-facility splits, and backorder orchestration')}
           </p>
         </div>
 
@@ -87,7 +89,7 @@ export default function FulfillmentHub() {
         <Card className="p-6">
           <div className="flex items-center justify-between pb-4 border-b border-border-subtle mb-2">
             <span className="font-label-caps text-xs uppercase text-text-secondary font-semibold">
-              Active Fulfillment Queue
+              {t('fulfillment.activeOrders', 'Active Fulfillment Queue')}
             </span>
             <span className="font-mono-tag text-xs text-text-secondary">
               {orders.length} orders
@@ -142,7 +144,7 @@ export default function FulfillmentHub() {
                   className="inline-flex items-center gap-1 font-mono-tag text-xs text-accent-blue hover:underline mb-2 cursor-pointer"
                 >
                   <span className="material-symbols-outlined text-[14px]">arrow_back</span>
-                  <span>Back to Orders List</span>
+                  <span>{t('common.back', 'Back to Orders List')}</span>
                 </button>
                 <div className="flex flex-wrap items-center gap-3">
                   <h2 className="font-headline-sm text-2xl font-bold text-text-primary">
@@ -170,7 +172,7 @@ export default function FulfillmentHub() {
                   icon="inventory_2"
                   onClick={handleAcceptSplit}
                 >
-                  Accept Suggested Split
+                  {t('fulfillment.markFulfilled', 'Accept Suggested Split')}
                 </PillButton>
               </div>
             </div>

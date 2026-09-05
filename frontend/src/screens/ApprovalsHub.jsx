@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import Card from '../components/Card';
 import PillButton from '../components/PillButton';
 import StatusBadge from '../components/StatusBadge';
@@ -11,6 +12,7 @@ export default function ApprovalsHub({
   quotations = [],
   onUpdateQuotationStatus,
 }) {
+  const { t } = useTranslation();
   const [selectedQuote, setSelectedQuote] = useState(null);
   const [pendingOnly, setPendingOnly] = useState(true);
   const [actionModal, setActionModal] = useState(null); // 'approve' | 'return' | 'reject'
@@ -61,17 +63,17 @@ export default function ApprovalsHub({
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
           <h1 className="font-headline-lg text-3xl font-bold tracking-tight text-text-primary">
-            Approvals Hub & Deal Governance
+            {t('approvals.title', 'Approvals Hub & Deal Governance')}
           </h1>
           <p className="text-body-sm text-text-secondary mt-1">
-            Enforcing multi-tier margin limits, dual-signoff policies, and audit logging
+            {t('approvals.subtitle', 'Enforcing multi-tier margin limits, dual-signoff policies, and audit logging')}
           </p>
         </div>
 
         {/* Summary counts as three small Big-Number stat chips */}
         <div className="flex items-center gap-3">
           <div className="bg-surface-card border border-border-subtle rounded-2xl px-4 py-2.5 flex items-center gap-3">
-            <span className="font-label-caps text-xs text-text-secondary uppercase">Pending</span>
+            <span className="font-label-caps text-xs text-text-secondary uppercase">{t('status.pending_approval', 'Pending')}</span>
             <span className="font-mono text-xl font-bold text-status-warning">{pendingCount}</span>
           </div>
           <div className="bg-surface-card border border-border-subtle rounded-2xl px-4 py-2.5 flex items-center gap-3">
@@ -79,7 +81,7 @@ export default function ApprovalsHub({
             <span className="font-mono text-xl font-bold text-text-secondary">{returnedCount}</span>
           </div>
           <div className="bg-surface-card border border-border-subtle rounded-2xl px-4 py-2.5 flex items-center gap-3">
-            <span className="font-label-caps text-xs text-text-secondary uppercase">Approved</span>
+            <span className="font-label-caps text-xs text-text-secondary uppercase">{t('status.approved', 'Approved')}</span>
             <span className="font-mono text-xl font-bold text-status-live">{approvedCount}</span>
           </div>
         </div>
@@ -92,7 +94,7 @@ export default function ApprovalsHub({
           <div className="flex items-center justify-between pb-4 border-b border-border-subtle mb-2">
             <div className="flex items-center gap-2">
               <span className="font-label-caps text-xs uppercase text-text-secondary font-semibold">
-                Quotation Approval Queue
+                {t('approvals.pendingList', 'Quotation Approval Queue')}
               </span>
               <span className="font-mono-tag text-xs text-text-secondary">
                 ({approvalQuotes.length} quotes)
@@ -112,7 +114,7 @@ export default function ApprovalsHub({
                 <span className="material-symbols-outlined text-[14px]">
                   {pendingOnly ? 'check_circle' : 'circle'}
                 </span>
-                <span>Pending Only</span>
+                <span>{t('status.pending_approval', 'Pending Only')}</span>
               </button>
             </div>
           </div>
@@ -192,7 +194,7 @@ export default function ApprovalsHub({
                   className="inline-flex items-center gap-1 font-mono-tag text-xs text-accent-blue hover:underline mb-2 cursor-pointer"
                 >
                   <span className="material-symbols-outlined text-[14px]">arrow_back</span>
-                  <span>Back to Queue</span>
+                  <span>{t('common.back', 'Back to Queue')}</span>
                 </button>
                 <div className="flex flex-wrap items-center gap-3">
                   <h2 className="font-headline-sm text-2xl font-bold text-text-primary">
@@ -215,14 +217,14 @@ export default function ApprovalsHub({
                   size="md"
                   onClick={() => setActionModal('return')}
                 >
-                  Return for Revision
+                  {t('approvals.requestRevision', 'Return for Revision')}
                 </PillButton>
                 <PillButton
                   variant="danger"
                   size="md"
                   onClick={() => setActionModal('reject')}
                 >
-                  Reject
+                  {t('approvals.rejectDeal', 'Reject')}
                 </PillButton>
                 <PillButton
                   variant="green"
@@ -230,7 +232,7 @@ export default function ApprovalsHub({
                   icon="verified"
                   onClick={() => setActionModal('approve')}
                 >
-                  Approve Deal
+                  {t('approvals.approveDeal', 'Approve Deal')}
                 </PillButton>
               </div>
             </div>
@@ -381,7 +383,7 @@ export default function ApprovalsHub({
 
             <div>
               <label className="block font-label-caps text-xs uppercase text-text-secondary mb-1.5">
-                Audit Note / Reason
+                {t('approvals.approverNotes', 'Audit Note / Reason')}
               </label>
               <textarea
                 value={actionReason}
@@ -393,14 +395,14 @@ export default function ApprovalsHub({
 
             <div className="flex items-center justify-end gap-3 pt-2">
               <PillButton variant="ghost" size="md" onClick={() => setActionModal(null)}>
-                Cancel
+                {t('common.cancel', 'Cancel')}
               </PillButton>
               <PillButton
                 variant={actionModal === 'approve' ? 'green' : actionModal === 'reject' ? 'danger' : 'outline'}
                 size="md"
                 onClick={() => handleAction(actionModal)}
               >
-                Confirm {actionModal.toUpperCase()}
+                {t('common.confirm', 'Confirm')} {actionModal.toUpperCase()}
               </PillButton>
             </div>
           </Card>

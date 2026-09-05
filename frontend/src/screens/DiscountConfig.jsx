@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import Card from '../components/Card';
 import PillButton from '../components/PillButton';
 import Tag from '../components/Tag';
@@ -9,6 +10,7 @@ import {
 } from '../data/mockData';
 
 export default function DiscountConfig() {
+  const { t } = useTranslation();
   const [tierCeilings, setTierCeilings] = useState(TIER_DISCOUNT_CEILINGS);
   const [categoryCeilings, setCategoryCeilings] = useState(CATEGORY_DISCOUNT_CEILINGS);
   const [approvalRules, _setApprovalRules] = useState(APPROVAL_TIER_RULES);
@@ -33,15 +35,15 @@ export default function DiscountConfig() {
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
           <h1 className="font-headline-lg text-3xl font-bold tracking-tight text-text-primary">
-            Discount Governance & Approval Chains
+            {t('discounts.title', 'Discount Governance & Approval Chains')}
           </h1>
           <p className="text-body-sm text-text-secondary mt-1">
-            Global discount ceilings, category policy thresholds, and dual-signoff trigger rules
+            {t('discounts.subtitle', 'Global discount ceilings, category policy thresholds, and dual-signoff trigger rules')}
           </p>
         </div>
 
         <PillButton variant="primary" icon="check" onClick={handleSave}>
-          Save Policy Configuration
+          {t('common.save', 'Save Policy Configuration')}
         </PillButton>
       </div>
 

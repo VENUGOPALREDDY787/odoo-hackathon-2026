@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import Card from '../components/Card';
 import PillButton from '../components/PillButton';
 import StatusBadge from '../components/StatusBadge';
@@ -10,16 +11,17 @@ export default function QuotationsKanban({
   onSelectQuotation,
   onNewQuotation,
 }) {
+  const { t } = useTranslation();
   const [viewMode, setViewMode] = useState('kanban'); // 'kanban' | 'table'
   const [searchQuery, setSearchQuery] = useState('');
   const [tierFilter, setTierFilter] = useState('ALL');
 
   const columns = [
-    { id: 'draft', label: 'Draft', color: 'text-text-secondary' },
-    { id: 'pending_approval', label: 'Pending Approval', color: 'text-status-warning' },
-    { id: 'approved', label: 'Approved', color: 'text-status-live' },
-    { id: 'negotiation', label: 'Negotiation', color: 'text-accent-blue' },
-    { id: 'confirmed', label: 'Confirmed', color: 'text-status-live' },
+    { id: 'draft', label: t('quotations.columnDraft', 'Draft'), color: 'text-text-secondary' },
+    { id: 'pending_approval', label: t('quotations.columnPending', 'Pending Approval'), color: 'text-status-warning' },
+    { id: 'approved', label: t('quotations.columnApproved', 'Approved'), color: 'text-status-live' },
+    { id: 'negotiation', label: t('status.negotiation', 'Negotiation'), color: 'text-accent-blue' },
+    { id: 'confirmed', label: t('status.confirmed', 'Confirmed'), color: 'text-status-live' },
   ];
 
   const filteredQuotations = quotations.filter((q) => {
@@ -37,10 +39,10 @@ export default function QuotationsKanban({
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
           <h1 className="font-headline-lg text-3xl md:text-4xl font-bold tracking-tight text-text-primary">
-            Quotations Pipeline
+            {t('quotations.title', 'Quotations Pipeline')}
           </h1>
           <p className="text-body-sm text-text-secondary mt-1">
-            Real-time stage tracking with embedded blended risk governance
+            {t('quotations.subtitle', 'Real-time stage tracking with embedded blended risk governance')}
           </p>
         </div>
 
@@ -52,7 +54,7 @@ export default function QuotationsKanban({
             </span>
             <input
               type="text"
-              placeholder="Search quotes, customers..."
+              placeholder={t('quotations.searchQuotation', 'Search quotes, customers...')}
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className="bg-surface-interactive border border-border-subtle rounded-full pl-9 pr-4 py-2 text-xs text-text-primary placeholder:text-text-secondary focus:outline-none focus:border-accent-blue w-48 sm:w-60"
@@ -71,7 +73,7 @@ export default function QuotationsKanban({
                     : 'text-text-secondary hover:text-white'
                 }`}
               >
-                {tier}
+                {tier === 'ALL' ? t('common.all', 'ALL') : tier}
               </button>
             ))}
           </div>
@@ -98,12 +100,12 @@ export default function QuotationsKanban({
               }`}
             >
               <span className="material-symbols-outlined text-[16px]">table_rows</span>
-              <span>Table</span>
+              <span>{t('common.details', 'Table')}</span>
             </button>
           </div>
 
           <PillButton variant="primary" icon="add" onClick={onNewQuotation}>
-            + New Quote
+            {t('quotations.newQuotation', '+ New Quote')}
           </PillButton>
         </div>
       </div>
@@ -216,12 +218,12 @@ export default function QuotationsKanban({
               <thead>
                 <tr className="border-b border-border-subtle bg-surface-interactive/60 font-label-caps text-xs text-text-secondary uppercase">
                   <th className="py-3.5 px-6">Quote ID</th>
-                  <th className="py-3.5 px-6">Customer & Tier</th>
-                  <th className="py-3.5 px-6">Status</th>
-                  <th className="py-3.5 px-6">Blended Risk</th>
-                  <th className="py-3.5 px-6">Total Value</th>
-                  <th className="py-3.5 px-6">Assigned Rep</th>
-                  <th className="py-3.5 px-6 text-right">Action</th>
+                  <th className="py-3.5 px-6">{t('common.customer', 'Customer')} & Tier</th>
+                  <th className="py-3.5 px-6">{t('common.status', 'Status')}</th>
+                  <th className="py-3.5 px-6">{t('builder.riskScore', 'Blended Risk')}</th>
+                  <th className="py-3.5 px-6">{t('builder.totalAmount', 'Total Value')}</th>
+                  <th className="py-3.5 px-6">{t('quotations.owner', 'Assigned Rep')}</th>
+                  <th className="py-3.5 px-6 text-right">{t('common.actions', 'Action')}</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-border-subtle text-sm">
@@ -266,7 +268,7 @@ export default function QuotationsKanban({
                       <td className="py-4 px-6 text-text-secondary">{q.assignedTo}</td>
                       <td className="py-4 px-6 text-right">
                         <span className="font-mono-tag text-xs text-accent-blue group-hover:underline">
-                          Open Details →
+                          {t('quotations.viewQuotation', 'Open Details →')}
                         </span>
                       </td>
                     </tr>

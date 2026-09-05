@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import Card from '../components/Card';
 import PillButton from '../components/PillButton';
 import Tag from '../components/Tag';
@@ -6,6 +7,7 @@ import StatusBadge from '../components/StatusBadge';
 import { INITIAL_PRODUCTS } from '../data/mockData';
 
 export default function ProductCatalog({ onSelectProduct, onNewProduct }) {
+  const { t } = useTranslation();
   const [products] = useState(INITIAL_PRODUCTS);
   const [search, setSearch] = useState('');
   const [categoryFilter, setCategoryFilter] = useState('ALL');
@@ -27,10 +29,10 @@ export default function ProductCatalog({ onSelectProduct, onNewProduct }) {
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
           <h1 className="font-headline-lg text-3xl font-bold tracking-tight text-text-primary">
-            Product Catalog & Pricelist Matrix
+            {t('products.title', 'Product Catalog & Pricelist Matrix')}
           </h1>
           <p className="text-body-sm text-text-secondary mt-1">
-            Global SKU definitions, dynamic tier pricelists, and subscription cycle parameters
+            {t('products.subtitle', 'Global SKU definitions, dynamic tier pricelists, and subscription cycle parameters')}
           </p>
         </div>
 
@@ -49,7 +51,7 @@ export default function ProductCatalog({ onSelectProduct, onNewProduct }) {
             <span className="font-mono text-sm font-bold text-text-primary">{totalVariants}</span>
           </div>
           <PillButton variant="primary" icon="add" onClick={onNewProduct}>
-            + New Product
+            {t('products.addProduct', '+ New Product')}
           </PillButton>
         </div>
       </div>
@@ -62,7 +64,7 @@ export default function ProductCatalog({ onSelectProduct, onNewProduct }) {
           </span>
           <input
             type="text"
-            placeholder="Search catalog SKUs..."
+            placeholder={t('products.searchProducts', 'Search catalog SKUs...')}
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             className="w-full bg-surface-interactive border border-border-subtle rounded-full pl-9 pr-4 py-2 text-xs text-text-primary focus:outline-none focus:border-accent-blue"
@@ -80,7 +82,7 @@ export default function ProductCatalog({ onSelectProduct, onNewProduct }) {
                   : 'bg-surface-interactive border border-border-subtle text-text-secondary hover:text-white'
               }`}
             >
-              {cat}
+              {cat === 'ALL' ? t('common.all', 'ALL') : cat}
             </button>
           ))}
         </div>
@@ -92,12 +94,12 @@ export default function ProductCatalog({ onSelectProduct, onNewProduct }) {
           <table className="w-full text-left text-xs border-collapse">
             <thead>
               <tr className="border-b border-border-subtle bg-surface-interactive/60 font-label-caps text-text-secondary uppercase text-[10px]">
-                <th className="py-3.5 px-6">Product Name</th>
-                <th className="py-3.5 px-4">Category</th>
-                <th className="py-3.5 px-4 text-center">Type</th>
-                <th className="py-3.5 px-4 text-right">Base Price</th>
+                <th className="py-3.5 px-6">{t('builder.productName', 'Product Name')}</th>
+                <th className="py-3.5 px-4">{t('products.category', 'Category')}</th>
+                <th className="py-3.5 px-4 text-center">{t('common.status', 'Type')}</th>
+                <th className="py-3.5 px-4 text-right">{t('products.price', 'Base Price')}</th>
                 <th className="py-3.5 px-4 text-center">Unit</th>
-                <th className="py-3.5 px-4 text-center">Tax %</th>
+                <th className="py-3.5 px-4 text-center">{t('builder.tax', 'Tax %')}</th>
                 <th className="py-3.5 px-4 text-center">Status</th>
                 <th className="py-3.5 px-6 text-right">Action</th>
               </tr>

@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
+import { useTranslation } from 'react-i18next';
 import Card from '../components/Card';
 import PillButton from '../components/PillButton';
 import BigNumber from '../components/BigNumber';
@@ -9,6 +10,7 @@ import Tag from '../components/Tag';
 import { DEAL_HEALTH_ANOMALIES } from '../data/mockData';
 
 export default function DealHealthDashboard({ _onNavigate }) {
+  const { t } = useTranslation();
   const [anomalies] = useState(DEAL_HEALTH_ANOMALIES);
   const [actionAlert, setActionAlert] = useState(null);
 
@@ -32,10 +34,10 @@ export default function DealHealthDashboard({ _onNavigate }) {
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
           <h1 className="font-headline-lg text-3xl md:text-4xl font-bold tracking-tight text-text-primary">
-            Deal Health & Anomaly Telemetry
+            {t('dealHealth.title', 'Deal Health & Anomaly Telemetry')}
           </h1>
           <p className="text-body-sm text-text-secondary mt-1">
-            Algorithmic detection of stalled stages, rep concession anomalies, and fulfillment slippage
+            {t('dealHealth.subtitle', 'Algorithmic detection of stalled stages, rep concession anomalies, and fulfillment slippage')}
           </p>
         </div>
 
