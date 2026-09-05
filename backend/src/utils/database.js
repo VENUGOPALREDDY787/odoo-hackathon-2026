@@ -15,7 +15,7 @@ export function createKnexInstance(customConfig = {}) {
       database: config.DB_NAME,
       ssl: config.DB_SSL ? { rejectUnauthorized: false } : undefined,
       charset: 'utf8mb4',
-      timezone: 'UTC',
+      timezone: '+00:00',
     },
     pool: {
       min: 2,

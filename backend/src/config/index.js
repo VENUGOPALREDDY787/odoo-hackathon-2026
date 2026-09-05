@@ -35,6 +35,9 @@ const envSchema = z.object({
   // CORS
   CORS_ORIGIN: z.string().default('*'),
 
+  // Frontend URL (for magic links)
+  FRONTEND_URL: z.string().url().default('http://localhost:5173'),
+
   // Feature flags
   ENABLE_SWAGGER: z.coerce.boolean().default(false),
 });

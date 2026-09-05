@@ -21,6 +21,7 @@ async function bootstrap() {
 
   registerServices(container);
   registerModules(container);
+  startCleanupJobs(container);
 
   const server = app.listen(config.PORT, config.HOST, () => {
     logger.info({ port: config.PORT, host: config.HOST, env: config.NODE_ENV }, 'Server started');
@@ -60,6 +61,7 @@ function registerServices(container) {
   container.registerSingleton('config', config);
   container.registerSingleton('logger', logger);
   container.registerSingleton('database', getDatabase());
+  container.registerSingleton('emailService', createEmailService());
 }
 
 async function registerModules(container) {
@@ -88,6 +90,37 @@ async function registerModules(container) {
       logger.debug({ module: moduleName }, 'Module not yet implemented');
     }
   }
+}
+
+function createEmailService() {
+  return {
+    async sendMagicLink(email, magicLink, expiresAt) {
+      if (config.NODE_ENV === 'development') {
+        logger.info({ email, magicLink, expiresAt }, 'DEV MODE: Magic link email would be sent');
+        return;
+      }
+      // TODO: Integrate with real email provider (SendGrid, AWS SES, etc.)
+      logger.warn({ email }, 'Email service not configured - magic link not sent');
+    },
+  };
+}
+
+function startCleanupJobs(container) {
+  const db = container.get('database');
+  const cleanupInterval = 60 * 60 * 1000;
+
+  setInterval(async () => {
+    try {
+      await db('refresh_tokens').where('expires_at', '<', new Date()).update({ revoked_at: new Date() });
+      await db('magic_links').where('expires_at', '<', new Date()).whereNull('used_at').del();
+      await db('login_attempts').where('created_at', '<', new Date(Date.now() - 30 * 24 * 60 * 60 * 1000)).del();
+      logger.debug('Auth cleanup job completed');
+    } catch (error) {
+      logger.error({ err: error.message }, 'Auth cleanup job failed');
+    }
+  }, cleanupInterval).unref();
+
+  logger.info('Auth cleanup jobs started');
 }
 
 bootstrap().catch((error) => {

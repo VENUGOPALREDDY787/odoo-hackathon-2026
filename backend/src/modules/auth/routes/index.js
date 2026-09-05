@@ -1,5 +1,25 @@
 import { Router } from 'express';
-import { container } from '../../container/index.js';
+import rateLimit from 'express-rate-limit';
+import { container } from '../../../container/index.js';
+import {
+  authenticate,
+  requireRole,
+  requireInternal,
+  requireCustomer,
+  requireOwnershipOrRole,
+  optionalAuth,
+  canManageUsers,
+  canManageFinance,
+  canManageApprovals,
+  canViewReports,
+  canManageProducts,
+  canManageDiscounts,
+  canManageWarehouses,
+  canManageSubscriptions,
+  canManageUpsell,
+  canNegotiate,
+  canViewDealHealth,
+} from '../middleware/auth.js';
 
 const router = Router();
 
@@ -7,55 +27,74 @@ function getController() {
   return container.get('authController');
 }
 
-router.post('/register', (req, res, next) => getController().register(req, res, next));
-router.post('/login', (req, res, next) => getController().login(req, res, next));
+const authRateLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 5,
+  standardHeaders: true,
+  legacyHeaders: false,
+  keyGenerator: (req) => `${req.ip}:${req.body?.email || 'unknown'}`,
+  handler: (req, res) => {
+    res.status(429).json({
+      error: {
+        code: 'RATE_LIMIT_EXCEEDED',
+        message: 'Too many authentication attempts. Please try again in 15 minutes.',
+        details: null,
+      },
+    });
+  },
+});
+
+const magicLinkRateLimiter = rateLimit({
+  windowMs: 60 * 60 * 1000,
+  max: 3,
+  standardHeaders: true,
+  legacyHeaders: false,
+  keyGenerator: (req) => `${req.ip}:${req.body?.email || 'unknown'}`,
+  handler: (req, res) => {
+    res.status(429).json({
+      error: {
+        code: 'RATE_LIMIT_EXCEEDED',
+        message: 'Too many magic link requests. Please try again in an hour.',
+        details: null,
+      },
+    });
+  },
+});
+
+router.post('/register/internal', authRateLimiter, (req, res, next) => getController().registerInternal(req, res, next));
+router.post('/register/customer', authRateLimiter, (req, res, next) => getController().registerCustomer(req, res, next));
+router.post('/login', authRateLimiter, (req, res, next) => getController().loginInternal(req, res, next));
+
+router.post('/magic-link/request', magicLinkRateLimiter, (req, res, next) => getController().requestMagicLink(req, res, next));
+router.post('/magic-link/verify', (req, res, next) => getController().verifyMagicLink(req, res, next));
+
 router.post('/refresh', (req, res, next) => getController().refresh(req, res, next));
+router.post('/logout', authenticate(), (req, res, next) => getController().logout(req, res, next));
+router.post('/logout-all', authenticate(), (req, res, next) => getController().logoutAll(req, res, next));
 
 router.get('/profile', authenticate(), (req, res, next) => getController().profile(req, res, next));
 router.put('/profile', authenticate(), (req, res, next) => getController().updateProfile(req, res, next));
 router.post('/change-password', authenticate(), (req, res, next) => getController().changePassword(req, res, next));
+router.post('/set-password', authenticate(), (req, res, next) => getController().setPassword(req, res, next));
+
+export {
+  authenticate,
+  requireRole,
+  requireInternal,
+  requireCustomer,
+  requireOwnershipOrRole,
+  optionalAuth,
+  canManageUsers,
+  canManageFinance,
+  canManageApprovals,
+  canViewReports,
+  canManageProducts,
+  canManageDiscounts,
+  canManageWarehouses,
+  canManageSubscriptions,
+  canManageUpsell,
+  canNegotiate,
+  canViewDealHealth,
+};
 
 export default router;
-
-export function authenticate() {
-  return async (req, res, next) => {
-    const authHeader = req.headers.authorization;
-    if (!authHeader?.startsWith('Bearer ')) {
-      return res.status(401).json({
-        error: { code: 'AUTHENTICATION_ERROR', message: 'Authorization header required', details: null },
-      });
-    }
-
-    const token = authHeader.slice(7);
-    const authService = container.get('authService');
-
-    try {
-      const decoded = authService.verifyAccessToken(token);
-      const user = await authService.getProfile(decoded.sub);
-      req.user = user;
-      next();
-    } catch (error) {
-      return res.status(401).json({
-        error: { code: 'AUTHENTICATION_ERROR', message: 'Invalid or expired token', details: null },
-      });
-    }
-  };
-}
-
-export function authorize(...roles) {
-  return (req, res, next) => {
-    if (!req.user) {
-      return res.status(401).json({
-        error: { code: 'AUTHENTICATION_ERROR', message: 'Authentication required', details: null },
-      });
-    }
-
-    if (!roles.includes(req.user.role)) {
-      return res.status(403).json({
-        error: { code: 'AUTHORIZATION_ERROR', message: 'Insufficient permissions', details: null },
-      });
-    }
-
-    next();
-  };
-}
