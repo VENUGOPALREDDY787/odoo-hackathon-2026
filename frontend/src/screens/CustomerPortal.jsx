@@ -3,7 +3,6 @@ import { useTranslation } from 'react-i18next';
 import Card from '../components/Card';
 import PillButton from '../components/PillButton';
 import Tag from '../components/Tag';
-import StatusBadge from '../components/StatusBadge';
 import LanguageSwitcher from '../components/LanguageSwitcher';
 
 export default function CustomerPortal({ onReturnToInternal }) {
@@ -45,7 +44,7 @@ export default function CustomerPortal({ onReturnToInternal }) {
   return (
     <div className="w-full max-w-max-width mx-auto space-y-6 animate-in fade-in duration-300">
       {/* Simplified Customer Portal Top Bar */}
-      <div className="bg-surface-card border border-border-subtle rounded-full px-6 py-3 flex items-center justify-between shadow-lg gap-3">
+      <div data-tour="customer-portal" className="bg-surface-card border border-border-subtle rounded-[28px] sm:rounded-full px-4 sm:px-6 py-3 flex flex-wrap items-center justify-between shadow-lg gap-3">
         <div className="flex items-center gap-3">
           <img src="/brand-mark.svg" alt="DealFlow360" className="h-7 w-auto" />
           <span className="font-mono-tag text-xs text-text-secondary border-l border-border-subtle pl-3 hidden sm:inline">
@@ -66,7 +65,7 @@ export default function CustomerPortal({ onReturnToInternal }) {
               className={`px-3 py-1.5 rounded-full text-xs font-medium transition-colors ${
                 activePortalTab === tab.id
                   ? 'bg-accent-blue text-surface-base font-bold'
-                  : 'text-text-secondary hover:text-white'
+                  : 'text-text-secondary hover:text-text-primary'
               }`}
             >
               {tab.label}
@@ -126,7 +125,7 @@ export default function CustomerPortal({ onReturnToInternal }) {
 
             {/* Line Table with Customer Comment Column */}
             <div className="mt-6 overflow-x-auto">
-              <table className="w-full text-left text-xs">
+              <table className="w-full min-w-[640px] text-left text-xs">
                 <thead>
                   <tr className="border-b border-border-subtle font-label-caps text-text-secondary uppercase text-[10px]">
                     <th className="py-2.5">{t('portal.itemDescription', 'Item Description')}</th>

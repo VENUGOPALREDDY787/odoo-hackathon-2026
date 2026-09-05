@@ -43,7 +43,7 @@ export default function SubscriptionsHub() {
   };
 
   return (
-    <div className="w-full max-w-max-width mx-auto space-y-6 animate-in fade-in duration-300">
+    <div data-tour="billing" className="w-full max-w-max-width mx-auto space-y-6 animate-in fade-in duration-300">
       {/* Top Header */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
@@ -249,13 +249,13 @@ export default function SubscriptionsHub() {
 
       {/* Proration Modification Modal */}
       {modifyModalOpen && (
-        <div className="fixed inset-0 z-50 bg-black/75 backdrop-blur-md flex items-center justify-center p-4">
-          <Card className="max-w-md w-full p-6 space-y-4" radiance>
+        <div className="fixed inset-0 z-50 bg-surface-base/75 backdrop-blur-md flex items-center justify-center p-4 overflow-y-auto">
+          <Card className="max-w-md w-full p-6 space-y-4 max-h-[calc(100vh-2rem)] overflow-y-auto" radiance>
             <div className="flex items-center justify-between pb-2 border-b border-border-subtle">
               <h3 className="font-headline-sm text-lg font-bold text-text-primary">
                 Modify Subscription Seats & Proration
               </h3>
-              <button onClick={() => setModifyModalOpen(false)} className="text-text-secondary hover:text-white">
+              <button onClick={() => setModifyModalOpen(false)} className="text-text-secondary hover:text-text-primary">
                 <span className="material-symbols-outlined text-[18px]">close</span>
               </button>
             </div>
@@ -307,13 +307,13 @@ export default function SubscriptionsHub() {
 
       {/* Cancel Confirmation Modal */}
       {cancelConfirmOpen && (
-        <div className="fixed inset-0 z-50 bg-black/75 backdrop-blur-md flex items-center justify-center p-4">
-          <Card className="max-w-md w-full p-6 space-y-4" radiance>
+        <div className="fixed inset-0 z-50 bg-surface-base/75 backdrop-blur-md flex items-center justify-center p-4 overflow-y-auto">
+          <Card className="max-w-md w-full p-6 space-y-4 max-h-[calc(100vh-2rem)] overflow-y-auto" radiance>
             <div className="flex items-center justify-between pb-2 border-b border-border-subtle">
               <h3 className="font-headline-sm text-lg font-bold text-status-danger">
                 Confirm Irreversible Cancellation
               </h3>
-              <button onClick={() => setCancelConfirmOpen(false)} className="text-text-secondary hover:text-white">
+              <button onClick={() => setCancelConfirmOpen(false)} className="text-text-secondary hover:text-text-primary">
                 <span className="material-symbols-outlined text-[18px]">close</span>
               </button>
             </div>

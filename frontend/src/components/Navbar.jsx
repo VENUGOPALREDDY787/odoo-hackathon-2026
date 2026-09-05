@@ -1,9 +1,8 @@
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useTranslation } from 'react-i18next';
 import { USER_ROLES } from '../data/mockData';
 import Tag from './Tag';
-import LanguageSwitcher from './LanguageSwitcher';
 
 export default function Navbar({
   activeTab,
@@ -15,9 +14,9 @@ export default function Navbar({
   currentUser,
   mobileMenuOpen,
   setMobileMenuOpen,
+  viewport,
 }) {
   const { t } = useTranslation();
-  const [isScrolled, setIsScrolled] = useState(false);
   const navItems = [
     { id: 'dashboard', label: t('navigation.dashboard', 'Dashboard'), icon: 'dashboard' },
     { id: 'quotations', label: t('navigation.quotations', 'Quotations'), icon: 'description' },
@@ -42,20 +41,14 @@ export default function Navbar({
     return icons[name] || 'dashboard';
   };
 
-  // Track scroll for potential future use (sidebar shadow, etc.)
-  useEffect(() => {
-    const handleScroll = () => setIsScrolled(window.scrollY > 50);
-    window.addEventListener('scroll', handleScroll, { passive: true });
-    return () => window.removeEventListener('scroll', handleScroll);
-  }, []);
-
   return (
     <>
       {/* Mobile Hamburger Button (Fixed Top Left) - only shown when sidebar is collapsed */}
-      {window.innerWidth < 768 && !mobileMenuOpen && (
+      {viewport.isMobile && !mobileMenuOpen && (
         <button
+          type="button"
           onClick={() => setMobileMenuOpen(true)}
-          className="fixed top-4 left-4 z-50 w-10 h-10 rounded-full bg-surface-card border border-border-subtle flex items-center justify-center text-text-secondary hover:text-white hover:border-accent-blue transition-all shadow-lg"
+          className="fixed top-4 left-4 z-50 w-10 h-10 rounded-full bg-surface-card border border-border-subtle flex items-center justify-center text-text-secondary hover:text-text-primary hover:border-accent-blue transition-all shadow-lg"
           aria-label="Toggle navigation menu"
         >
           <span className="material-symbols-outlined text-[24px]">menu</span>
@@ -64,12 +57,12 @@ export default function Navbar({
 
       {/* Sidebar Overlay for Mobile */}
       <AnimatePresence>
-        {mobileMenuOpen && window.innerWidth < 768 && (
+        {mobileMenuOpen && viewport.isMobile && (
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 z-40 bg-black/75 backdrop-blur-sm md:hidden"
+            className="fixed inset-0 z-40 bg-surface-base/75 backdrop-blur-sm md:hidden"
             onClick={() => setMobileMenuOpen(false)}
           />
         )}
@@ -78,21 +71,21 @@ export default function Navbar({
       {/* Fixed Left Sidebar */}
       <aside
         className={`fixed left-0 top-0 bottom-0 z-40 flex flex-col bg-surface-card border-r border-border-subtle transition-all duration-300 ease-out ${
-          window.innerWidth < 768
+          viewport.isMobile
             ? 'w-72 translate-x-[-100%] md:hidden'
-            : window.innerWidth < 1024
-            ? 'w-16'
+            : !viewport.isDesktop
+            ? 'w-[72px]'
             : 'w-[260px]'
-        } ${mobileMenuOpen && window.innerWidth < 768 ? 'translate-x-0' : ''}`}
+        } ${mobileMenuOpen && viewport.isMobile ? 'translate-x-0' : ''}`}
       >
         {/* Brand Wordmark */}
         <div className="flex items-center justify-center px-4 py-6 border-b border-border-subtle min-h-[80px]">
-          {window.innerWidth >= 1024 && (
+          {viewport.isDesktop && (
             <span className="font-display-hero text-2xl font-extrabold tracking-[-1px] text-text-primary select-none whitespace-nowrap">
               DealFlow360
             </span>
           )}
-          {window.innerWidth < 1024 && (
+          {!viewport.isDesktop && (
             <span className="font-display-hero text-xl font-extrabold tracking-[-1px] text-text-primary select-none">
               DF
             </span>
@@ -107,16 +100,17 @@ export default function Navbar({
             return (
               <button
                 key={item.id}
+                data-tour={item.id}
                 onClick={() => {
                   setActiveTab(item.id);
-                  if (window.innerWidth < 768) setMobileMenuOpen(false);
+                  if (viewport.isMobile) setMobileMenuOpen(false);
                 }}
                 className={`relative flex items-center gap-3 px-3 py-3 rounded-full cursor-pointer transition-all duration-200 min-h-[44px] ${
                   isActive
                     ? 'text-text-primary z-10'
                     : 'text-text-secondary hover:text-text-primary'
-                } ${window.innerWidth < 1024 ? 'justify-center' : ''}`}
-                title={window.innerWidth < 1024 ? item.label : undefined}
+                } ${!viewport.isDesktop ? 'justify-center' : ''}`}
+                title={!viewport.isDesktop ? item.label : undefined}
                 aria-current={isActive ? 'page' : undefined}
               >
                 {isActive && (
@@ -133,12 +127,12 @@ export default function Navbar({
                 >
                   {getIcon(item.icon)}
                 </span>
-                {!window.innerWidth < 1024 && (
+                {!!viewport.isDesktop && (
                   <span className="relative z-10 font-medium text-sm whitespace-nowrap">
                     {item.label}
                   </span>
                 )}
-                {item.badge && !window.innerWidth < 1024 && (
+                {item.badge && !!viewport.isDesktop && (
                   <motion.span
                     initial={{ scale: 0, opacity: 0 }}
                     animate={{ scale: 1, opacity: 1 }}
@@ -154,7 +148,7 @@ export default function Navbar({
 
         {/* User Profile Section - Pinned at Bottom */}
         <div className="p-4 border-t border-border-subtle">
-          {window.innerWidth >= 1024 ? (
+          {viewport.isDesktop ? (
             <div className="flex items-center gap-3">
               <div className="relative w-9 h-9 flex-shrink-0">
                 <div className="w-full h-full rounded-full bg-accent-blue/20 border border-accent-blue/40 flex items-center justify-center font-mono text-xs font-bold text-accent-blue">
@@ -197,7 +191,7 @@ export default function Navbar({
           )}
 
           {/* Role Selector (Desktop/Tablet) */}
-          {window.innerWidth >= 640 && (
+          {viewport.width >= 640 && (
             <div className="mt-4">
               <label className="block font-label-caps text-[10px] uppercase text-text-secondary mb-2">
                 {t('navigation.activeRole', 'Active Role')}
@@ -208,7 +202,7 @@ export default function Navbar({
                 className="w-full bg-surface-interactive border border-border-subtle rounded-xl px-3 py-2 text-sm text-accent-blue font-mono font-medium focus:outline-none focus:border-accent-blue appearance-none cursor-pointer"
               >
                 {USER_ROLES.map((role) => (
-                  <option key={role} value={role} className="bg-surface-card text-white">
+                  <option key={role} value={role} className="bg-surface-card text-text-primary">
                     {t(`roles.${role}`, role.charAt(0).toUpperCase() + role.slice(1))}
                   </option>
                 ))}
@@ -217,10 +211,11 @@ export default function Navbar({
           )}
 
           {/* New Quotation CTA (Desktop) */}
-          {window.innerWidth >= 1024 && onNewQuotation && (
+          {viewport.isDesktop && onNewQuotation && (
             <button
+              type="button"
               onClick={onNewQuotation}
-              className="mt-4 w-full inline-flex items-center justify-center gap-2 px-4 py-3 rounded-full bg-white text-surface-base text-sm font-semibold hover:opacity-90 active:scale-[0.98] transition-all shadow-[0_0_12px_rgba(255,255,255,0.2)]"
+              className="mt-4 w-full inline-flex items-center justify-center gap-2 px-4 py-3 rounded-full bg-text-primary text-surface-base text-sm font-semibold hover:opacity-90 active:scale-[0.98] transition-all shadow-[0_0_12px_rgb(var(--text-primary)/0.18)]"
             >
               <span className="material-symbols-outlined text-[18px]">add</span>
               <span>{t('navigation.newQuotation', 'New Quotation')}</span>

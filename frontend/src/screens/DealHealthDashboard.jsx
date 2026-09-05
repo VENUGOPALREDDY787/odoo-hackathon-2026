@@ -29,7 +29,7 @@ export default function DealHealthDashboard({ _onNavigate }) {
   };
 
   return (
-    <div className="w-full max-w-max-width mx-auto space-y-8 animate-in fade-in duration-300">
+    <div data-tour="deal-health" className="w-full max-w-max-width mx-auto space-y-8 animate-in fade-in duration-300">
       {/* Top Header */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>

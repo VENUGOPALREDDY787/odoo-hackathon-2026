@@ -64,7 +64,7 @@ export default function ProductDetail({ product, onBack, onSave }) {
           {onBack && (
             <button
               onClick={onBack}
-              className="w-9 h-9 rounded-full bg-surface-interactive border border-border-subtle flex items-center justify-center text-text-secondary hover:text-white"
+              className="w-9 h-9 rounded-full bg-surface-interactive border border-border-subtle flex items-center justify-center text-text-secondary hover:text-text-primary"
             >
               <span className="material-symbols-outlined text-[18px]">arrow_back</span>
             </button>
@@ -213,7 +213,7 @@ export default function ProductDetail({ product, onBack, onSave }) {
                   className={`px-3 py-1 rounded-full font-medium transition-colors ${
                     !isSubscription
                       ? 'bg-text-primary text-surface-base'
-                      : 'text-text-secondary hover:text-white'
+                      : 'text-text-secondary hover:text-text-primary'
                   }`}
                 >
                   No (One-Time)
@@ -224,7 +224,7 @@ export default function ProductDetail({ product, onBack, onSave }) {
                   className={`px-3 py-1 rounded-full font-medium transition-colors ${
                     isSubscription
                       ? 'bg-accent-blue text-surface-base font-bold'
-                      : 'text-text-secondary hover:text-white'
+                      : 'text-text-secondary hover:text-text-primary'
                   }`}
                 >
                   Yes (Recurring)
@@ -269,7 +269,7 @@ export default function ProductDetail({ product, onBack, onSave }) {
           </div>
 
           <div className="overflow-x-auto">
-            <table className="w-full text-left text-xs">
+            <table className="w-full min-w-[640px] text-left text-xs">
               <thead>
                 <tr className="border-b border-border-subtle font-label-caps text-text-secondary uppercase text-[10px]">
                   <th className="py-2.5">Attribute Name</th>
@@ -312,7 +312,7 @@ export default function ProductDetail({ product, onBack, onSave }) {
           </div>
 
           <div className="overflow-x-auto">
-            <table className="w-full text-left text-xs">
+            <table className="w-full min-w-[640px] text-left text-xs">
               <thead>
                 <tr className="border-b border-border-subtle font-label-caps text-text-secondary uppercase text-[10px]">
                   <th className="py-2.5">Customer Tier</th>

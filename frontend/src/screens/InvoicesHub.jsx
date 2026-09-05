@@ -186,7 +186,7 @@ export default function InvoicesHub() {
 
             {/* Line Table */}
             <div className="mt-6 overflow-x-auto">
-              <table className="w-full text-left text-xs">
+              <table className="w-full min-w-[640px] text-left text-xs">
                 <thead>
                   <tr className="border-b border-border-subtle font-label-caps text-text-secondary uppercase text-[10px]">
                     <th className="py-2.5">Line Description</th>

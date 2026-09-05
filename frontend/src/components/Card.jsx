@@ -6,18 +6,20 @@ export default function Card({
   accent = 'none', // 'none' | 'blue' | 'pink' | 'interactive'
   onClick,
   radiance = false,
+  dataTour,
 }) {
-  let baseClass = 'bg-surface-card border border-border-subtle rounded-[32px] p-6 md:p-8 relative overflow-hidden transition-all duration-300';
+  let baseClass = 'bg-surface-card border border-border-subtle rounded-[32px] p-card-padding-mobile md:p-card-padding relative overflow-hidden transition-all duration-300';
   
   if (accent === 'blue') {
-    baseClass = 'bg-accent-blue text-surface-base rounded-[32px] p-6 md:p-8 relative overflow-hidden shadow-lg transition-all duration-300';
+    baseClass = 'bg-accent-blue text-surface-base rounded-[32px] p-card-padding-mobile md:p-card-padding relative overflow-hidden shadow-lg transition-all duration-300';
   } else if (accent === 'interactive') {
-    baseClass = 'bg-surface-interactive border border-border-subtle rounded-[24px] p-6 relative overflow-hidden transition-all duration-300';
+    baseClass = 'bg-surface-interactive border border-border-subtle rounded-[24px] p-card-padding-mobile relative overflow-hidden transition-all duration-300';
   }
 
   return (
     <div
       onClick={onClick}
+      data-tour={dataTour}
       className={`${baseClass} ${onClick ? 'cursor-pointer hover:border-text-secondary/40 hover:scale-[1.008]' : ''} ${className}`}
     >
       {radiance && (

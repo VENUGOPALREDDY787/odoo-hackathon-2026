@@ -53,7 +53,7 @@ export default function SalesDashboard({
   ];
 
   return (
-    <div className="w-full max-w-max-width mx-auto space-y-8 animate-in fade-in duration-300">
+    <div data-tour="dashboard" className="w-full max-w-max-width mx-auto space-y-8 animate-in fade-in duration-300">
       {/* Top Bento Grid Row - 12 col grid */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-gutter-lg">
         {/* Left Hero Deck (8-col span) */}

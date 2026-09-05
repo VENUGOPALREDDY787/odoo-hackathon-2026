@@ -45,7 +45,7 @@ export default function LoginScreen({ onLoginSuccess }) {
             className={`flex-1 py-2 text-xs font-semibold rounded-full transition-all duration-200 cursor-pointer ${
               tab === 'login'
                 ? 'bg-text-primary text-surface-base shadow-sm'
-                : 'text-text-secondary hover:text-white'
+                : 'text-text-secondary hover:text-text-primary'
             }`}
           >
             {t('navigation.login', 'Log In')}
@@ -56,7 +56,7 @@ export default function LoginScreen({ onLoginSuccess }) {
             className={`flex-1 py-2 text-xs font-semibold rounded-full transition-all duration-200 cursor-pointer ${
               tab === 'signup'
                 ? 'bg-text-primary text-surface-base shadow-sm'
-                : 'text-text-secondary hover:text-white'
+                : 'text-text-secondary hover:text-text-primary'
             }`}
           >
             {t('auth.signUp', 'Sign Up')}
@@ -143,7 +143,7 @@ export default function LoginScreen({ onLoginSuccess }) {
                   className={`px-2 py-1.5 text-xs font-mono rounded-lg border text-center transition-all ${
                     role === r.id
                       ? 'bg-accent-blue/15 border-accent-blue text-accent-blue font-bold'
-                      : 'bg-surface-interactive border-border-subtle text-text-secondary hover:text-white'
+                      : 'bg-surface-interactive border-border-subtle text-text-secondary hover:text-text-primary'
                   }`}
                 >
                   {t(r.key, r.fallback)}
