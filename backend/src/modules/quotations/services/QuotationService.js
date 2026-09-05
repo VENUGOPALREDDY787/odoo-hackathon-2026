@@ -1,4 +1,4 @@
-import { NotFoundError, ValidationError, ConflictError } from '../../../errors/AppError.js';
+import { NotFoundError, ValidationError, ConflictError, AuthorizationError } from '../../../errors/AppError.js';
 import {
   QuotationRepository,
   QuotationLineRepository,
@@ -433,6 +433,11 @@ export class QuotationService {
     try {
       const quotation = await this.quotationRepo.findWithDetails(quotationId, trx);
       if (!quotation) throw new NotFoundError('Quotation');
+
+      // Defense in depth: Verify authorization at service level
+      if (user && user.role !== 'admin' && user.role !== 'manager' && quotation.assigned_rep_id !== user.id) {
+        throw new AuthorizationError('You are not authorized to submit this quotation for approval.');
+      }
 
       if (expectedVersion !== null && expectedVersion !== undefined && quotation.version !== expectedVersion) {
         throw new ConflictError(

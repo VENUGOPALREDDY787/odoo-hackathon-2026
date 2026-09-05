@@ -1,4 +1,4 @@
-import { NotFoundError, ValidationError } from '../../../errors/AppError.js';
+import { NotFoundError, ValidationError, AuthorizationError } from '../../../errors/AppError.js';
 import { ProductRepository, ProductVariantRepository, PriceListRepository, PriceListItemRepository } from '../repositories/ProductRepository.js';
 import { resolvePrice } from './priceResolver.js';
 
@@ -15,7 +15,11 @@ export class ProductService {
 
   // ==================== PRODUCT CRUD ====================
 
-  async createProduct(data) {
+  async createProduct(data, user) {
+    if (!user || user.role !== 'admin') {
+      throw new AuthorizationError('Only administrators can create products');
+    }
+
     const existing = await this.productRepo.findBySku(data.sku);
     if (existing) {
       throw new ValidationError('Product with this SKU already exists', { sku: data.sku });
@@ -46,7 +50,11 @@ export class ProductService {
     return product;
   }
 
-  async updateProduct(id, data) {
+  async updateProduct(id, data, user) {
+    if (!user || user.role !== 'admin') {
+      throw new AuthorizationError('Only administrators can update products');
+    }
+
     const product = await this.getProduct(id);
 
     if (data.sku && data.sku !== product.sku) {

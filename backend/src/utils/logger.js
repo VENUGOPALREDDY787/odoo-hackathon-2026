@@ -21,6 +21,10 @@ const baseLogger = pino({
     service: 'dealflow360-backend',
     env: config.NODE_ENV,
   },
+  redact: {
+    paths: ['token', 'rawToken', 'password', 'authorization', 'req.headers.authorization', 'req.headers.cookie'],
+    censor: '[REDACTED]',
+  },
 });
 
 export const logger = baseLogger;

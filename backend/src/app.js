@@ -18,7 +18,7 @@ export function createApp() {
   }));
 
   app.use(cors({
-    origin: config.CORS_ORIGIN === '*' ? true : config.CORS_ORIGIN.split(','),
+    origin: config.CORS_ORIGIN.split(','),
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization', 'X-Request-ID'],
@@ -46,6 +46,25 @@ export function createApp() {
     },
   });
   app.use(limiter);
+
+  // Stricter rate limiter for auth routes (brute-force protection)
+  const authLimiter = rateLimit({
+    windowMs: 15 * 60 * 1000, // 15 minutes
+    max: 10, // 10 requests per window
+    standardHeaders: true,
+    legacyHeaders: false,
+    keyGenerator: (req) => req.ip,
+    handler: (req, res) => {
+      res.status(429).json({
+        error: {
+          code: 'AUTH_RATE_LIMIT_EXCEEDED',
+          message: 'Too many authentication attempts, please try again later',
+          details: null,
+        },
+      });
+    },
+  });
+  app.use('/api/auth', authLimiter);
 
   app.use(requestIdMiddleware);
 

@@ -33,7 +33,7 @@ const envSchema = z.object({
   RATE_LIMIT_MAX_REQUESTS: z.coerce.number().int().positive().default(100),
 
   // CORS
-  CORS_ORIGIN: z.string().default('*'),
+  CORS_ORIGIN: z.string().default('http://localhost:5173'),
 
   // Frontend URL (for magic links)
   FRONTEND_URL: z.string().url().default('http://localhost:5173'),
