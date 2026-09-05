@@ -298,10 +298,10 @@ export default function QuotationBuilder({
                   {t('builder.totalAmount', 'Net Quotation Value')}
                 </span>
                 <div className="font-kpi-value text-3xl font-bold text-text-primary mt-1 sm:mt-0">
-                  ${totals.total.toLocaleString()}
+                  ₹{totals.total.toLocaleString()}
                 </div>
                 <div className="font-mono-tag text-xs text-accent-pink font-semibold mt-0.5">
-                  Savings: -${totals.totalDiscount.toLocaleString()} ({totals.effectiveDiscountPct.toFixed(1)}%)
+                  Savings: -₹{totals.totalDiscount.toLocaleString()} ({totals.effectiveDiscountPct.toFixed(1)}%)
                 </div>
               </div>
             </div>
@@ -379,7 +379,7 @@ export default function QuotationBuilder({
                         </td>
 
                         <td className="py-3 px-2 text-right font-mono-data text-text-secondary">
-                          ${line.unitPrice.toLocaleString()}
+                          ₹{line.unitPrice.toLocaleString()}
                         </td>
 
                         <td className="py-3 px-2 text-center">
@@ -425,7 +425,7 @@ export default function QuotationBuilder({
                         </td>
 
                         <td className="py-3 px-2 text-right font-mono-data font-semibold text-text-primary">
-                          ${lineTotal.toLocaleString()}
+                          ₹{lineTotal.toLocaleString()}
                         </td>
 
                         <td className="py-3 pl-2 text-center">
@@ -476,7 +476,7 @@ export default function QuotationBuilder({
                         <div className="font-mono-tag text-[10px] text-text-secondary">{prod.category}</div>
                       </div>
                       <span className="font-mono text-xs font-semibold text-accent-blue">
-                        ${prod.price.toLocaleString()}
+                        ₹{prod.price.toLocaleString()}
                       </span>
                     </div>
                   ))}
@@ -538,7 +538,7 @@ export default function QuotationBuilder({
 
                     <div className="flex items-center justify-between pt-1">
                       <span className="font-mono-data text-sm font-semibold text-text-primary">
-                        +${item.unitPrice.toLocaleString()}
+                        +₹{item.unitPrice.toLocaleString()}
                       </span>
                       <div className="flex items-center gap-2 flex-wrap">
                         <PillButton
@@ -585,7 +585,7 @@ export default function QuotationBuilder({
         <div className="flex items-center gap-3 flex-wrap">
           <span className="font-mono-tag text-xs text-text-secondary">{t('common.details', 'Summary')}:</span>
           <span className="font-mono-data font-semibold text-text-primary text-sm">
-            {lines.length} Line Items &bull; ${totals.total.toLocaleString()} {t('common.total', 'Total')}
+            {lines.length} Line Items &bull; ₹{totals.total.toLocaleString()} {t('common.total', 'Total')}
           </span>
         </div>
 

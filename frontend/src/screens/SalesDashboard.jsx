@@ -18,7 +18,7 @@ export default function SalesDashboard({
       user: 'Marcus Vance',
       role: 'Enterprise Rep',
       action: 'Submitted Quote QT-2026-8841',
-      target: 'Apex Global Logistics ($324,500)',
+      target: 'Apex Global Logistics (₹324,500)',
       time: '12m ago',
       risk: 'HIGH',
       badge: 'Dual Approval Required',
@@ -27,7 +27,7 @@ export default function SalesDashboard({
       user: 'Sarah Lin',
       role: 'Sales Manager',
       action: 'Approved Quote QT-2026-8839',
-      target: 'Hyperion BioDynamics ($106,000)',
+      target: 'Hyperion BioDynamics (₹106,000)',
       time: '1h ago',
       risk: 'LOW',
       badge: 'Tier Preferred Rate',
@@ -36,10 +36,10 @@ export default function SalesDashboard({
       user: 'System Bot',
       role: 'Negotiation Engine',
       action: 'Counter-Offer Generated (Round 3)',
-      target: 'Solaria Cyber Defense ($76,800)',
+      target: 'Solaria Cyber Defense (₹76,800)',
       time: '3h ago',
       risk: 'MEDIUM',
-      badge: 'Delta $3,300',
+      badge: 'Delta ₹3,300',
     },
     {
       user: 'Elena Rostova',
@@ -127,7 +127,7 @@ export default function SalesDashboard({
                     {t('dashboard.dealVelocity', 'Gross Velocity')}
                   </div>
                   <div className="font-mono-data text-mono-data text-text-primary mt-1 font-semibold flex items-center gap-1.5">
-                    <span>$3.82M</span>
+                    <span>₹3.82M</span>
                     <span className="text-status-live text-xs">▲ +14.2%</span>
                   </div>
                 </div>
@@ -177,7 +177,7 @@ export default function SalesDashboard({
                   {t('common.active', 'ACTIVE')} STAGE
                 </span>
                 <span className="font-body-sm text-body-sm font-semibold text-surface-base">
-                  $2.14M Blended
+                  ₹2.14M Blended
                 </span>
               </div>
             </div>

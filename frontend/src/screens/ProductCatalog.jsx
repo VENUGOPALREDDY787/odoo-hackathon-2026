@@ -1,16 +1,47 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import Card from '../components/Card';
 import PillButton from '../components/PillButton';
 import Tag from '../components/Tag';
 import StatusBadge from '../components/StatusBadge';
-import { INITIAL_PRODUCTS } from '../data/mockData';
+import { listProducts } from '../auth/authApi';
 
-export default function ProductCatalog({ onSelectProduct, onNewProduct }) {
+function mapProduct(product) {
+  return {
+    ...product,
+    category: product.category_name || product.category || 'Uncategorized',
+    price: Number(product.base_price ?? product.price ?? 0),
+    unit: product.unit_of_measure || product.unit || 'EA',
+    tax: Number(product.tax ?? 0),
+    status: product.is_active === false ? 'Inactive' : 'Active',
+    isSubscription: Boolean(product.is_recurring_eligible ?? product.isSubscription),
+    variants: product.variants || [],
+    pricelists: product.pricelists || [],
+  };
+}
+
+export default function ProductCatalog({ onSelectProduct, onNewProduct, onDeleteProduct, canDelete = false, reloadKey = 0 }) {
   const { t } = useTranslation();
-  const [products] = useState(INITIAL_PRODUCTS);
+  const [products, setProducts] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
   const [search, setSearch] = useState('');
   const [categoryFilter, setCategoryFilter] = useState('ALL');
+
+  useEffect(() => {
+    let active = true;
+    listProducts({ limit: 100 })
+      .then((response) => {
+        if (active) setProducts((response.data || []).map(mapProduct));
+      })
+      .catch((requestError) => {
+        if (active) setError(requestError.message);
+      })
+      .finally(() => {
+        if (active) setLoading(false);
+      });
+    return () => { active = false; };
+  }, [reloadKey]);
 
   const totalVariants = products.reduce((acc, p) => acc + (p.variants?.length || 0), 0);
   const totalPricelists = products.reduce((acc, p) => acc + (p.pricelists?.length || 0), 0);
@@ -56,6 +87,8 @@ export default function ProductCatalog({ onSelectProduct, onNewProduct }) {
         </div>
       </div>
 
+      {error && <div className="rounded-2xl border border-status-danger/40 bg-status-danger/10 px-4 py-3 text-sm text-status-danger">{error}</div>}
+
       {/* Filter Bar */}
       <div className="flex flex-wrap items-center justify-between gap-3 bg-surface-card border border-border-subtle rounded-2xl p-4">
         <div className="relative w-full sm:w-72">
@@ -72,7 +105,7 @@ export default function ProductCatalog({ onSelectProduct, onNewProduct }) {
         </div>
 
         <div className="flex items-center gap-2 overflow-x-auto">
-          {['ALL', 'Enterprise Hardware', 'SaaS Licenses', 'Professional Services', 'Cloud Infrastructure'].map((cat) => (
+          {['ALL', ...new Set(products.map((product) => product.category))].map((cat) => (
             <button
               key={cat}
               onClick={() => setCategoryFilter(cat)}
@@ -105,7 +138,13 @@ export default function ProductCatalog({ onSelectProduct, onNewProduct }) {
               </tr>
             </thead>
             <tbody className="divide-y divide-border-subtle">
-              {filtered.map((prod) => (
+              {loading && (
+                <tr><td colSpan="8" className="py-10 text-center text-text-secondary">Loading products...</td></tr>
+              )}
+              {!loading && filtered.length === 0 && (
+                <tr><td colSpan="8" className="py-10 text-center text-text-secondary">No products found.</td></tr>
+              )}
+              {!loading && filtered.map((prod) => (
                 <tr
                   key={prod.id}
                   onClick={() => onSelectProduct(prod)}
@@ -126,7 +165,7 @@ export default function ProductCatalog({ onSelectProduct, onNewProduct }) {
                     </Tag>
                   </td>
                   <td className="py-4 px-4 text-right font-mono-data font-semibold text-text-primary text-sm">
-                    ${prod.price.toLocaleString()}
+                    ₹{prod.price.toLocaleString()}
                   </td>
                   <td className="py-4 px-4 text-center font-mono text-text-secondary">
                     /{prod.unit}
@@ -138,9 +177,21 @@ export default function ProductCatalog({ onSelectProduct, onNewProduct }) {
                     <StatusBadge status={prod.status} />
                   </td>
                   <td className="py-4 px-6 text-right">
-                    <span className="font-mono-tag text-accent-blue hover:underline">
-                      Configure →
-                    </span>
+                    <div className="flex items-center justify-end gap-3">
+                      <span className="font-mono-tag text-accent-blue hover:underline">Configure →</span>
+                      {canDelete && (
+                        <button
+                          type="button"
+                          onClick={(event) => {
+                            event.stopPropagation();
+                            onDeleteProduct?.(prod);
+                          }}
+                          className="font-mono-tag text-status-danger hover:underline"
+                        >
+                          Delete
+                        </button>
+                      )}
+                    </div>
                   </td>
                 </tr>
               ))}

@@ -22,7 +22,7 @@ export default function SubscriptionsHub() {
   const proration = calculateProration(10, newQty, 4800, 18, 30);
 
   const handleConfirmModification = () => {
-    alert(`Subscription seats updated to ${newQty}! Immediate proration credit/charge calculated: $${proration.prorationAmount.toLocaleString()}.`);
+    alert(`Subscription seats updated to ${newQty}! Immediate proration credit/charge calculated: ₹${proration.prorationAmount.toLocaleString()}.`);
     setModifyModalOpen(false);
   };
 
@@ -58,7 +58,7 @@ export default function SubscriptionsHub() {
         <div className="flex items-center gap-3">
           <div className="bg-surface-card border border-border-subtle rounded-2xl px-4 py-2 flex items-center gap-2">
             <span className="font-label-caps text-xs text-text-secondary uppercase">{t('subscriptions.arr', 'Active ARR')}:</span>
-            <span className="font-mono text-base font-bold text-accent-blue">${(totalARR / 1000).toFixed(1)}k</span>
+            <span className="font-mono text-base font-bold text-accent-blue">₹{(totalARR / 1000).toFixed(1)}k</span>
           </div>
           <PillButton
             variant="primary"
@@ -112,7 +112,7 @@ export default function SubscriptionsHub() {
 
                   <div className="hidden sm:block">
                     <span className="font-mono-data font-semibold text-text-primary block text-sm">
-                      ${sub.amount.toLocaleString()}/{sub.cycle === 'yearly' ? 'yr' : 'mo'}
+                      ₹{sub.amount.toLocaleString()}/{sub.cycle === 'yearly' ? 'yr' : 'mo'}
                     </span>
                     <span className="font-mono-tag text-[10px] text-text-secondary">
                       Next: {sub.nextBill}
@@ -205,7 +205,7 @@ export default function SubscriptionsHub() {
                         <div className="text-xs text-text-secondary font-mono">Qty: {ot.qty}</div>
                       </div>
                       <span className="font-mono-data font-semibold text-text-primary text-sm">
-                        ${ot.amount.toLocaleString()}
+                        ₹{ot.amount.toLocaleString()}
                       </span>
                     </div>
                   ))}
@@ -237,7 +237,7 @@ export default function SubscriptionsHub() {
                       </div>
                     </div>
                     <span className="font-mono-data font-semibold text-accent-blue text-sm">
-                      ${rec.amount.toLocaleString()}
+                        ₹{rec.amount.toLocaleString()}
                     </span>
                   </div>
                 ))}
@@ -288,7 +288,7 @@ export default function SubscriptionsHub() {
               <div className="flex items-center justify-between border-t border-border-subtle pt-2">
                 <span className="text-xs text-text-primary font-bold">Prorated Charge:</span>
                 <span className="font-mono font-bold text-status-live text-base">
-                  +${proration.prorationAmount.toLocaleString()}
+                        +₹{proration.prorationAmount.toLocaleString()}
                 </span>
               </div>
             </div>

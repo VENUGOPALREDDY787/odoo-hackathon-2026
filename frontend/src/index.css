@@ -103,7 +103,8 @@
   }
 
   body {
-    overscroll-behavior: none;
+    overscroll-behavior-y: auto;
+    overflow-x: hidden;
     min-height: 100vh;
   }
 
@@ -123,13 +124,37 @@
   }
 }
 
-/* Scrollbar hiding */
+/* Keep scrolling discoverable without competing with the AETHER surface. */
 ::-webkit-scrollbar {
-  display: none;
+  width: 8px;
+  height: 8px;
 }
+
+::-webkit-scrollbar-track {
+  background: rgb(var(--surface-base));
+}
+
+::-webkit-scrollbar-thumb {
+  border: 2px solid rgb(var(--surface-base));
+  border-radius: 999px;
+  background: rgb(var(--border-subtle));
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgb(var(--outline));
+}
+
+@media (max-width: 640px) {
+  ::-webkit-scrollbar {
+    width: 4px;
+    height: 4px;
+  }
+}
+
 html {
-  scrollbar-width: none;
-  -ms-overflow-style: none;
+  scrollbar-width: thin;
+  scrollbar-color: rgb(var(--border-subtle)) rgb(var(--surface-base));
+  overflow-x: hidden;
 }
 
 /* AETHER dot-grid background */

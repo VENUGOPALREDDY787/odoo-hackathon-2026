@@ -146,7 +146,7 @@ export default function DealHealthDashboard({ _onNavigate }) {
             </div>
             <div className="my-5 flex items-baseline gap-3">
               <div className="font-kpi-value text-5xl md:text-kpi-value text-accent-pink font-bold tracking-tighter leading-none">
-                +$148.4k
+                +₹148.4k
               </div>
               <span className="font-mono-tag text-xs text-status-live font-semibold">
                 ▲ +18.2% vs target

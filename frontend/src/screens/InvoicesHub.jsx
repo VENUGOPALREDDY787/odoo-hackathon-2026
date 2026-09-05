@@ -48,13 +48,13 @@ export default function InvoicesHub() {
           <div className="bg-surface-card border border-border-subtle rounded-2xl px-4 py-2 flex items-center gap-2">
             <span className="font-label-caps text-xs text-text-secondary uppercase">{t('status.unpaid', 'Unpaid')}:</span>
             <span className="font-mono text-base font-bold text-status-warning">
-              ${(totalUnpaid / 1000).toFixed(1)}k
+              ₹{(totalUnpaid / 1000).toFixed(1)}k
             </span>
           </div>
           <div className="bg-surface-card border border-border-subtle rounded-2xl px-4 py-2 flex items-center gap-2">
             <span className="font-label-caps text-xs text-text-secondary uppercase">{t('status.paid', 'Paid')}:</span>
             <span className="font-mono text-base font-bold text-status-live">
-              ${(totalPaid / 1000).toFixed(1)}k
+              ₹{(totalPaid / 1000).toFixed(1)}k
             </span>
           </div>
         </div>
@@ -96,7 +96,7 @@ export default function InvoicesHub() {
 
                 <div className="flex items-center gap-4 text-right">
                   <span className="font-mono-data font-bold text-base text-text-primary">
-                    ${inv.amount.toLocaleString()}
+                    ₹{inv.amount.toLocaleString()}
                   </span>
 
                   <StatusBadge status={inv.status} />
@@ -203,10 +203,10 @@ export default function InvoicesHub() {
                       </td>
                       <td className="py-3 text-center font-mono">{ln.qty}</td>
                       <td className="py-3 text-right font-mono text-text-secondary">
-                        ${ln.unitPrice.toLocaleString()}
+                        ₹{ln.unitPrice.toLocaleString()}
                       </td>
                       <td className="py-3 text-right font-mono font-bold text-text-primary">
-                        ${ln.total.toLocaleString()}
+                        ₹{ln.total.toLocaleString()}
                       </td>
                     </tr>
                   ))}
@@ -221,7 +221,7 @@ export default function InvoicesHub() {
                   Total Payable Amount
                 </span>
                 <span className="font-kpi-value text-3xl font-bold text-text-primary mt-1 block">
-                  ${selectedInvoice.amount.toLocaleString()}
+                  ₹{selectedInvoice.amount.toLocaleString()}
                 </span>
               </div>
             </div>

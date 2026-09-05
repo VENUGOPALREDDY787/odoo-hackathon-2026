@@ -1,35 +1,51 @@
 import React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useTranslation } from 'react-i18next';
-import { USER_ROLES } from '../data/mockData';
 import Tag from './Tag';
 
 export default function Navbar({
   activeTab,
   setActiveTab,
-  userRole,
-  setUserRole,
   pendingApprovalsCount = 14,
   onNewQuotation,
   currentUser,
   mobileMenuOpen,
   setMobileMenuOpen,
   viewport,
+  onLogout,
 }) {
   const { t } = useTranslation();
-  const navItems = [
-    { id: 'dashboard', label: t('navigation.dashboard', 'Dashboard'), icon: 'dashboard' },
-    { id: 'quotations', label: t('navigation.quotations', 'Quotations'), icon: 'description' },
-    { id: 'approvals', label: t('navigation.approvals', 'Approvals'), icon: 'gavel', badge: pendingApprovalsCount > 0 ? pendingApprovalsCount : null },
-    { id: 'fulfillment', label: t('navigation.fulfillment', 'Fulfillment'), icon: 'local_shipping' },
-    { id: 'subscriptions', label: t('navigation.subscriptions', 'Subscriptions'), icon: 'autorenew' },
-    { id: 'invoices', label: t('navigation.invoices', 'Invoices'), icon: 'receipt_long' },
-    { id: 'deal-health', label: t('navigation.dealHealth', 'Deal Health'), icon: 'monitor_heart' },
-    { id: 'reports', label: t('navigation.reports', 'Reports'), icon: 'analytics' },
-    { id: 'products', label: t('navigation.products', 'Product'), icon: 'inventory_2' },
-    { id: 'discounts', label: t('navigation.discounts', 'Discounts'), icon: 'tune' },
-    { id: 'customer-portal', label: t('navigation.customerPortal', 'Portal'), icon: 'public', isPortal: true },
-  ];
+  const role = currentUser?.role || 'customer';
+  const displayName = currentUser?.fullName || currentUser?.full_name || currentUser?.name || 'Account user';
+  const navByRole = {
+    customer: [
+      ['dashboard', 'Dashboard', 'dashboard'], ['quotations', 'My Quotations', 'description'],
+      ['customer-portal', 'Negotiations', 'public'], ['invoices', 'Invoices', 'receipt_long'],
+    ],
+    rep: [
+      ['dashboard', 'Dashboard', 'dashboard'], ['quotations', 'Quotations', 'description'],
+      ['products', 'Products', 'inventory_2'], ['fulfillment', 'Fulfillment', 'local_shipping'],
+      ['subscriptions', 'Subscriptions', 'autorenew'], ['invoices', 'Invoices', 'receipt_long'], ['deal-health', 'Deal Health', 'monitor_heart'],
+    ],
+    manager: [
+      ['dashboard', 'Dashboard', 'dashboard'], ['approvals', 'Approvals', 'gavel'], ['quotations', 'Quotations', 'description'],
+      ['deal-health', 'Deal Health', 'monitor_heart'], ['reports', 'Reports', 'analytics'],
+    ],
+    finance: [
+      ['dashboard', 'Dashboard', 'dashboard'], ['approvals', 'Approvals', 'gavel'], ['subscriptions', 'Subscriptions', 'autorenew'],
+      ['invoices', 'Invoices', 'receipt_long'], ['reports', 'Reports', 'analytics'],
+    ],
+    admin: [
+      ['dashboard', 'Dashboard', 'dashboard'], ['products', 'Products', 'inventory_2'], ['discounts', 'Discount Setup', 'tune'],
+      ['approvals', 'Approval Setup', 'gavel'], ['reports', 'Reports', 'analytics'],
+    ],
+  };
+  const navItems = (navByRole[role] || navByRole.customer).map(([id, label, icon]) => ({
+    id,
+    label: t(`navigation.${id}`, label),
+    icon,
+    badge: id === 'approvals' && pendingApprovalsCount > 0 ? pendingApprovalsCount : null,
+  }));
 
   const getIcon = (name) => {
     const icons = {
@@ -72,11 +88,11 @@ export default function Navbar({
       <aside
         className={`fixed left-0 top-0 bottom-0 z-40 flex flex-col bg-surface-card border-r border-border-subtle transition-all duration-300 ease-out ${
           viewport.isMobile
-            ? 'w-72 translate-x-[-100%] md:hidden'
+            ? `w-72 md:hidden ${mobileMenuOpen ? 'translate-x-0' : '-translate-x-full'}`
             : !viewport.isDesktop
             ? 'w-[72px]'
             : 'w-[260px]'
-        } ${mobileMenuOpen && viewport.isMobile ? 'translate-x-0' : ''}`}
+          }`}
       >
         {/* Brand Wordmark */}
         <div className="flex items-center justify-center px-4 py-6 border-b border-border-subtle min-h-[80px]">
@@ -109,7 +125,7 @@ export default function Navbar({
                   isActive
                     ? 'text-text-primary z-10'
                     : 'text-text-secondary hover:text-text-primary'
-                } ${!viewport.isDesktop ? 'justify-center' : ''}`}
+                } ${viewport.isMobile ? 'justify-start' : !viewport.isDesktop ? 'justify-center' : ''}`}
                 title={!viewport.isDesktop ? item.label : undefined}
                 aria-current={isActive ? 'page' : undefined}
               >
@@ -127,12 +143,12 @@ export default function Navbar({
                 >
                   {getIcon(item.icon)}
                 </span>
-                {!!viewport.isDesktop && (
+                {(viewport.isMobile || viewport.isDesktop) && (
                   <span className="relative z-10 font-medium text-sm whitespace-nowrap">
                     {item.label}
                   </span>
                 )}
-                {item.badge && !!viewport.isDesktop && (
+                {item.badge && (viewport.isMobile || viewport.isDesktop) && (
                   <motion.span
                     initial={{ scale: 0, opacity: 0 }}
                     animate={{ scale: 1, opacity: 1 }}
@@ -152,7 +168,7 @@ export default function Navbar({
             <div className="flex items-center gap-3">
               <div className="relative w-9 h-9 flex-shrink-0">
                 <div className="w-full h-full rounded-full bg-accent-blue/20 border border-accent-blue/40 flex items-center justify-center font-mono text-xs font-bold text-accent-blue">
-                  {currentUser?.name?.slice(0, 2).toUpperCase() || 'MV'}
+                  {displayName.slice(0, 2).toUpperCase()}
                 </div>
                 <span className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full bg-status-live ring-2 ring-surface-card">
                   <motion.span
@@ -164,7 +180,7 @@ export default function Navbar({
               </div>
               <div className="flex-1 min-w-0">
                 <div className="font-medium text-sm text-text-primary truncate">
-                  {currentUser?.name || 'Marcus Vance'}
+                  {displayName}
                 </div>
                 <div className="flex items-center gap-1.5 mt-0.5">
                   <Tag variant="blue" pill className="text-[10px]">
@@ -177,7 +193,7 @@ export default function Navbar({
             <div className="flex items-center justify-center gap-2">
               <div className="relative w-9 h-9">
                 <div className="w-full h-full rounded-full bg-accent-blue/20 border border-accent-blue/40 flex items-center justify-center font-mono text-xs font-bold text-accent-blue">
-                  {currentUser?.name?.slice(0, 2).toUpperCase() || 'MV'}
+                  {displayName.slice(0, 2).toUpperCase()}
                 </div>
                 <span className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full bg-status-live ring-2 ring-surface-card">
                   <motion.span
@@ -190,25 +206,8 @@ export default function Navbar({
             </div>
           )}
 
-          {/* Role Selector (Desktop/Tablet) */}
-          {viewport.width >= 640 && (
-            <div className="mt-4">
-              <label className="block font-label-caps text-[10px] uppercase text-text-secondary mb-2">
-                {t('navigation.activeRole', 'Active Role')}
-              </label>
-              <select
-                value={userRole}
-                onChange={(e) => setUserRole(e.target.value)}
-                className="w-full bg-surface-interactive border border-border-subtle rounded-xl px-3 py-2 text-sm text-accent-blue font-mono font-medium focus:outline-none focus:border-accent-blue appearance-none cursor-pointer"
-              >
-                {USER_ROLES.map((role) => (
-                  <option key={role} value={role} className="bg-surface-card text-text-primary">
-                    {t(`roles.${role}`, role.charAt(0).toUpperCase() + role.slice(1))}
-                  </option>
-                ))}
-              </select>
-            </div>
-          )}
+          <button type="button" onClick={() => setActiveTab('profile')} className="mt-4 w-full text-left text-sm text-text-secondary hover:text-text-primary transition-colors">View Profile</button>
+          <button type="button" onClick={onLogout} className="mt-3 w-full text-left text-sm text-status-danger hover:underline">Logout</button>
 
           {/* New Quotation CTA (Desktop) */}
           {viewport.isDesktop && onNewQuotation && (

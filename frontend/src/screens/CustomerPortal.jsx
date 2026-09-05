@@ -14,9 +14,9 @@ export default function CustomerPortal({ onReturnToInternal }) {
     'We have competitive quotes from Dynatrace and Datadog. Countering at 18.5% with annual upfront payment.'
   );
   const [negotiationRounds, setNegotiationRounds] = useState([
-    { round: 1, buyerOffer: '$66,000', sellerOffer: '$87,000', status: 'Countered' },
-    { round: 2, buyerOffer: '$69,500', sellerOffer: '$82,000', status: 'Countered' },
-    { round: 3, buyerOffer: '$73,500', sellerOffer: '$76,800', status: 'Active (Convergence Delta: $3,300)' },
+    { round: 1, buyerOffer: '₹66,000', sellerOffer: '₹87,000', status: 'Countered' },
+    { round: 2, buyerOffer: '₹69,500', sellerOffer: '₹82,000', status: 'Countered' },
+    { round: 3, buyerOffer: '₹73,500', sellerOffer: '₹76,800', status: 'Active (Convergence Delta: ₹3,300)' },
   ]);
   const [submittedMessage, setSubmittedMessage] = useState(false);
 
@@ -27,7 +27,7 @@ export default function CustomerPortal({ onReturnToInternal }) {
       ...prev,
       {
         round: prev.length + 1,
-        buyerOffer: `$${(76000 * (1 - counterDiscount / 100)).toFixed(0)}`,
+        buyerOffer: `₹${(76000 * (1 - counterDiscount / 100)).toFixed(0)}`,
         sellerOffer: 'Pending Deal Desk Review',
         status: 'Counter Submitted',
       },
@@ -118,7 +118,7 @@ export default function CustomerPortal({ onReturnToInternal }) {
                   {t('portal.proposedValue', 'Proposed Value')}
                 </span>
                 <div className="font-kpi-value text-3xl font-bold text-text-primary mt-0.5">
-                  $76,800
+                  ₹76,800
                 </div>
               </div>
             </div>
@@ -149,10 +149,10 @@ export default function CustomerPortal({ onReturnToInternal }) {
                     </td>
                     <td className="py-3.5 text-center font-mono">2</td>
                     <td className="py-3.5 text-right font-mono text-text-secondary line-through">
-                      $72,000
+                      ₹72,000
                     </td>
                     <td className="py-3.5 text-right font-mono font-bold text-text-primary">
-                      $58,680
+                      ₹58,680
                     </td>
                     <td className="py-3.5 pl-4 text-text-secondary font-mono text-[11px]">
                       Requires sub-10ms disaster recovery mesh SLA
@@ -170,10 +170,10 @@ export default function CustomerPortal({ onReturnToInternal }) {
                     </td>
                     <td className="py-3.5 text-center font-mono">1</td>
                     <td className="py-3.5 text-right font-mono text-text-secondary line-through">
-                      $28,000
+                      ₹28,000
                     </td>
                     <td className="py-3.5 text-right font-mono font-bold text-text-primary">
-                      $18,120
+                      ₹18,120
                     </td>
                     <td className="py-3.5 pl-4 text-text-secondary font-mono text-[11px]">
                       Target production cutoff date: mid October
@@ -291,7 +291,7 @@ export default function CustomerPortal({ onReturnToInternal }) {
             </div>
 
             <div className="mt-4 pt-3 border-t border-border-subtle text-[11px] text-text-secondary font-mono">
-              Convergence threshold: $5,000 delta. Current gap: $3,300 (Deal zone reached).
+              Convergence threshold: ₹5,000 delta. Current gap: ₹3,300 (Deal zone reached).
             </div>
           </Card>
         </div>
