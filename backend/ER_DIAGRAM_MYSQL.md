@@ -1,7 +1,7 @@
 # DealFlow360 - Entity Relationship Diagram Description (MySQL/InnoDB)
 
 ## Overview
-This document describes the complete ER diagram for the DealFlow360 MySQL database schema, showing all tables, their relationships, and cardinalities. All tables use **InnoDB** engine explicitly for foreign key support, transactions, and row-level locking.
+This document describes the complete ER diagram for the DealFlow360 MySQL database schema in `schema_mysql.sql`, showing all tables, their relationships, and cardinalities. All tables use **InnoDB** engine explicitly for foreign key support, transactions, and row-level locking.
 
 ---
 

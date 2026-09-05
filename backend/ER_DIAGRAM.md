@@ -1,7 +1,7 @@
-# DealFlow360 - Entity Relationship Diagram Description
+# DealFlow360 - Entity Relationship Diagram Description (PostgreSQL)
 
 ## Overview
-This document describes the complete ER diagram for the DealFlow360 database schema, showing all tables, their relationships, and cardinalities.
+This document describes the complete ER diagram for the DealFlow360 PostgreSQL database schema in `schema.sql`, showing all tables, their relationships, and cardinalities.
 
 ---
 
