@@ -1,3 +1,4 @@
+import { v4 as uuidv4 } from 'uuid';
 import { NotFoundError, ValidationError, ConflictError, AuthorizationError } from '../../../errors/AppError.js';
 import {
   QuotationRepository,
@@ -35,6 +36,7 @@ export class QuotationService {
     const quotationNumber = await this.quotationRepo.generateNextQuotationNumber();
 
     const payload = {
+      id: uuidv4(),
       quotation_number: quotationNumber,
       customer_id: data.customer_id,
       assigned_rep_id: data.assigned_rep_id || user?.id || null,
@@ -61,10 +63,9 @@ export class QuotationService {
       updated_at: new Date(),
     };
 
-    const [id] = await this.db('quotations').insert(payload).returning('id');
-    const createdId = typeof id === 'object' ? id.id : id;
+    await this.db('quotations').insert(payload);
 
-    const created = await this.quotationRepo.findWithDetails(createdId || payload.id);
+    const created = await this.quotationRepo.findWithDetails(payload.id);
     this.logger.info({ quotationId: created?.id, quotationNumber }, 'Draft quotation created');
     return created;
   }
@@ -125,11 +126,13 @@ export class QuotationService {
       const nextLineNum = await this.lineRepo.getNextLineNumber(quotationId, trx);
 
       const linePayload = {
+        id: uuidv4(),
         quotation_id: quotationId,
         line_number: nextLineNum,
         line_type: lineData.line_type || 'one_time',
         product_id: productId,
         variant_id: variantId,
+        subscription_plan_id: lineData.subscription_plan_id || null,
         custom_name: lineData.custom_name || null,
         custom_description: lineData.custom_description || null,
         quantity: Number(lineData.quantity) || 1,
@@ -143,8 +146,8 @@ export class QuotationService {
         updated_at: new Date(),
       };
 
-      const [lineId] = await trx('quotation_lines').insert(linePayload).returning('id');
-      const createdLineId = typeof lineId === 'object' ? lineId.id : lineId;
+      await trx('quotation_lines').insert(linePayload);
+      const createdLineId = linePayload.id;
 
       // Fetch all current lines including new line & product cost prices
       const currentLines = await trx('quotation_lines as ql')

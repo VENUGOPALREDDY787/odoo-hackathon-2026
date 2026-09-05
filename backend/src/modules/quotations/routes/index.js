@@ -2,6 +2,7 @@ import { Router } from 'express';
 import { container } from '../../../container/index.js';
 import { validateBody, validateQuery, validateParams } from '../../../middleware/validate.js';
 import { cacheMiddleware } from '../../../middleware/cacheMiddleware.js';
+import { authenticate } from '../../auth/middleware/auth.js';
 import {
   idParamSchema,
   lineIdParamSchema,
@@ -18,16 +19,17 @@ function getController() {
   return container.get('quotationController');
 }
 
-router.get('/', validateQuery(quotationQuerySchema), (req, res, next) =>
+router.get('/', authenticate(), validateQuery(quotationQuerySchema), (req, res, next) =>
   getController().list(req, res, next)
 );
 
-router.post('/', validateBody(createQuotationSchema), (req, res, next) =>
+router.post('/', authenticate(), validateBody(createQuotationSchema), (req, res, next) =>
   getController().create(req, res, next)
 );
 
 router.get(
   '/:id', 
+  authenticate(),
   validateParams(idParamSchema), 
   cacheMiddleware({ key: (req) => `quotations:item:${req.params.id}`, ttl: 300 }),
   (req, res, next) => getController().getById(req, res, next)
@@ -35,6 +37,7 @@ router.get(
 
 router.post(
   '/:id/lines',
+  authenticate(),
   validateParams(idParamSchema),
   validateBody(addQuotationLineSchema),
   (req, res, next) => getController().addLine(req, res, next)
@@ -42,6 +45,7 @@ router.post(
 
 router.put(
   '/:id/lines/:lineId',
+  authenticate(),
   validateParams(lineIdParamSchema),
   validateBody(updateQuotationLineSchema),
   (req, res, next) => getController().updateLine(req, res, next)
@@ -49,12 +53,14 @@ router.put(
 
 router.delete(
   '/:id/lines/:lineId',
+  authenticate(),
   validateParams(lineIdParamSchema),
   (req, res, next) => getController().removeLine(req, res, next)
 );
 
 router.post(
   '/:id/submit',
+  authenticate(),
   validateParams(idParamSchema),
   validateBody(submitQuotationSchema),
   (req, res, next) => getController().submitForApproval(req, res, next)

@@ -2,6 +2,7 @@ import { Router } from 'express';
 import { container } from '../../../container/index.js';
 import { validateBody, validateQuery, validateParams } from '../../../middleware/validate.js';
 import { cacheMiddleware } from '../../../middleware/cacheMiddleware.js';
+import { authenticate, requireInternal } from '../../auth/middleware/auth.js';
 import {
   idParamSchema,
   quotationIdParamSchema,
@@ -91,6 +92,8 @@ router.post(
 
 router.post(
   '/quotations/:quotationId/approval',
+  authenticate(),
+  requireInternal(),
   validateParams(quotationIdParamSchema),
   validateBody(approvalActionSchema),
   (req, res, next) => getController().processApprovalDecision(req, res, next)
@@ -98,6 +101,8 @@ router.post(
 
 router.post(
   '/quotations/:quotationId/action',
+  authenticate(),
+  requireInternal(),
   validateParams(quotationIdParamSchema),
   validateBody(approvalActionSchema),
   (req, res, next) => getController().handleApprovalAction(req, res, next)
@@ -105,6 +110,8 @@ router.post(
 
 router.post(
   '/quotations/:quotationId/approve',
+  authenticate(),
+  requireInternal(),
   validateParams(quotationIdParamSchema),
   (req, res, next) => {
     req.body = { ...req.body, action: 'approve' };
@@ -114,6 +121,8 @@ router.post(
 
 router.post(
   '/quotations/:quotationId/reject',
+  authenticate(),
+  requireInternal(),
   validateParams(quotationIdParamSchema),
   (req, res, next) => {
     req.body = { ...req.body, action: 'reject' };
@@ -123,6 +132,8 @@ router.post(
 
 router.post(
   '/quotations/:quotationId/return',
+  authenticate(),
+  requireInternal(),
   validateParams(quotationIdParamSchema),
   (req, res, next) => {
     req.body = { ...req.body, action: 'return_for_revision' };

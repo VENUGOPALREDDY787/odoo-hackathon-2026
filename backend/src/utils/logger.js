@@ -22,7 +22,22 @@ const baseLogger = pino({
     env: config.NODE_ENV,
   },
   redact: {
-    paths: ['token', 'rawToken', 'password', 'authorization', 'req.headers.authorization', 'req.headers.cookie'],
+    paths: [
+      'token',
+      'rawToken',
+      'password',
+      'authorization',
+      'req.headers.authorization',
+      'req.headers.cookie',
+      'req.body.password',
+      'req.body.token',
+      'req.body.refreshToken',
+      'requestBody.password',
+      'requestBody.token',
+      'requestBody.refreshToken',
+      'responseBody.token',
+      'responseBody.refreshToken',
+    ],
     censor: '[REDACTED]',
   },
 });

@@ -42,4 +42,14 @@ describe('prorationCalculator - Pure Integer-Cents Proration Engine', () => {
     expect(result.prorated_amount).toBe(0);
     expect(result.prorated_cents).toBe(0);
   });
+
+  it('returns a positive charge for an upgrade and clamps invalid cycle inputs', () => {
+    const result = calculateProration(1, 3, 12.5, -4, 0);
+
+    expect(result.delta_quantity).toBe(2);
+    expect(result.days_remaining_in_cycle).toBe(0);
+    expect(result.total_days_in_cycle).toBe(1);
+    expect(result.prorated_cents).toBe(0);
+    expect(result.is_credit_note).toBe(false);
+  });
 });

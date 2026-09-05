@@ -97,7 +97,15 @@ registerProductModule(container);
 npm test
 ```
 
-Uses Jest with mocked container (see `jest.setup.js`).
+Uses Jest with a mocked container for unit tests (see `jest.setup.js`). The pure-function suites cover risk scoring, proration, fulfillment splitting, price resolution, and negotiation. The live critical-path suite is opt-in because it requires MySQL:
+
+```bash
+$env:RUN_INTEGRATION_TESTS='true'; npm test -- --runInBand src/__tests__/integration/criticalPath.test.js
+```
+
+Redis is not required for the test suite; the integration test injects an in-memory cache. Payment and invoice HTTP routes are not implemented yet, so the final critical-path test records those expected 404 boundaries.
+
+Set `DEBUG_MODE=true` to enable verbose SQL plus request/response body logging. It defaults to `false`; sensitive fields are redacted.
 
 ## Scripts
 

@@ -15,7 +15,7 @@ export default function LoginScreen({ onLoginSuccess }) {
   const handleSubmit = (e) => {
     e.preventDefault();
     if (onLoginSuccess) {
-      onLoginSuccess({ email, role, name });
+      onLoginSuccess({ email, password, role, name, isSignup: tab === 'signup' });
     }
   };
 

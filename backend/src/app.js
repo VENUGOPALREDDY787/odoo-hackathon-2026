@@ -5,6 +5,7 @@ import compression from 'compression';
 import rateLimit from 'express-rate-limit';
 import config from './config/index.js';
 import { logger, createRequestLogger } from './utils/logger.js';
+import pinoHttp from 'pino-http';
 import { requestIdMiddleware } from './middleware/requestId.js';
 import { errorHandler, notFoundHandler } from './middleware/errorHandler.js';
 import { container } from './container/index.js';
@@ -28,6 +29,28 @@ export function createApp() {
 
   app.use(express.json({ limit: '10mb' }));
   app.use(express.urlencoded({ extended: true, limit: '10mb' }));
+
+  if (config.DEBUG_MODE) {
+    app.use((req, res, next) => {
+      const originalJson = res.json.bind(res);
+      const originalSend = res.send.bind(res);
+      let responseBody;
+
+      res.json = (body) => {
+        responseBody = body;
+        return originalJson(body);
+      };
+      res.send = (body) => {
+        responseBody = body;
+        return originalSend(body);
+      };
+
+      res.on('finish', () => {
+        req.log?.debug({ requestBody: req.body, responseBody, statusCode: res.statusCode }, 'Request and response body');
+      });
+      next();
+    });
+  }
 
   const limiter = rateLimit({
     windowMs: config.RATE_LIMIT_WINDOW_MS,
@@ -67,6 +90,10 @@ export function createApp() {
   app.use('/api/auth', authLimiter);
 
   app.use(requestIdMiddleware);
+
+  if (config.DEBUG_MODE) {
+    app.use(pinoHttp({ logger, autoLogging: true }));
+  }
 
   app.use((req, res, next) => {
     req.log = createRequestLogger(req);

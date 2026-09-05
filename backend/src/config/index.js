@@ -27,6 +27,7 @@ const envSchema = z.object({
   // Logging
   LOG_LEVEL: z.enum(['fatal', 'error', 'warn', 'info', 'debug', 'trace']).default('info'),
   LOG_PRETTY: z.coerce.boolean().default(false),
+  DEBUG_MODE: z.coerce.boolean().default(false),
 
   // Rate limiting
   RATE_LIMIT_WINDOW_MS: z.coerce.number().int().positive().default(900000),

@@ -13,8 +13,6 @@ import { registerAuthModule } from './modules/auth/index.js';
 import { registerProductModule } from './modules/products/index.js';
 
 async function bootstrap() {
-  const app = createApp();
-
   try {
     const db = getDatabase();
     await db.raw('SELECT 1');
@@ -45,8 +43,11 @@ async function bootstrap() {
   container.registerSingleton('dealHealthCache', globalCache);
 
   registerServices(container);
-  registerModules(container);
+  await registerModules(container);
   startCleanupJobs(container);
+
+  // Register all module routes before creating the app so createApp() can mount them.
+  const app = createApp();
 
   const server = app.listen(config.PORT, config.HOST, () => {
     logger.info({ port: config.PORT, host: config.HOST, env: config.NODE_ENV }, 'Server started');

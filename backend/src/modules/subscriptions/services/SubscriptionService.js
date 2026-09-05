@@ -6,6 +6,7 @@ import {
 import { AuditTrailRepository } from '../../discounts/repositories/DiscountRepository.js';
 import { calculateProration } from './prorationCalculator.js';
 import { generateBillingSchedules } from './scheduleGenerator.js';
+import { v4 as uuidv4 } from 'uuid';
 
 export class SubscriptionService {
   constructor(db, logger) {
@@ -20,15 +21,15 @@ export class SubscriptionService {
 
   async createPlan(data) {
     const payload = {
+      id: data.id || uuidv4(),
       ...data,
       features: typeof data.features === 'object' ? JSON.stringify(data.features) : data.features,
       created_at: new Date(),
       updated_at: new Date(),
     };
 
-    const [id] = await this.db('subscription_plans').insert(payload).returning('id');
-    const createdId = typeof id === 'object' ? id.id : id;
-    const plan = await this.planRepo.findById(createdId || data.id);
+    await this.db('subscription_plans').insert(payload);
+    const plan = await this.planRepo.findById(payload.id);
 
     this.logger.info({ planId: plan?.id }, 'Subscription plan created');
     return plan;

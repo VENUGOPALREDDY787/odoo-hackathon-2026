@@ -54,6 +54,8 @@ const mockConfig = {
   DB_NAME: 'test',
   JWT_SECRET: 'test-secret-key-for-testing-only-32-chars',
   JWT_REFRESH_SECRET: 'test-refresh-secret-key-for-testing-only-32-chars',
+  JWT_EXPIRES_IN: '15m',
+  JWT_REFRESH_EXPIRES_IN: '7d',
   BCRYPT_ROUNDS: 4,
 };
 

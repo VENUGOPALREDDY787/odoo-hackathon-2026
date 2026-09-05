@@ -20,6 +20,7 @@ import DiscountConfig from './screens/DiscountConfig';
 import CustomerPortal from './screens/CustomerPortal';
 import LoginScreen from './screens/LoginScreen';
 import { createProductTour, hasCompletedProductTour } from './tour/productTour';
+import { getWorkspace, login, registerCustomer, registerInternal } from './api/client';
 
 import { INITIAL_QUOTATIONS } from './data/mockData';
 
@@ -35,6 +36,7 @@ export default function App() {
   const viewport = useViewport();
   const [activeTab, setActiveTab] = useState('login');
   const [userRole, setUserRole] = useState('rep');
+  const [authToken, setAuthToken] = useState(() => localStorage.getItem('dealflow360-token'));
   const [currentUser, setCurrentUser] = useState({
     name: 'Marcus Vance',
     email: 'marcus.vance@dealflow360.io',
@@ -92,6 +94,41 @@ export default function App() {
     setTimeout(() => setToastMessage(null), 3500);
   };
 
+  useEffect(() => {
+    if (!authToken) return undefined;
+
+    getWorkspace(authToken)
+      .then(({ quotations: liveQuotations }) => {
+        if (liveQuotations.length > 0) setQuotations(liveQuotations);
+        setActiveTab((currentTab) => (currentTab === 'login' ? 'dashboard' : currentTab));
+      })
+      .catch((error) => showToast(`Backend sync unavailable: ${error.message}`));
+
+    return undefined;
+  }, [authToken]);
+
+  const handleBackendLogin = async ({ email, password, role, name, isSignup }) => {
+    try {
+      const session = isSignup
+        ? role === 'customer'
+          ? await registerCustomer({ email, fullName: name, companyName: `${name}'s Company` })
+          : await registerInternal({ email, password, fullName: name, role })
+        : await login(email, password);
+      const backendUser = session.user || { email, role, fullName: name };
+      localStorage.setItem('dealflow360-token', session.token);
+      setAuthToken(session.token);
+      setCurrentUser({
+        name: backendUser.fullName || backendUser.name || name,
+        email: backendUser.email || email,
+        role: backendUser.role || role,
+      });
+      setUserRole(backendUser.role || role);
+      handleTabChange('dashboard');
+      showToast(isSignup ? 'Account created successfully' : `Authenticated as ${backendUser.fullName || name}`);
+    } catch (error) {
+      showToast(`Authentication failed: ${error.message}`);
+    }
+  };
   const handleTabChange = (tab) => {
     setActiveTab(tab);
     window.location.hash = tab;
@@ -380,12 +417,7 @@ export default function App() {
             >
               {activeTab === 'login' && (
                 <LoginScreen
-                  onLoginSuccess={({ email, role, name }) => {
-                    setCurrentUser({ email, role, name });
-                    setUserRole(role);
-                    handleTabChange('dashboard');
-                    showToast(`Authenticated as ${name} (${role})`);
-                  }}
+                  onLoginSuccess={handleBackendLogin}
                 />
               )}
 

@@ -8,7 +8,7 @@ export const quotationIdParamSchema = z.object({
   quotationId: z.string().uuid('Invalid quotation ID format'),
 });
 
-export const discountTierSchema = z.object({
+const baseDiscountTierSchema = z.object({
   customer_tier: z.enum(['Bronze', 'Silver', 'Gold']),
   category_id: z.string().uuid().optional().nullable(),
   product_id: z.string().uuid().optional().nullable(),
@@ -20,12 +20,14 @@ export const discountTierSchema = z.object({
   is_active: z.boolean().default(true),
   effective_from: z.string().refine(val => !isNaN(Date.parse(val)), { message: 'Effective from must be a valid date' }),
   effective_to: z.string().refine(val => !isNaN(Date.parse(val)), { message: 'Effective to must be a valid date' }).optional().nullable(),
-}).refine(data => {
+});
+
+export const discountTierSchema = baseDiscountTierSchema.refine(data => {
   // Either category_id or product_id or both can be specified, but at least one preferred
   return true;
 });
 
-export const discountTierUpdateSchema = discountTierSchema.partial();
+export const discountTierUpdateSchema = baseDiscountTierSchema.partial();
 
 export const discountTierQuerySchema = z.object({
   page: z.coerce.number().int().positive().default(1),

@@ -11,7 +11,8 @@
     "test:watch": "node --experimental-vm-modules node_modules/jest/bin/jest.js --watch",
     "lint": "eslint src/",
     "db:migrate": "node src/scripts/migrate.js",
-    "db:seed": "node src/scripts/seed.js"
+    "db:seed": "node src/scripts/seed.js",
+    "db:seed:demo-users": "node src/scripts/seed_demo_users.js"
   },
   "keywords": [
     "dealflow",

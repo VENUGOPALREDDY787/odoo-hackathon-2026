@@ -1,4 +1,4 @@
-import { jest, describe, it, expect } from '@jest/globals';
+import { describe, it, expect } from '@jest/globals';
 import { calculateBlendedRisk, routeApproval } from '../services/riskScorer.js';
 
 describe('riskScorer - Pure Discount Governance Scoring & Routing', () => {
@@ -126,6 +126,28 @@ describe('riskScorer - Pure Discount Governance Scoring & Routing', () => {
       expect(result.blended_score).toBe(15);
       expect(result.required_roles).toEqual(['manager', 'finance']);
       expect(result.min_approvals_required).toBe(2);
+    });
+
+    it('ignores inactive tiers and parses serialized approver roles', () => {
+      const risk = calculateBlendedRisk(
+        [{ category_id: 'cat-hardware', discount_percent: 30 }],
+        [
+          { category_id: 'cat-hardware', customer_tier: 'Gold', discount_percent: 25, is_active: false },
+          { category_id: 'cat-hardware', customer_tier: 'Gold', discount_percent: 10, is_active: true },
+        ],
+        'Gold'
+      );
+      const result = routeApproval(risk.blendedScore, [{
+        id: 'chain-serialized',
+        min_discount_percent: 1,
+        max_discount_percent: 100,
+        required_approver_roles: '["manager"]',
+        min_approvals_required: 1,
+        is_active: true,
+      }]);
+
+      expect(risk.blendedScore).toBe(20);
+      expect(result.required_roles).toEqual(['manager']);
     });
   });
 });

@@ -34,14 +34,14 @@ export function createKnexInstance(customConfig = {}) {
     seeds: {
       directory: './src/database/seeds',
     },
-    debug: config.NODE_ENV === 'development',
+    debug: config.DEBUG_MODE,
     ...customConfig,
   };
 
   const instance = knex(cfg);
 
   instance.on('query', (queryData) => {
-    if (config.NODE_ENV === 'development') {
+    if (config.DEBUG_MODE) {
       logger.debug({ sql: queryData.sql, bindings: queryData.bindings, duration: queryData.duration }, 'SQL Query');
     }
   });

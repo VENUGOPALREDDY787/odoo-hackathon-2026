@@ -43,6 +43,17 @@ describe('fulfillmentSplitter - Pure Greedy Split Algorithm', () => {
     });
   });
 
+  it('ignores reserved, deleted, and empty stock', () => {
+    const result = splitFulfillment('prod-1', 10, [
+      { warehouse_id: 'reserved', quantity_on_hand: 20, quantity_reserved: 20 },
+      { warehouse_id: 'deleted', quantity_on_hand: 20, quantity_reserved: 0, deleted_at: '2026-01-01' },
+      { warehouse_id: 'available', quantity_on_hand: 10, quantity_reserved: 0 },
+    ]);
+
+    expect(result.is_fully_allocated).toBe(true);
+    expect(result.splits).toEqual([{ warehouse_id: 'available', warehouse_name: 'Warehouse', quantity: 10 }]);
+  });
+
   it('case 3: insufficient stock across all warehouses resulting in backorder quantity', () => {
     // Requested 120 units. Total stock across all warehouses is 50 + 30 + 20 = 100.
     const result = splitFulfillment('prod-1', 120, sampleWarehouses);

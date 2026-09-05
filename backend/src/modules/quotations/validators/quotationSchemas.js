@@ -36,6 +36,7 @@ export const addQuotationLineSchema = z.object({
   line_type: z.enum(['one_time', 'recurring']).default('one_time'),
   product_id: z.string().uuid().optional().nullable(),
   variant_id: z.string().uuid().optional().nullable(),
+  subscription_plan_id: z.string().uuid().optional().nullable(),
   custom_name: z.string().optional().nullable(),
   custom_description: z.string().optional().nullable(),
   quantity: z.number().positive('Quantity must be greater than 0').default(1),

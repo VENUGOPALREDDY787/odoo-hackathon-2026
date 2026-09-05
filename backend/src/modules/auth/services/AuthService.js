@@ -27,9 +27,10 @@ export class AuthService {
     }
 
     const passwordHash = await bcrypt.hash(password, this.config.BCRYPT_ROUNDS);
+    const userId = crypto.randomUUID();
 
-    const [user] = await this.db('users')
-      .insert({
+    await this.db('users').insert({
+        id: userId,
         email,
         password_hash: passwordHash,
         full_name: fullName,
@@ -37,8 +38,8 @@ export class AuthService {
         is_active: true,
         created_at: new Date(),
         updated_at: new Date(),
-      })
-      .returning('*');
+      });
+    const user = await this.db('users').where({ id: userId }).first();
 
     this.logger.info({ userId: user.id, email, role }, 'Internal user registered');
     return this.generateTokensWithRotation(user);
@@ -54,17 +55,20 @@ export class AuthService {
 
     const trx = await this.db.transaction();
     try {
-      const [user] = await trx('users')
-        .insert({
+      // Customer authentication is magic-link-only, but MySQL requires a non-null password hash.
+      const unusablePasswordHash = await bcrypt.hash(crypto.randomBytes(32).toString('hex'), this.config.BCRYPT_ROUNDS);
+      const userId = crypto.randomUUID();
+      await trx('users').insert({
+          id: userId,
           email,
-          password_hash: null,
+          password_hash: unusablePasswordHash,
           full_name: fullName,
           role: CUSTOMER_ROLE,
           is_active: true,
           created_at: new Date(),
           updated_at: new Date(),
-        })
-        .returning('*');
+        });
+      const user = await trx('users').where({ id: userId }).first();
 
       await trx('customers')
         .insert({
