@@ -746,4 +746,32 @@ WHERE sl.`deleted_at` IS NULL
   AND p.`deleted_at` IS NULL
   AND (pv.`deleted_at` IS NULL OR pv.`id` IS NULL);
 
+-- Portable review accounts. Password for all accounts: DemoPass2026
+INSERT INTO `users` (`email`, `password_hash`, `full_name`, `role`, `is_active`)
+VALUES
+        ('rep.demo@dealflow360.local', '$2a$12$eByQ0Yn4oiVoT10y8xIFxu7c.6ItNV56xGJlHAOFcvZQKGpzUogE.', 'Demo Sales Rep', 'rep', 1),
+        ('manager.demo@dealflow360.local', '$2a$12$eByQ0Yn4oiVoT10y8xIFxu7c.6ItNV56xGJlHAOFcvZQKGpzUogE.', 'Demo Sales Manager', 'manager', 1),
+        ('finance.demo@dealflow360.local', '$2a$12$eByQ0Yn4oiVoT10y8xIFxu7c.6ItNV56xGJlHAOFcvZQKGpzUogE.', 'Demo Finance User', 'finance', 1),
+        ('admin.demo@dealflow360.local', '$2a$12$eByQ0Yn4oiVoT10y8xIFxu7c.6ItNV56xGJlHAOFcvZQKGpzUogE.', 'Demo Administrator', 'admin', 1)
+ON DUPLICATE KEY UPDATE
+        `password_hash` = VALUES(`password_hash`),
+        `full_name` = VALUES(`full_name`),
+        `role` = VALUES(`role`),
+        `is_active` = 1,
+        `deleted_at` = NULL;
+
 SET FOREIGN_KEY_CHECKS = 1;
+
+-- Portable review accounts. Password for all accounts: DemoPass2026
+INSERT INTO `users` (`email`, `password_hash`, `full_name`, `role`, `is_active`)
+VALUES
+    ('rep.demo@dealflow360.local', '$2a$12$eByQ0Yn4oiVoT10y8xIFxu7c.6ItNV56xGJlHAOFcvZQKGpzUogE.', 'Demo Sales Rep', 'rep', 1),
+    ('manager.demo@dealflow360.local', '$2a$12$eByQ0Yn4oiVoT10y8xIFxu7c.6ItNV56xGJlHAOFcvZQKGpzUogE.', 'Demo Sales Manager', 'manager', 1),
+    ('finance.demo@dealflow360.local', '$2a$12$eByQ0Yn4oiVoT10y8xIFxu7c.6ItNV56xGJlHAOFcvZQKGpzUogE.', 'Demo Finance User', 'finance', 1),
+    ('admin.demo@dealflow360.local', '$2a$12$eByQ0Yn4oiVoT10y8xIFxu7c.6ItNV56xGJlHAOFcvZQKGpzUogE.', 'Demo Administrator', 'admin', 1)
+ON DUPLICATE KEY UPDATE
+    `password_hash` = VALUES(`password_hash`),
+    `full_name` = VALUES(`full_name`),
+    `role` = VALUES(`role`),
+    `is_active` = 1,
+    `deleted_at` = NULL;
