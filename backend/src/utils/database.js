@@ -18,7 +18,7 @@ export function createKnexInstance(customConfig = {}) {
       timezone: '+00:00',
     },
     pool: {
-      min: 2,
+      min: 5,
       max: config.DB_CONNECTION_LIMIT,
       acquireTimeoutMillis: 30000,
       createTimeoutMillis: 30000,

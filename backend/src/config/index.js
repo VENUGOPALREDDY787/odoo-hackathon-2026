@@ -14,7 +14,7 @@ const envSchema = z.object({
   DB_USER: z.string().min(1),
   DB_PASSWORD: z.string().min(1),
   DB_NAME: z.string().min(1),
-  DB_CONNECTION_LIMIT: z.coerce.number().int().positive().default(10),
+  DB_CONNECTION_LIMIT: z.coerce.number().int().positive().default(50),
   DB_SSL: z.coerce.boolean().default(false),
 
   // Auth
