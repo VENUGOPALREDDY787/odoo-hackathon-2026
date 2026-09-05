@@ -1,55 +1,70 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import Card from '../components/Card';
 import PillButton from '../components/PillButton';
 import StatusBadge from '../components/StatusBadge';
 import Tag from '../components/Tag';
 import ListItem from '../components/ListItem';
-import { FULFILLMENT_ORDERS } from '../data/mockData';
+import Skeleton from '../components/Skeleton';
+import { consolidateBackorders, listStockLevels, listWarehouses, overrideFulfillment, reserveStock } from '../api/client';
 
 export default function FulfillmentHub() {
   const { t } = useTranslation();
-  const [orders, setOrders] = useState(FULFILLMENT_ORDERS);
+  const [orders, setOrders] = useState([]);
   const [selectedOrder, setSelectedOrder] = useState(null);
   const [showOverrideModal, setShowOverrideModal] = useState(false);
   const [overrideReason, setOverrideReason] = useState('');
   const [overrideSuccess, setOverrideSuccess] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
 
-  const handleAcceptSplit = () => {
+  useEffect(() => {
+    listWarehouses().then(async (warehouses) => {
+      const liveOrders = await Promise.all(warehouses.map(async (warehouse) => {
+        const stock = await listStockLevels(warehouse.id);
+        const items = stock.map((item) => ({
+          warehouse: warehouse.name,
+          warehouse_id: warehouse.id,
+          qtyFulfilled: item.available_quantity || item.quantity_available || 0,
+          estShipments: 1,
+          cost: item.shipping_cost || 0,
+          status: (item.available_quantity || item.quantity_available || 0) > 0 ? 'Ready' : 'Backorder',
+        }));
+        return { id: warehouse.id, customer: warehouse.name, quotationId: warehouse.code || warehouse.id, warehouses: [warehouse.name], totalItems: items.length, backorderQty: items.filter((item) => item.status === 'Backorder').length, backorderProduct: items.find((item) => item.status === 'Backorder')?.product || 'stock item', status: 'Pending', splitDetail: items, lineId: items[0]?.quotation_line_id };
+      }));
+      setOrders(liveOrders);
+    }).catch((requestError) => setError(requestError.message)).finally(() => setLoading(false));
+  }, []);
+
+  const handleAcceptSplit = async () => {
     if (!selectedOrder) return;
-    setOrders((prev) =>
-      prev.map((o) => (o.id === selectedOrder.id ? { ...o, status: 'Fulfilled' } : o))
-    );
-    setSelectedOrder((prev) => (prev ? { ...prev, status: 'Fulfilled' } : null));
-    alert('Split allocation confirmed! Dispatch instructions transmitted to warehouse management system.');
+    try {
+      await reserveStock(selectedOrder.lineId, { suggested_splits: selectedOrder.splitDetail });
+      setOrders((prev) => prev.map((o) => (o.id === selectedOrder.id ? { ...o, status: 'Fulfilled' } : o)));
+      setSelectedOrder((prev) => (prev ? { ...prev, status: 'Fulfilled' } : null));
+    } catch (requestError) { setError(requestError.message); }
   };
 
-  const handleManualOverride = (e) => {
+  const handleManualOverride = async (e) => {
     e.preventDefault();
     if (!overrideReason.trim()) {
       alert('Override rationale is required for audit trail.');
       return;
     }
 
-    setOrders((prev) =>
-      prev.map((o) =>
-        o.id === selectedOrder.id
-          ? {
-              ...o,
-              status: 'Split Pending (Manual Override)',
-              splitDetail: o.splitDetail.map((s) => ({
-                ...s,
-                status: 'Overridden',
-              })),
-            }
-          : o
-      )
-    );
-
-    setShowOverrideModal(false);
-    setOverrideSuccess(true);
-    setTimeout(() => setOverrideSuccess(false), 3000);
+    try {
+      await overrideFulfillment({ quotation_line_id: selectedOrder.lineId, override_reason: overrideReason, custom_splits: selectedOrder.splitDetail.map((split) => ({ warehouse_id: split.warehouse_id, quantity: split.qtyFulfilled })) });
+      setOrders((prev) => prev.map((o) => o.id === selectedOrder.id ? { ...o, status: 'Split Pending (Manual Override)' } : o));
+      setShowOverrideModal(false); setOverrideSuccess(true); setTimeout(() => setOverrideSuccess(false), 3000);
+    } catch (requestError) { setError(requestError.message); }
   };
+
+  const handleConsolidate = async () => {
+    try { await consolidateBackorders({ quotation_id: selectedOrder?.quotationId }); } catch (requestError) { setError(requestError.message); }
+  };
+
+  if (loading) return <div className="space-y-4"><Skeleton height="6rem" /><Skeleton variant="rounded" height="28rem" /></div>;
+  if (error) return <Card className="p-6 text-status-danger">Unable to load fulfillment data: {error}</Card>;
 
   return (
     <div data-tour="fulfillment" className="w-full max-w-max-width mx-auto space-y-6 animate-in fade-in duration-300">
@@ -199,7 +214,7 @@ export default function FulfillmentHub() {
                   variant="outline"
                   size="sm"
                   onClick={() =>
-                    alert('Consolidation rule applied. Partial shipment 1 released; shipment 2 queued.')
+                    handleConsolidate()
                   }
                 >
                   Consolidate Remaining Backorder

@@ -3,13 +3,13 @@ import crypto from 'crypto';
 import { getDatabase, closeDatabase } from '../utils/database.js';
 import config from '../config/index.js';
 
-const password = 'DemoPass123!';
+const password = 'DemoPass2026';
 const users = [
-  { email: 'demo.rep@dealflow360.local', full_name: 'Demo Sales Rep', role: 'rep' },
-  { email: 'demo.manager@dealflow360.local', full_name: 'Demo Sales Manager', role: 'manager' },
-  { email: 'demo.finance@dealflow360.local', full_name: 'Demo Finance Lead', role: 'finance' },
-  { email: 'demo.admin@dealflow360.local', full_name: 'Demo Administrator', role: 'admin' },
-  { email: 'demo.customer@dealflow360.local', full_name: 'Demo Customer', role: 'customer' },
+  { email: 'rep.demo@dealflow360.local', full_name: 'Demo Sales Rep', role: 'rep' },
+  { email: 'manager.demo@dealflow360.local', full_name: 'Demo Sales Manager', role: 'manager' },
+  { email: 'finance.demo@dealflow360.local', full_name: 'Demo Finance Lead', role: 'finance' },
+  { email: 'admin.demo@dealflow360.local', full_name: 'Demo Administrator', role: 'admin' },
+  { email: 'customer.demo@dealflow360.local', full_name: 'Demo Customer', role: 'customer' },
 ];
 
 async function seedDemoUsers() {

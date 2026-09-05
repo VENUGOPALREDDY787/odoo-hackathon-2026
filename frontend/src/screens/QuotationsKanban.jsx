@@ -4,10 +4,13 @@ import Card from '../components/Card';
 import PillButton from '../components/PillButton';
 import StatusBadge from '../components/StatusBadge';
 import Tag from '../components/Tag';
-import { calculateQuotationTotals } from '../data/mockData';
+import { calculateQuotationTotals } from '../utils/quotationCalculations';
+import Skeleton from '../components/Skeleton';
 
 export default function QuotationsKanban({
   quotations = [],
+  loading = false,
+  error = '',
   onSelectQuotation,
   onNewQuotation,
 }) {
@@ -33,22 +36,30 @@ export default function QuotationsKanban({
     return matchesSearch && matchesTier;
   });
 
+  if (loading) {
+    return <div className="space-y-4"><Skeleton height="3rem" /><Skeleton variant="rounded" height="32rem" /></div>;
+  }
+
+  if (error) {
+    return <Card className="p-6 text-status-danger">Unable to load quotations: {error}</Card>;
+  }
+
   return (
-    <div className="w-full max-w-max-width mx-auto space-y-6 animate-in fade-in duration-300">
+    <div data-tour="quotations" className="w-full max-w-max-width mx-auto space-y-6 animate-in fade-in duration-300">
       {/* Top Header & Action Controls */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <div>
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div className="min-w-0">
           <h1 className="font-headline-lg text-3xl md:text-4xl font-bold tracking-tight text-text-primary">
             {t('quotations.title', 'Quotations Pipeline')}
           </h1>
-          <p className="text-body-sm text-text-secondary mt-1">
+          <p className="text-body-sm text-text-secondary mt-1 truncate">
             {t('quotations.subtitle', 'Real-time stage tracking with embedded blended risk governance')}
           </p>
         </div>
 
-        <div className="flex flex-wrap items-center gap-3">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 w-full sm:w-auto">
           {/* Search Input */}
-          <div className="relative">
+          <div className="relative w-full sm:w-72">
             <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-[18px] text-text-secondary">
               search
             </span>
@@ -57,56 +68,59 @@ export default function QuotationsKanban({
               placeholder={t('quotations.searchQuotation', 'Search quotes, customers...')}
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="bg-surface-interactive border border-border-subtle rounded-full pl-9 pr-4 py-2 text-xs text-text-primary placeholder:text-text-secondary focus:outline-none focus:border-accent-blue w-48 sm:w-60"
+              className="w-full bg-surface-interactive border border-border-subtle rounded-full pl-9 pr-4 py-2 text-xs text-text-primary placeholder:text-text-secondary focus:outline-none focus:border-accent-blue"
             />
           </div>
 
-          {/* Tier Filter Toggle */}
-          <div className="flex items-center bg-surface-interactive border border-border-subtle rounded-full p-1 text-xs">
-            {['ALL', 'Bronze', 'Silver', 'Gold'].map((tier) => (
+          {/* Filters & Actions Group */}
+          <div className="flex flex-wrap items-center gap-3 w-full sm:w-auto justify-start sm:justify-end">
+            {/* Tier Filter Toggle */}
+            <div className="flex items-center bg-surface-interactive border border-border-subtle rounded-full p-1 text-xs">
+              {['ALL', 'Bronze', 'Silver', 'Gold'].map((tier) => (
+                <button
+                  key={tier}
+                  onClick={() => setTierFilter(tier)}
+                  className={`px-2.5 py-1 rounded-full font-mono text-[11px] transition-colors cursor-pointer ${
+                    tierFilter === tier
+                      ? 'bg-accent-blue text-surface-base font-bold'
+                      : 'text-text-secondary hover:text-text-primary'
+                  }`}
+                >
+                  {tier === 'ALL' ? t('common.all', 'ALL') : tier}
+                </button>
+              ))}
+            </div>
+
+            {/* View Mode Toggle */}
+            <div className="flex items-center bg-surface-interactive border border-border-subtle rounded-full p-1 text-xs">
               <button
-                key={tier}
-                onClick={() => setTierFilter(tier)}
-                className={`px-2.5 py-1 rounded-full font-mono text-[11px] transition-colors cursor-pointer ${
-                  tierFilter === tier
-                    ? 'bg-accent-blue text-surface-base font-bold'
+                onClick={() => setViewMode('kanban')}
+                className={`flex items-center gap-1 px-3 py-1 rounded-full font-medium transition-colors cursor-pointer ${
+                  viewMode === 'kanban'
+                    ? 'bg-text-primary text-surface-base'
                     : 'text-text-secondary hover:text-text-primary'
                 }`}
               >
-                {tier === 'ALL' ? t('common.all', 'ALL') : tier}
+                <span className="material-symbols-outlined text-[16px]">view_kanban</span>
+                <span>Kanban</span>
               </button>
-            ))}
-          </div>
+              <button
+                onClick={() => setViewMode('table')}
+                className={`flex items-center gap-1 px-3 py-1 rounded-full font-medium transition-colors cursor-pointer ${
+                  viewMode === 'table'
+                    ? 'bg-text-primary text-surface-base'
+                    : 'text-text-secondary hover:text-text-primary'
+                }`}
+              >
+                <span className="material-symbols-outlined text-[16px]">table_rows</span>
+                <span>{t('common.details', 'Table')}</span>
+              </button>
+            </div>
 
-          {/* View Mode Toggle */}
-          <div className="flex items-center bg-surface-interactive border border-border-subtle rounded-full p-1 text-xs">
-            <button
-              onClick={() => setViewMode('kanban')}
-              className={`flex items-center gap-1 px-3 py-1 rounded-full font-medium transition-colors cursor-pointer ${
-                viewMode === 'kanban'
-                  ? 'bg-text-primary text-surface-base'
-                  : 'text-text-secondary hover:text-text-primary'
-              }`}
-            >
-              <span className="material-symbols-outlined text-[16px]">view_kanban</span>
-              <span>Kanban</span>
-            </button>
-            <button
-              onClick={() => setViewMode('table')}
-              className={`flex items-center gap-1 px-3 py-1 rounded-full font-medium transition-colors cursor-pointer ${
-                viewMode === 'table'
-                  ? 'bg-text-primary text-surface-base'
-                  : 'text-text-secondary hover:text-text-primary'
-              }`}
-            >
-              <span className="material-symbols-outlined text-[16px]">table_rows</span>
-              <span>{t('common.details', 'Table')}</span>
-            </button>
+            <PillButton variant="primary" icon="add" onClick={onNewQuotation}>
+              {t('quotations.newQuotation', '+ New Quote')}
+            </PillButton>
           </div>
-
-          <PillButton variant="primary" icon="add" onClick={onNewQuotation}>
-            {t('quotations.newQuotation', '+ New Quote')}
-          </PillButton>
         </div>
       </div>
 

@@ -1,19 +1,41 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import Card from '../components/Card';
 import PillButton from '../components/PillButton';
 import StatusBadge from '../components/StatusBadge';
 import Tag from '../components/Tag';
 import ListItem from '../components/ListItem';
-import { SUBSCRIPTIONS_DATA, calculateProration } from '../data/mockData';
+import { calculateProration } from '../utils/quotationCalculations';
+import Skeleton from '../components/Skeleton';
+import { cancelSubscriptionLine, generateSchedules, listSubscriptionPlans } from '../api/client';
 
 export default function SubscriptionsHub() {
   const { t } = useTranslation();
-  const [subscriptions, setSubscriptions] = useState(SUBSCRIPTIONS_DATA);
+  const [subscriptions, setSubscriptions] = useState([]);
   const [selectedSub, setSelectedSub] = useState(null);
   const [modifyModalOpen, setModifyModalOpen] = useState(false);
   const [cancelConfirmOpen, setCancelConfirmOpen] = useState(false);
   const [newQty, setNewQty] = useState(15);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+
+  useEffect(() => {
+    listSubscriptionPlans().then((plans) => setSubscriptions(plans.map((plan) => ({
+      ...plan,
+      id: plan.id,
+      customer: plan.customer_name || 'Active customer contract',
+      customerTier: plan.customer_tier || 'Bronze',
+      plan: plan.name,
+      cycle: plan.interval_type || 'monthly',
+      amount: plan.base_price || 0,
+      nextBill: plan.next_bill || 'Scheduled',
+      status: plan.is_active === false ? 'Cancelled' : 'Active',
+      recurringLines: [],
+      oneTimeLines: [],
+      lineId: plan.quotation_line_id,
+      quotationId: plan.quotation_id,
+    })))).catch((requestError) => setError(requestError.message)).finally(() => setLoading(false));
+  }, []);
 
   const activeSubs = subscriptions.filter((s) => s.status === 'Active');
   const totalARR = activeSubs.reduce((acc, s) => acc + s.amount, 0);
@@ -21,26 +43,27 @@ export default function SubscriptionsHub() {
   // Compute proration preview for modification
   const proration = calculateProration(10, newQty, 4800, 18, 30);
 
-  const handleConfirmModification = () => {
-    alert(`Subscription seats updated to ${newQty}! Immediate proration credit/charge calculated: ₹${proration.prorationAmount.toLocaleString()}.`);
-    setModifyModalOpen(false);
+  const handleConfirmModification = async () => {
+    try {
+      if (!selectedSub?.quotationId) throw new Error('This plan is not linked to a quotation schedule.');
+      await generateSchedules({ quotation_id: selectedSub.quotationId, default_cycles: newQty });
+      setModifyModalOpen(false);
+    } catch (requestError) { setError(requestError.message); }
   };
 
-  const handleConfirmCancellation = () => {
+  const handleConfirmCancellation = async () => {
     if (!selectedSub) return;
-    setSubscriptions((prev) =>
-      prev.map((s) =>
-        s.id === selectedSub.id
-          ? { ...s, status: 'Cancelled', nextBill: 'Cancelled (Credit Note Issued)' }
-          : s
-      )
-    );
-    setSelectedSub((prev) =>
-      prev ? { ...prev, status: 'Cancelled', nextBill: 'Cancelled (Credit Note Issued)' } : null
-    );
-    setCancelConfirmOpen(false);
-    alert('Subscription cancelled. Credit note CN-2026-091 created in billing schedules ledger.');
+    try {
+      if (!selectedSub.lineId) throw new Error('This plan is not linked to a subscription line.');
+      await cancelSubscriptionLine(selectedSub.lineId, { cancellation_reason: 'Customer requested cancellation' });
+      setSubscriptions((prev) => prev.map((s) => s.id === selectedSub.id ? { ...s, status: 'Cancelled', nextBill: 'Cancelled' } : s));
+      setSelectedSub((prev) => prev ? { ...prev, status: 'Cancelled', nextBill: 'Cancelled' } : null);
+      setCancelConfirmOpen(false);
+    } catch (requestError) { setError(requestError.message); }
   };
+
+  if (loading) return <div className="space-y-4"><Skeleton height="6rem" /><Skeleton variant="rounded" height="28rem" /></div>;
+  if (error) return <Card className="p-6 text-status-danger">Unable to load subscriptions: {error}</Card>;
 
   return (
     <div data-tour="billing" className="w-full max-w-max-width mx-auto space-y-6 animate-in fade-in duration-300">

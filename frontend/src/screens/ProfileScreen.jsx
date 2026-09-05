@@ -68,7 +68,7 @@ export default function ProfileScreen({ user, onUserUpdated, onLogout, showToast
   const role = user?.role || 'customer';
 
   return (
-    <div className="space-y-6">
+    <div data-tour="account" className="space-y-6">
       <div>
         <p className="font-mono-tag text-accent-blue text-xs uppercase tracking-[0.18em]">Account</p>
         <h1 className="font-display-hero text-4xl text-text-primary mt-2">Profile</h1>

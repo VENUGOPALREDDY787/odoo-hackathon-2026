@@ -22,7 +22,7 @@ const baseDiscountTierSchema = z.object({
   effective_to: z.string().refine(val => !isNaN(Date.parse(val)), { message: 'Effective to must be a valid date' }).optional().nullable(),
 });
 
-export const discountTierSchema = baseDiscountTierSchema.refine(data => {
+export const discountTierSchema = baseDiscountTierSchema.refine(_data => {
   // Either category_id or product_id or both can be specified, but at least one preferred
   return true;
 });
@@ -36,8 +36,8 @@ export const discountTierQuerySchema = z.object({
   category_id: z.string().uuid().optional(),
   product_id: z.string().uuid().optional(),
   is_active: z.preprocess(val => {
-    if (val === 'true' || val === true) return true;
-    if (val === 'false' || val === false) return false;
+    if (val === 'true' || val === true) { return true; }
+    if (val === 'false' || val === false) { return false; }
     return undefined;
   }, z.boolean().optional()),
 });
@@ -58,8 +58,8 @@ export const approvalChainQuerySchema = z.object({
   page: z.coerce.number().int().positive().default(1),
   limit: z.coerce.number().int().positive().max(100).default(20),
   is_active: z.preprocess(val => {
-    if (val === 'true' || val === true) return true;
-    if (val === 'false' || val === false) return false;
+    if (val === 'true' || val === true) { return true; }
+    if (val === 'false' || val === false) { return false; }
     return undefined;
   }, z.boolean().optional()),
 });
@@ -77,6 +77,6 @@ export const evaluateRiskSchema = z.object({
 });
 
 export const approvalActionSchema = z.object({
-  action: z.enum(['approved', 'rejected', 'escalated']),
+  action: z.enum(['approve', 'reject', 'return_for_revision', 'approved', 'rejected', 'returned']),
   comments: z.string().max(1000).optional(),
 });

@@ -6,51 +6,30 @@ import PillButton from '../components/PillButton';
 import BarChart from '../components/BarChart';
 import ListItem from '../components/ListItem';
 import Tag from '../components/Tag';
+import Skeleton from '../components/Skeleton';
 
 export default function SalesDashboard({
   onNavigate,
-  _quotations = [],
-  pendingApprovalsCount = 14,
+  quotations = [],
+  pendingApprovalsCount = 0,
+  loading = false,
+  error = '',
 }) {
   const { t } = useTranslation();
-  const recentActivities = [
-    {
-      user: 'Marcus Vance',
-      role: 'Enterprise Rep',
-      action: 'Submitted Quote QT-2026-8841',
-      target: 'Apex Global Logistics (₹324,500)',
-      time: '12m ago',
-      risk: 'HIGH',
-      badge: 'Dual Approval Required',
-    },
-    {
-      user: 'Sarah Lin',
-      role: 'Sales Manager',
-      action: 'Approved Quote QT-2026-8839',
-      target: 'Hyperion BioDynamics (₹106,000)',
-      time: '1h ago',
-      risk: 'LOW',
-      badge: 'Tier Preferred Rate',
-    },
-    {
-      user: 'System Bot',
-      role: 'Negotiation Engine',
-      action: 'Counter-Offer Generated (Round 3)',
-      target: 'Solaria Cyber Defense (₹76,800)',
-      time: '3h ago',
-      risk: 'MEDIUM',
-      badge: 'Delta ₹3,300',
-    },
-    {
-      user: 'Elena Rostova',
-      role: 'Senior Rep',
-      action: 'Fulfillment Split Confirmed',
-      target: 'Vector Aerospace Systems (12 Nodes)',
-      time: '5h ago',
-      risk: 'LOW',
-      badge: 'Austin + Berlin',
-    },
-  ];
+  const activeQuotations = quotations.filter((quote) => !['rejected', 'cancelled', 'expired'].includes(quote.status));
+  const pipelineValue = activeQuotations.reduce((total, quote) => total + Number(quote.grand_total || quote.total || 0), 0);
+  const recentActivities = quotations.slice(0, 4).map((quote) => ({
+    user: quote.assignedTo || 'Assigned representative',
+    role: quote.status,
+    action: `Quotation ${quote.id}`,
+    target: `${quote.customer || 'Customer'} (${Number(quote.grand_total || 0).toLocaleString()})`,
+    time: quote.updated_at || quote.createdAt || 'Recently updated',
+    risk: quote.blended_risk_score > 60 ? 'HIGH' : quote.blended_risk_score > 25 ? 'MEDIUM' : 'LOW',
+    badge: quote.status,
+  }));
+
+  if (loading) return <div className="space-y-4"><Skeleton height="10rem" /><Skeleton variant="rounded" height="28rem" /></div>;
+  if (error) return <Card className="p-6 text-status-danger">Unable to load dashboard data: {error}</Card>;
 
   return (
     <div data-tour="dashboard" className="w-full max-w-max-width mx-auto space-y-8 animate-in fade-in duration-300">
@@ -127,8 +106,7 @@ export default function SalesDashboard({
                     {t('dashboard.dealVelocity', 'Gross Velocity')}
                   </div>
                   <div className="font-mono-data text-mono-data text-text-primary mt-1 font-semibold flex items-center gap-1.5">
-                    <span>₹3.82M</span>
-                    <span className="text-status-live text-xs">▲ +14.2%</span>
+                    <span>₹{pipelineValue.toLocaleString()}</span>
                   </div>
                 </div>
                 <div>
@@ -136,7 +114,7 @@ export default function SalesDashboard({
                     {t('dashboard.targetPacing', 'SLA Compliance')}
                   </div>
                   <div className="font-mono-data text-mono-data text-text-primary mt-1 font-semibold">
-                    99.4%
+                    {activeQuotations.length ? `${Math.round((activeQuotations.filter((quote) => quote.status === 'approved' || quote.status === 'confirmed').length / activeQuotations.length) * 100)}%` : '0%'}
                   </div>
                 </div>
                 <div>
@@ -144,7 +122,7 @@ export default function SalesDashboard({
                     {t('dashboard.marginHealth', 'Median Margin')}
                   </div>
                   <div className="font-mono-data text-mono-data text-accent-pink mt-1 font-semibold">
-                    31.8%
+                    {activeQuotations.length ? `${Math.round(activeQuotations.reduce((total, quote) => total + Number(quote.margin_percentage || 0), 0) / activeQuotations.length)}%` : '0%'}
                   </div>
                 </div>
               </div>
@@ -170,21 +148,21 @@ export default function SalesDashboard({
 
             <div className="my-5 flex items-baseline justify-between">
               <div className="font-kpi-value text-5xl md:text-kpi-value tracking-tighter text-surface-base font-bold leading-none">
-                48
+                {activeQuotations.length}
               </div>
               <div className="text-right">
                 <span className="font-mono-tag text-mono-tag text-surface-base/70 block">
                   {t('common.active', 'ACTIVE')} STAGE
                 </span>
                 <span className="font-body-sm text-body-sm font-semibold text-surface-base">
-                  ₹2.14M Blended
+                  ₹{pipelineValue.toLocaleString()} Blended
                 </span>
               </div>
             </div>
 
             {/* 8-bar Micro Chart Visualization */}
             <BarChart
-              data={[35, 52, 44, 68, 60, 82, 75, 100]}
+              data={activeQuotations.slice(-8).map((quote) => Number(quote.grand_total || 0))}
               labels={['D-7', 'D-6', 'D-5', 'D-4', 'D-3', 'D-2', 'D-1', 'TODAY']}
               inverse
             />

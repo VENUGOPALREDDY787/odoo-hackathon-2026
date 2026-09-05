@@ -1,20 +1,33 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import Card from '../components/Card';
 import PillButton from '../components/PillButton';
 import Tag from '../components/Tag';
-import {
-  TIER_DISCOUNT_CEILINGS,
-  CATEGORY_DISCOUNT_CEILINGS,
-  APPROVAL_TIER_RULES,
-} from '../data/mockData';
+import Skeleton from '../components/Skeleton';
+import { listApprovalChains, listDiscountTiers, saveApprovalChain, saveDiscountTier } from '../api/client';
 
 export default function DiscountConfig() {
   const { t } = useTranslation();
-  const [tierCeilings, setTierCeilings] = useState(TIER_DISCOUNT_CEILINGS);
-  const [categoryCeilings, setCategoryCeilings] = useState(CATEGORY_DISCOUNT_CEILINGS);
-  const [approvalRules, _setApprovalRules] = useState(APPROVAL_TIER_RULES);
+  const [tierCeilings, setTierCeilings] = useState({});
+  const [categoryCeilings, setCategoryCeilings] = useState({});
+  const [approvalRules, setApprovalRules] = useState([]);
   const [saveSuccess, setSaveSuccess] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+
+  useEffect(() => {
+    Promise.all([listDiscountTiers(), listApprovalChains()]).then(([tiers, chains]) => {
+      const tierValues = {};
+      const categoryValues = {};
+      tiers.forEach((tier) => {
+        if (tier.customer_tier && !tier.category_id && !tier.product_id) tierValues[tier.customer_tier] = tier.discount_percent;
+        if (tier.category_name) categoryValues[tier.category_name] = tier.discount_percent;
+      });
+      setTierCeilings(tierValues);
+      setCategoryCeilings(categoryValues);
+      setApprovalRules(chains);
+    }).catch((requestError) => setError(requestError.message)).finally(() => setLoading(false));
+  }, []);
 
   const handleUpdateTier = (tier, val) => {
     setTierCeilings((prev) => ({ ...prev, [tier]: parseFloat(val) || 0 }));
@@ -24,13 +37,30 @@ export default function DiscountConfig() {
     setCategoryCeilings((prev) => ({ ...prev, [cat]: parseFloat(val) || 0 }));
   };
 
-  const handleSave = () => {
-    setSaveSuccess(true);
-    setTimeout(() => setSaveSuccess(false), 3000);
+  const handleSave = async () => {
+    try {
+      await Promise.all(Object.entries(tierCeilings).map(([tier, value]) => saveDiscountTier({
+        customer_tier: tier, discount_percent: value, effective_from: new Date().toISOString(), is_active: true,
+      })));
+      await Promise.all(approvalRules.map((rule) => saveApprovalChain({
+        name: rule.name || rule.label || 'Approval chain',
+        description: rule.description || rule.label,
+        min_discount_percent: rule.min_discount_percent || 0,
+        max_discount_percent: rule.max_discount_percent || 100,
+        required_approver_roles: rule.required_approver_roles || [rule.requiredApprover || 'manager'],
+      })));
+      setSaveSuccess(true);
+      setTimeout(() => setSaveSuccess(false), 3000);
+    } catch (requestError) {
+      setError(requestError.message);
+    }
   };
 
+  if (loading) return <div className="space-y-4"><Skeleton height="6rem" /><Skeleton variant="rounded" height="30rem" /></div>;
+  if (error) return <Card className="p-6 text-status-danger">Unable to load discount policy: {error}</Card>;
+
   return (
-    <div className="w-full max-w-max-width mx-auto space-y-6 animate-in fade-in duration-300">
+    <div data-tour="discounts" className="w-full max-w-max-width mx-auto space-y-6 animate-in fade-in duration-300">
       {/* Top Header */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>

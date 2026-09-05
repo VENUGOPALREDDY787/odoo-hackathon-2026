@@ -1,9 +1,11 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import Card from '../components/Card';
 import PillButton from '../components/PillButton';
 import Tag from '../components/Tag';
 import LanguageSwitcher from '../components/LanguageSwitcher';
+import Skeleton from '../components/Skeleton';
+import { acceptQuotation, getNegotiationHistory, listQuotations, negotiateQuotation } from '../api/client';
 
 export default function CustomerPortal({ onReturnToInternal }) {
   const { t } = useTranslation();
@@ -13,36 +15,47 @@ export default function CustomerPortal({ onReturnToInternal }) {
   const [customerComment, setCustomerComment] = useState(
     'We have competitive quotes from Dynatrace and Datadog. Countering at 18.5% with annual upfront payment.'
   );
-  const [negotiationRounds, setNegotiationRounds] = useState([
-    { round: 1, buyerOffer: '₹66,000', sellerOffer: '₹87,000', status: 'Countered' },
-    { round: 2, buyerOffer: '₹69,500', sellerOffer: '₹82,000', status: 'Countered' },
-    { round: 3, buyerOffer: '₹73,500', sellerOffer: '₹76,800', status: 'Active (Convergence Delta: ₹3,300)' },
-  ]);
+  const [negotiationRounds, setNegotiationRounds] = useState([]);
   const [submittedMessage, setSubmittedMessage] = useState(false);
+  const [quotation, setQuotation] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
 
-  const handleSubmitCounter = (e) => {
+  useEffect(() => {
+    listQuotations().then((quotations) => {
+      const current = quotations.find((item) => ['negotiation', 'pending_approval', 'approved'].includes(item.status)) || quotations[0];
+      setQuotation(current);
+      if (current?.id) return getNegotiationHistory(current.id).then(setNegotiationRounds);
+      return undefined;
+    }).catch((requestError) => setError(requestError.message)).finally(() => setLoading(false));
+  }, []);
+
+  const handleSubmitCounter = async (e) => {
     e.preventDefault();
-    setSubmittedMessage(true);
-    setNegotiationRounds((prev) => [
-      ...prev,
-      {
-        round: prev.length + 1,
-        buyerOffer: `₹${(76000 * (1 - counterDiscount / 100)).toFixed(0)}`,
-        sellerOffer: 'Pending Deal Desk Review',
-        status: 'Counter Submitted',
-      },
-    ]);
-    setTimeout(() => setSubmittedMessage(false), 4000);
+    try {
+      if (!quotation?.id) throw new Error('No quotation is available for negotiation.');
+      await negotiateQuotation(quotation.id, { seller_min: 50000, seller_max: 100000, buyer_min: 50000 * (1 - counterDiscount / 100), buyer_max: 100000 * (1 - counterDiscount / 100), message: customerComment });
+      setNegotiationRounds(await getNegotiationHistory(quotation.id));
+      setSubmittedMessage(true); setTimeout(() => setSubmittedMessage(false), 4000);
+    } catch (requestError) { setError(requestError.message); }
   };
 
-  const handleConfirmQuotation = () => {
-    alert(
-      'NOTICE: Confirming quotation under negotiated terms (18.5% discount) exceeds Bronze Tier 10% ceiling. This will auto-resubmit for Sales Manager & Finance dual-signoff before final order activation.'
-    );
+  const handleConfirmQuotation = async () => {
+    try {
+      if (!quotation?.id) throw new Error('No quotation is available to confirm.');
+      setQuotation(await acceptQuotation(quotation.id));
+      setSubmittedMessage(true);
+    } catch (requestError) { setError(requestError.message); }
   };
+
+  if (loading) return <div className="space-y-4"><Skeleton height="5rem" /><Skeleton variant="rounded" height="30rem" /></div>;
+  if (error) return <Card className="p-6 text-status-danger">Unable to load customer quotation data: {error}</Card>;
+
+  const quotationLines = quotation?.lines || [];
+  const quotationTotal = Number(quotation?.grand_total || quotationLines.reduce((total, line) => total + Number(line.quantity || line.qty || 0) * Number(line.list_price || line.unitPrice || 0), 0));
 
   return (
-    <div className="w-full max-w-max-width mx-auto space-y-6 animate-in fade-in duration-300">
+    <div data-tour="dashboard" className="w-full max-w-max-width mx-auto space-y-6 animate-in fade-in duration-300">
       {/* Simplified Customer Portal Top Bar */}
       <div data-tour="customer-portal" className="bg-surface-card border border-border-subtle rounded-[28px] sm:rounded-full px-4 sm:px-6 py-3 flex flex-wrap items-center justify-between shadow-lg gap-3">
         <div className="flex items-center gap-3">
@@ -101,15 +114,15 @@ export default function CustomerPortal({ onReturnToInternal }) {
               <div>
                 <div className="flex items-center gap-2 mb-1">
                   <span className="font-mono-tag text-xs text-accent-blue font-semibold">
-                    QT-2026-8837
+                    {quotation?.id || 'No quotation'}
                   </span>
                   <Tag variant="blue">{t('status.negotiation', 'Under Negotiation')}</Tag>
                 </div>
                 <h2 className="font-headline-sm text-2xl font-bold text-text-primary">
-                  Solaria Cyber Defense — Commercial Proposal
+                  {quotation?.customer || 'Customer quotation'} — Commercial Proposal
                 </h2>
                 <p className="text-body-sm text-text-secondary text-xs mt-0.5">
-                  Prepared by Devon Miles (Enterprise Deal Desk)
+                  Prepared by {quotation?.assignedTo || 'Deal Desk'}
                 </p>
               </div>
 
@@ -118,7 +131,7 @@ export default function CustomerPortal({ onReturnToInternal }) {
                   {t('portal.proposedValue', 'Proposed Value')}
                 </span>
                 <div className="font-kpi-value text-3xl font-bold text-text-primary mt-0.5">
-                  ₹76,800
+                  ₹{quotationTotal.toLocaleString()}
                 </div>
               </div>
             </div>
@@ -137,48 +150,22 @@ export default function CustomerPortal({ onReturnToInternal }) {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-border-subtle/50">
-                  <tr className="hover:bg-surface-interactive/30">
-                    <td className="py-3.5 font-semibold text-text-primary">
-                      <div>DealFlow360 Enterprise Core License</div>
-                      <div className="text-[10px] text-text-secondary font-mono">
-                        Autonomous pricing & risk orchestration
-                      </div>
-                    </td>
-                    <td className="py-3.5 text-center">
-                      <Tag variant="blue">RECURRING</Tag>
-                    </td>
-                    <td className="py-3.5 text-center font-mono">2</td>
-                    <td className="py-3.5 text-right font-mono text-text-secondary line-through">
-                      ₹72,000
-                    </td>
-                    <td className="py-3.5 text-right font-mono font-bold text-text-primary">
-                      ₹58,680
-                    </td>
-                    <td className="py-3.5 pl-4 text-text-secondary font-mono text-[11px]">
-                      Requires sub-10ms disaster recovery mesh SLA
-                    </td>
-                  </tr>
-                  <tr className="hover:bg-surface-interactive/30">
-                    <td className="py-3.5 font-semibold text-text-primary">
-                      <div>Enterprise Architecture Deployment Sprint</div>
-                      <div className="text-[10px] text-text-secondary font-mono">
-                        Dedicated solutions architect onboarding
-                      </div>
-                    </td>
-                    <td className="py-3.5 text-center">
-                      <Tag variant="neutral">ONE-TIME</Tag>
-                    </td>
-                    <td className="py-3.5 text-center font-mono">1</td>
-                    <td className="py-3.5 text-right font-mono text-text-secondary line-through">
-                      ₹28,000
-                    </td>
-                    <td className="py-3.5 text-right font-mono font-bold text-text-primary">
-                      ₹18,120
-                    </td>
-                    <td className="py-3.5 pl-4 text-text-secondary font-mono text-[11px]">
-                      Target production cutoff date: mid October
-                    </td>
-                  </tr>
+                  {quotationLines.map((line) => {
+                    const quantity = Number(line.quantity || line.qty || 0);
+                    const listPrice = Number(line.list_price || line.unitPrice || 0);
+                    const discount = Number(line.discount_percent || line.discountPct || 0);
+                    const offerPrice = quantity * listPrice * (1 - discount / 100);
+                    return (
+                      <tr key={line.id} className="hover:bg-surface-interactive/30">
+                        <td className="py-3.5 font-semibold text-text-primary">{line.product || line.product_name || line.custom_name}</td>
+                        <td className="py-3.5 text-center"><Tag variant={line.isRecurring ? 'blue' : 'neutral'}>{line.isRecurring ? 'RECURRING' : 'ONE-TIME'}</Tag></td>
+                        <td className="py-3.5 text-center font-mono">{quantity}</td>
+                        <td className="py-3.5 text-right font-mono text-text-secondary">₹{(quantity * listPrice).toLocaleString()}</td>
+                        <td className="py-3.5 text-right font-mono font-bold text-text-primary">₹{offerPrice.toLocaleString()}</td>
+                        <td className="py-3.5 pl-4 text-text-secondary font-mono text-[11px]">{line.custom_description || 'Quotation line item'}</td>
+                      </tr>
+                    );
+                  })}
                 </tbody>
               </table>
             </div>
@@ -269,7 +256,7 @@ export default function CustomerPortal({ onReturnToInternal }) {
                   {t('portal.negotiationSubtitle', 'Autonomous convergence rounds')}
                 </p>
               </div>
-              <Tag variant="blue">ROUND 3/5</Tag>
+              <Tag variant="blue">ROUND {negotiationRounds.length}/5</Tag>
             </div>
 
             <div className="space-y-3">

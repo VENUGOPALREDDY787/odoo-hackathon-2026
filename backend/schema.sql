@@ -16,7 +16,7 @@ CREATE DOMAIN user_role AS TEXT CHECK (VALUE IN ('rep', 'manager', 'finance', 'a
 CREATE DOMAIN customer_tier AS TEXT CHECK (VALUE IN ('Bronze', 'Silver', 'Gold'));
 CREATE DOMAIN quotation_status AS TEXT CHECK (VALUE IN ('draft', 'pending_approval', 'approved', 'rejected', 'sent', 'accepted', 'expired', 'cancelled'));
 CREATE DOMAIN line_type AS TEXT CHECK (VALUE IN ('one_time', 'recurring'));
-CREATE DOMAIN approval_status AS TEXT CHECK (VALUE IN ('pending', 'approved', 'rejected', 'escalated'));
+CREATE DOMAIN approval_status AS TEXT CHECK (VALUE IN ('pending', 'approved', 'rejected', 'returned', 'escalated'));
 CREATE DOMAIN fulfillment_status AS TEXT CHECK (VALUE IN ('pending', 'partial', 'shipped', 'delivered', 'cancelled'));
 CREATE DOMAIN billing_status AS TEXT CHECK (VALUE IN ('pending', 'invoiced', 'paid', 'overdue', 'cancelled'));
 CREATE DOMAIN subscription_interval AS TEXT CHECK (VALUE IN ('monthly', 'quarterly', 'yearly'));

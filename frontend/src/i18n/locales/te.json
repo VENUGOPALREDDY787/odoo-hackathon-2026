@@ -1,0 +1,5 @@
+{
+  "navigation": { "dashboard": "డాష్‌బోర్డ్", "quotations": "కొటేషన్లు", "products": "ఉత్పత్తులు", "reports": "నివేదికలు", "profile": "ప్రొఫైల్" },
+  "common": { "save": "సేవ్ చేయి", "cancel": "రద్దు చేయి", "confirm": "నిర్ధారించు", "all": "అన్నీ" },
+  "status": { "approved": "ఆమోదించబడింది", "pending_approval": "ఆమోదం పెండింగ్‌లో ఉంది", "confirmed": "నిర్ధారించబడింది" }
+}

@@ -512,7 +512,7 @@ CREATE TABLE `approval_logs` (
     `approval_chain_id` CHAR(36),
     `approver_id` CHAR(36) NOT NULL,
     `role_at_approval` ENUM('rep','manager','finance','admin','customer') NOT NULL,
-    `action` ENUM('pending','approved','rejected','escalated') NOT NULL,
+    `action` ENUM('pending','approved','rejected','returned','escalated') NOT NULL,
     `discount_percent_at_review` DECIMAL(5,2),
     `comments` TEXT,
     `ip_address` VARCHAR(45),
@@ -761,3 +761,19 @@ ON DUPLICATE KEY UPDATE
     `role` = VALUES(`role`),
     `is_active` = 1,
     `deleted_at` = NULL;
+
+INSERT INTO `users` (`email`, `password_hash`, `full_name`, `role`, `is_active`)
+VALUES ('customer.demo@dealflow360.local', '$2a$12$eByQ0Yn4oiVoT10y8xIFxu7c.6ItNV56xGJlHAOFcvZQKGpzUogE.', 'Demo Customer', 'customer', 1)
+ON DUPLICATE KEY UPDATE
+        `password_hash` = VALUES(`password_hash`),
+        `full_name` = VALUES(`full_name`),
+        `is_active` = 1,
+        `deleted_at` = NULL;
+
+INSERT INTO `customers` (`user_id`, `company_name`, `tier`, `billing_address`, `shipping_address`)
+SELECT `id`, 'Demo Customer Company', 'Gold', JSON_OBJECT('city', 'Demo City', 'country', 'US'), JSON_OBJECT('city', 'Demo City', 'country', 'US')
+FROM `users`
+WHERE `email` = 'customer.demo@dealflow360.local'
+    AND NOT EXISTS (
+        SELECT 1 FROM `customers` c WHERE c.`user_id` = `users`.`id` AND c.`deleted_at` IS NULL
+    );

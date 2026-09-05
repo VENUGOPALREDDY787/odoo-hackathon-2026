@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { useTranslation } from 'react-i18next';
 import Card from '../components/Card';
@@ -7,26 +7,46 @@ import BigNumber from '../components/BigNumber';
 import CircularGauge from '../components/CircularGauge';
 import BarChart from '../components/BarChart';
 import Tag from '../components/Tag';
-import { DEAL_HEALTH_ANOMALIES } from '../data/mockData';
+import Skeleton from '../components/Skeleton';
+import { acknowledgeDealHealthAlert, getDealHealthDashboard, listDealHealthAlerts } from '../api/client';
 
 export default function DealHealthDashboard({ _onNavigate }) {
   const { t } = useTranslation();
-  const [anomalies] = useState(DEAL_HEALTH_ANOMALIES);
+  const [anomalies, setAnomalies] = useState([]);
+  const [dashboard, setDashboard] = useState({});
   const [actionAlert, setActionAlert] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
 
-  const stalledCount = anomalies.filter((a) => a.issueType === 'STALLED').length;
-  const anomalyCount = anomalies.filter((a) => a.issueType === 'ANOMALY').length;
-  const slippageCount = anomalies.filter((a) => a.issueType === 'SLIPPAGE').length;
+  useEffect(() => {
+    Promise.all([getDealHealthDashboard(), listDealHealthAlerts()]).then(([summary, alerts]) => {
+      setDashboard(summary || {});
+      setAnomalies(alerts.map((alert) => ({
+        ...alert,
+        dealId: alert.quotation_number || alert.quotation_id,
+        customer: alert.customer_name || 'Customer',
+        rep: alert.rep_name || 'Assigned rep',
+        summary: alert.message || alert.description || alert.alert_type,
+        issueType: String(alert.alert_type || 'ANOMALY').toUpperCase(),
+        flaggedDate: alert.created_at,
+      })));
+    }).catch((requestError) => setError(requestError.message)).finally(() => setLoading(false));
+  }, []);
+
+  const stalledCount = dashboard.stalled_deals ?? anomalies.filter((a) => a.issueType === 'STALLED').length;
+  const anomalyCount = dashboard.discount_anomalies ?? anomalies.filter((a) => a.issueType === 'ANOMALY').length;
+  const slippageCount = dashboard.delivery_slippage ?? anomalies.filter((a) => a.issueType === 'SLIPPAGE').length;
 
   const handleNudgeRep = (item) => {
-    setActionAlert(`Notification ping dispatched to ${item.rep} for deal ${item.dealId}.`);
-    setTimeout(() => setActionAlert(null), 3000);
+    acknowledgeDealHealthAlert(item.id).then(() => { setActionAlert(`Alert acknowledged for deal ${item.dealId}.`); setAnomalies((prev) => prev.filter((alert) => alert.id !== item.id)); }).catch((requestError) => setError(requestError.message));
   };
 
   const handleEscalate = (item) => {
-    setActionAlert(`Deal ${item.dealId} escalated directly to VP Commercial Operations.`);
-    setTimeout(() => setActionAlert(null), 3000);
+    acknowledgeDealHealthAlert(item.id).then(() => { setActionAlert(`Deal ${item.dealId} escalated and acknowledged.`); setAnomalies((prev) => prev.filter((alert) => alert.id !== item.id)); }).catch((requestError) => setError(requestError.message));
   };
+
+  if (loading) return <div className="space-y-4"><Skeleton height="6rem" /><Skeleton variant="rounded" height="30rem" /></div>;
+  if (error) return <Card className="p-6 text-status-danger">Unable to load deal health data: {error}</Card>;
 
   return (
     <div data-tour="deal-health" className="w-full max-w-max-width mx-auto space-y-8 animate-in fade-in duration-300">

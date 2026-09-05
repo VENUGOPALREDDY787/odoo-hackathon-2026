@@ -4,6 +4,7 @@ import { container } from '../../../container/index.js';
 import {
   authenticate,
   requireRole,
+  authorize,
   requireInternal,
   requireCustomer,
   requireOwnershipOrRole,
@@ -61,7 +62,7 @@ const magicLinkRateLimiter = rateLimit({
   },
 });
 
-router.post('/register/internal', authRateLimiter, (req, res, next) => getController().registerInternal(req, res, next));
+router.post('/register/internal', authRateLimiter, authenticate(), canManageUsers, (req, res, next) => getController().registerInternal(req, res, next));
 router.post('/register/customer', authRateLimiter, (req, res, next) => getController().registerCustomer(req, res, next));
 router.post('/login', authRateLimiter, (req, res, next) => getController().loginInternal(req, res, next));
 
@@ -80,6 +81,7 @@ router.post('/set-password', authenticate(), (req, res, next) => getController()
 export {
   authenticate,
   requireRole,
+  authorize,
   requireInternal,
   requireCustomer,
   requireOwnershipOrRole,

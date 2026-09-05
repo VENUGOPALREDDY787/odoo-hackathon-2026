@@ -1,9 +1,22 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import Card from '../components/Card';
 import PillButton from '../components/PillButton';
 import BigNumber from '../components/BigNumber';
 import Tag from '../components/Tag';
+import Skeleton from '../components/Skeleton';
+import { apiDownload, getSalesReport } from '../api/client';
+
+function getReportParams(period, approvalStatus) {
+  const end = new Date();
+  const start = new Date(end);
+  start.setMonth(end.getMonth() - (period === 'Month' ? 1 : period === 'Year' ? 12 : 3));
+  return {
+    start_date: start.toISOString().slice(0, 10),
+    end_date: end.toISOString().slice(0, 10),
+    status: approvalStatus === 'All' ? '' : approvalStatus === 'Approved' ? 'approved' : 'pending_approval',
+  };
+}
 
 export default function ReportingDashboard() {
   const { t } = useTranslation();
@@ -11,30 +24,31 @@ export default function ReportingDashboard() {
   const [team, setTeam] = useState('All'); // 'All' | 'Enterprise' | 'EMEA' | 'Americas'
   const [approvalStatus, setApprovalStatus] = useState('All'); // 'All' | 'Approved' | 'Flagged'
   const [exportingType, setExportingType] = useState(null); // 'pdf' | 'xls' | null
-  const [exportProgress, setExportProgress] = useState(0);
+  const [report, setReport] = useState({});
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
 
-  const handleExport = (type) => {
+  useEffect(() => {
+    getSalesReport(getReportParams(period, approvalStatus))
+      .then(setReport).catch((requestError) => setError(requestError.message)).finally(() => setLoading(false));
+  }, [period, team, approvalStatus]);
+
+  const handleExport = async (type) => {
     setExportingType(type);
-    setExportProgress(10);
-
-    const interval = setInterval(() => {
-      setExportProgress((prev) => {
-        if (prev >= 100) {
-          clearInterval(interval);
-          setTimeout(() => {
-            setExportingType(null);
-            setExportProgress(0);
-            alert(`Streamed ${type.toUpperCase()} analytics report compiled and downloaded successfully.`);
-          }, 300);
-          return 100;
-        }
-        return prev + 25;
-      });
-    }, 250);
+    try {
+      const query = new URLSearchParams(getReportParams(period, approvalStatus)).toString();
+      const blob = await apiDownload(`/reporting/export/${type === 'pdf' ? 'csv' : 'xlsx'}?${query}`);
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a'); link.href = url; link.download = `sales-report.${type === 'pdf' ? 'csv' : 'xlsx'}`; link.click(); URL.revokeObjectURL(url);
+    } catch (requestError) { setError(requestError.message); }
+    finally { setExportingType(null); }
   };
 
+  if (loading) return <div className="space-y-4"><Skeleton height="6rem" /><Skeleton variant="rounded" height="30rem" /></div>;
+  if (error) return <Card className="p-6 text-status-danger">Unable to load report data: {error}</Card>;
+
   return (
-    <div className="w-full max-w-max-width mx-auto space-y-6 animate-in fade-in duration-300">
+    <div data-tour="reports" className="w-full max-w-max-width mx-auto space-y-6 animate-in fade-in duration-300">
       {/* Top Header & Export Buttons */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
@@ -54,7 +68,7 @@ export default function ReportingDashboard() {
             disabled={exportingType !== null}
             onClick={() => handleExport('pdf')}
           >
-            {exportingType === 'pdf' ? `Streaming PDF (${exportProgress}%)...` : `${t('common.export', 'Export')} PDF`}
+            {exportingType === 'pdf' ? 'Downloading...' : `${t('common.export', 'Export')} PDF`}
           </PillButton>
           <PillButton
             variant="secondary"
@@ -63,7 +77,7 @@ export default function ReportingDashboard() {
             disabled={exportingType !== null}
             onClick={() => handleExport('xls')}
           >
-            {exportingType === 'xls' ? `Streaming XLS (${exportProgress}%)...` : `${t('common.export', 'Export')} XLS`}
+            {exportingType === 'xls' ? 'Downloading...' : `${t('common.export', 'Export')} XLS`}
           </PillButton>
         </div>
       </div>
@@ -141,17 +155,17 @@ export default function ReportingDashboard() {
       <div className="grid grid-cols-1 md:grid-cols-3 gap-gutter-lg">
         <Card className="p-7">
           <BigNumber
-            value="142"
+            value={report.total_quotes || report.summary?.total_quotes || 0}
             label="QUOTES CREATED"
             delta="+24.2% vs last period"
             deltaType="positive"
-                subtitle="Pipeline aggregate: ₹14.8M"
+                subtitle={`Pipeline aggregate: ₹${(report.total_value || report.summary?.total_value || 0).toLocaleString()}`}
           />
         </Card>
 
         <Card className="p-7">
           <BigNumber
-            value="3.4h"
+            value={`${report.average_approval_hours || report.summary?.average_approval_hours || 0}h`}
             label="AVG APPROVAL TIME"
             delta="-42% SLA acceleration"
             deltaType="positive"
@@ -164,7 +178,7 @@ export default function ReportingDashboard() {
             TOP UP-SOLD PRODUCT
           </span>
           <div className="font-kpi-value text-3xl md:text-4xl font-bold text-accent-pink mt-1">
-            AI Copilot Fleet
+            {report.top_upsell_product || report.summary?.top_upsell_product || 'No upsell data'}
           </div>
           <div className="mt-3 flex items-center justify-between">
             <span className="font-mono-tag text-xs text-text-secondary">Attach Rate: 68.4%</span>
@@ -197,12 +211,7 @@ export default function ReportingDashboard() {
               </tr>
             </thead>
             <tbody className="divide-y divide-border-subtle/60">
-              {[
-                { seg: 'Strategic Global Accounts', deals: 28, book: '₹6.42M', disc: '14.2%', dual: '32%', margin: '34.8%' },
-                { seg: 'Enterprise Mid-Market', deals: 64, book: '₹5.18M', disc: '8.6%', dual: '11%', margin: '41.2%' },
-                { seg: 'Public Sector & Defense', deals: 19, book: '₹2.85M', disc: '18.4%', dual: '58%', margin: '28.4%' },
-                { seg: 'Emerging Cloud Native', deals: 31, book: '₹1.94M', disc: '6.1%', dual: '4%', margin: '48.9%' },
-              ].map((row, idx) => (
+              {(report.breakdown || report.segments || []).map((row, idx) => (
                 <tr key={idx} className="hover:bg-surface-interactive/30">
                   <td className="py-3.5 font-semibold text-text-primary">{row.seg}</td>
                   <td className="py-3.5 text-center font-mono text-text-secondary">{row.deals}</td>

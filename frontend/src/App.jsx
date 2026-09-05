@@ -23,8 +23,7 @@ import ProfileScreen from './screens/ProfileScreen';
 import { clearSession, createProduct, createProductVariant, deleteProduct, recoverSession, signIn, signUp, updateProduct } from './auth/authApi';
 import { roleBasedRedirect } from './auth/roleRedirect';
 import { createProductTour, hasCompletedProductTour } from './tour/productTour';
-
-import { INITIAL_QUOTATIONS } from './data/mockData';
+import { listQuotations, normalizeQuotation, submitQuotation as submitQuotationApi, createQuotation as createQuotationApi } from './api/client';
 
 const pageVariants = {
   initial: { opacity: 0, x: 20 },
@@ -62,7 +61,9 @@ export default function App() {
     );
   });
 
-  const [quotations, setQuotations] = useState(INITIAL_QUOTATIONS);
+  const [quotations, setQuotations] = useState([]);
+  const [quotationsLoading, setQuotationsLoading] = useState(false);
+  const [quotationsError, setQuotationsError] = useState('');
   const [selectedQuotation, setSelectedQuotation] = useState(null);
   const [selectedProduct, setSelectedProduct] = useState(null);
   const [productReloadKey, setProductReloadKey] = useState(0);
@@ -90,6 +91,18 @@ export default function App() {
       }
     });
   }, []);
+
+  useEffect(() => {
+    if (authStatus !== 'authenticated') return;
+    setQuotationsLoading(true);
+    listQuotations()
+      .then((items) => {
+        setQuotations(items);
+        setQuotationsError('');
+      })
+      .catch((error) => setQuotationsError(error.message))
+      .finally(() => setQuotationsLoading(false));
+  }, [authStatus]);
 
   // Sync hash routing
   useEffect(() => {
@@ -183,6 +196,7 @@ export default function App() {
       const tour = createProductTour({
         navigate: handleTabChange,
         isMobile: viewport.isMobile,
+        role: currentUser?.role || 'customer',
         onStartExploring: () => {
           tourRef.current = null;
         },
@@ -264,51 +278,35 @@ export default function App() {
     }
   };
 
-  const handleSaveDraft = (quote) => {
-    setQuotations((prev) => {
-      const idx = prev.findIndex((q) => q.id === quote.id);
-      if (idx >= 0) {
-        const copy = [...prev];
-        copy[idx] = { ...copy[idx], ...quote };
-        return copy;
-      }
-      return [quote, ...prev];
-    });
-    showToast(`Quotation ${quote.id} saved to Drafts.`);
-    handleTabChange('quotations');
+  const handleSaveDraft = async (quote) => {
+    try {
+      const saved = quote.id && quote.id.includes('-') && quote.id.length > 20
+        ? normalizeQuotation(quote)
+        : await createQuotationApi({
+          customer_id: quote.customer_id || currentUser?.customer_id,
+          currency: 'INR',
+          valid_until: quote.expiresAt || new Date(Date.now() + 30 * 86400000).toISOString(),
+          metadata: { customer_name: quote.customer },
+        });
+      setQuotations((prev) => [saved, ...prev.filter((item) => item.id !== saved.id)]);
+      showToast(`Quotation ${saved.id} saved to Drafts.`);
+      handleTabChange('quotations');
+    } catch (error) {
+      setQuotationsError(error.message);
+      showToast(error.message);
+    }
   };
 
-  const handleSubmitApproval = (quote) => {
-    const updated = {
-      ...quote,
-      status: 'pending_approval',
-      stage: 'Sales Manager Review',
-      assignedTo: currentUser.fullName || currentUser.full_name || currentUser.name,
-      createdAt: new Date().toISOString().slice(0, 10),
-      auditTrails: [
-        {
-          user: `${currentUser.fullName || currentUser.full_name || currentUser.name} (${currentUser.role.toUpperCase()})`,
-          action: 'Submitted Quotation for Governance Review',
-          date: new Date().toISOString().replace('T', ' ').slice(0, 16),
-          note: `Risk score ${quote.blended_risk_score}/100. Dual signoff required: ${
-            quote.requiresFinance ? 'YES' : 'NO'
-          }.`,
-        },
-      ],
-    };
-
-    setQuotations((prev) => {
-      const idx = prev.findIndex((q) => q.id === quote.id);
-      if (idx >= 0) {
-        const copy = [...prev];
-        copy[idx] = updated;
-        return copy;
-      }
-      return [updated, ...prev];
-    });
-
-    showToast(`Quotation ${quote.id} submitted for policy approval!`);
-    handleTabChange('approvals');
+  const handleSubmitApproval = async (quote) => {
+    try {
+      const updated = await submitQuotationApi(quote.id, { expected_version: quote.version });
+      setQuotations((prev) => prev.map((item) => item.id === updated.id ? updated : item));
+      showToast(`Quotation ${quote.id} submitted for policy approval!`);
+      handleTabChange('approvals');
+    } catch (error) {
+      setQuotationsError(error.message);
+      showToast(error.message);
+    }
   };
 
   const handleUpdateQuotationStatus = (quoteId, newStatus, newStage, newAudit) => {
@@ -537,6 +535,8 @@ export default function App() {
                   onNavigate={handleTabChange}
                   quotations={quotations}
                   pendingApprovalsCount={pendingApprovalsCount}
+                    loading={quotationsLoading}
+                    error={quotationsError}
                 />
               )}
 
@@ -552,6 +552,8 @@ export default function App() {
               {activeTab === 'quotations' && (
                 <QuotationsKanban
                   quotations={quotations}
+                  loading={quotationsLoading}
+                  error={quotationsError}
                   onSelectQuotation={handleSelectQuotation}
                   onNewQuotation={handleNewQuotation}
                 />
@@ -560,6 +562,7 @@ export default function App() {
               {activeTab === 'quotation-builder' && (
                 <QuotationBuilder
                   initialQuotation={selectedQuotation}
+                  currentUser={currentUser}
                   onSaveDraft={handleSaveDraft}
                   onSubmitApproval={handleSubmitApproval}
                   onBack={() => handleTabChange('quotations')}
@@ -569,6 +572,7 @@ export default function App() {
               {activeTab === 'approvals' && (
                 <ApprovalsHub
                   quotations={quotations}
+                  onRefreshQuotations={() => listQuotations().then(setQuotations)}
                   onUpdateQuotationStatus={handleUpdateQuotationStatus}
                 />
               )}

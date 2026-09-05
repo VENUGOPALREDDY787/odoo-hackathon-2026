@@ -1,0 +1,5 @@
+{
+  "navigation": { "dashboard": "ಡ್ಯಾಶ್‌ಬೋರ್ಡ್", "quotations": "ಕೋಟೇಶನ್‌ಗಳು", "products": "ಉತ್ಪನ್ನಗಳು", "reports": "ವರದಿಗಳು", "profile": "ಪ್ರೊಫೈಲ್" },
+  "common": { "save": "ಉಳಿಸಿ", "cancel": "ರದ್ದುಮಾಡಿ", "confirm": "ದೃಢೀಕರಿಸಿ", "all": "ಎಲ್ಲಾ" },
+  "status": { "approved": "ಅನುಮೋದಿಸಲಾಗಿದೆ", "pending_approval": "ಅನುಮೋದನೆ ಬಾಕಿ", "confirmed": "ದೃಢೀಕರಿಸಲಾಗಿದೆ" }
+}

@@ -8,7 +8,7 @@ export class ProductController {
   // ==================== PRODUCTS ====================
 
   create = asyncHandler(async (req, res) => {
-    const product = await this.service.createProduct(req.body);
+    const product = await this.service.createProduct(req.body, req.user);
     res.status(201).json({ data: product });
   });
 
@@ -18,7 +18,7 @@ export class ProductController {
   });
 
   update = asyncHandler(async (req, res) => {
-    const product = await this.service.updateProduct(req.params.id, req.body);
+    const product = await this.service.updateProduct(req.params.id, req.body, req.user);
     res.json({ data: product });
   });
 

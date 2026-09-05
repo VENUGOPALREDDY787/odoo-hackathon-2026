@@ -2,6 +2,8 @@ import i18n from 'i18next';
 import { initReactI18next } from 'react-i18next';
 import enTranslations from './locales/en.json';
 import hiTranslations from './locales/hi.json';
+import knTranslations from './locales/kn.json';
+import teTranslations from './locales/te.json';
 
 const savedLanguage = typeof window !== 'undefined' ? localStorage.getItem('dealflow_language') : null;
 const defaultLanguage = savedLanguage || 'en';
@@ -11,7 +13,9 @@ i18n
   .init({
     resources: {
       en: { translation: enTranslations },
-      hi: { translation: hiTranslations }
+      hi: { translation: hiTranslations },
+      kn: { translation: knTranslations },
+      te: { translation: teTranslations }
     },
     lng: defaultLanguage,
     fallbackLng: 'en',

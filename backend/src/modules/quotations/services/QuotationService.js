@@ -540,6 +540,19 @@ export class QuotationService {
       throw error;
     }
   }
+
+  async acceptQuotation(quotationId, user) {
+    if (user?.role !== 'customer') { throw new AuthorizationError('Only the quotation customer can accept this quotation.'); }
+    const customer = await this.db('customers').where({ user_id: user.id, deleted_at: null }).select('id').first();
+    if (!customer) { throw new AuthorizationError('Customer profile not found.'); }
+    const quotation = await this.db('quotations').where({ id: quotationId, customer_id: customer.id, deleted_at: null }).first();
+    if (!quotation) { throw new AuthorizationError('You cannot accept this quotation.'); }
+    if (!['approved', 'sent', 'negotiation'].includes(quotation.status)) {
+      throw new ValidationError(`Quotation cannot be accepted from status '${quotation.status}'.`);
+    }
+    await this.db('quotations').where({ id: quotationId }).update({ status: 'accepted', updated_at: new Date(), version: this.db.raw('version + 1') });
+    return this.quotationRepo.findWithDetails(quotationId);
+  }
 }
 
 export default QuotationService;

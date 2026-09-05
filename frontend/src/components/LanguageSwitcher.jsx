@@ -7,11 +7,13 @@ export default function LanguageSwitcher({ className = '', dropDirection = 'down
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef(null);
 
-  const currentLang = i18n.language?.startsWith('hi') ? 'hi' : 'en';
+  const currentLang = ['en', 'hi', 'kn', 'te'].find((language) => i18n.language?.startsWith(language)) || 'en';
 
   const languages = [
     { code: 'en', label: 'English', native: 'English', flag: '🇬🇧' },
     { code: 'hi', label: 'Hindi', native: 'हिन्दी', flag: '🇮🇳' },
+    { code: 'kn', label: 'Kannada', native: 'ಕನ್ನಡ', flag: '🇮🇳' },
+    { code: 'te', label: 'Telugu', native: 'తెలుగు', flag: '🇮🇳' },
   ];
 
   // Close dropdown on outside click

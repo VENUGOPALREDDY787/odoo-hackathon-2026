@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import Card from '../components/Card';
 import PillButton from '../components/PillButton';
@@ -6,17 +6,31 @@ import StatusBadge from '../components/StatusBadge';
 import Tag from '../components/Tag';
 import Stepper from '../components/Stepper';
 import ListItem from '../components/ListItem';
-import { calculateBlendedRisk } from '../data/mockData';
+import Skeleton from '../components/Skeleton';
+import { approveQuotation, getApproval, listQuotations, rejectQuotation, returnQuotation } from '../api/client';
 
 export default function ApprovalsHub({
   quotations = [],
   onUpdateQuotationStatus,
+  onRefreshQuotations,
 }) {
   const { t } = useTranslation();
   const [selectedQuote, setSelectedQuote] = useState(null);
   const [pendingOnly, setPendingOnly] = useState(true);
   const [actionModal, setActionModal] = useState(null); // 'approve' | 'return' | 'reject'
   const [actionReason, setActionReason] = useState('');
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+  const [approval, setApproval] = useState(null);
+
+  useEffect(() => {
+    listQuotations().then(() => setError('')).catch((requestError) => setError(requestError.message)).finally(() => setLoading(false));
+  }, []);
+
+  useEffect(() => {
+    if (!selectedQuote?.id) return;
+    getApproval(selectedQuote.id).then(setApproval).catch((requestError) => setError(requestError.message));
+  }, [selectedQuote?.id]);
 
   // Filter quotes
   const approvalQuotes = quotations.filter((q) => {
@@ -33,29 +47,18 @@ export default function ApprovalsHub({
   const handleAction = (type) => {
     if (!selectedQuote) return;
 
-    let newStatus = 'approved';
-    let stageName = 'Confirmed & Routing to Fulfillment';
-
-    if (type === 'return') {
-      newStatus = 'draft';
-      stageName = 'Returned to Rep for Revision';
-    } else if (type === 'reject') {
-      newStatus = 'draft';
-      stageName = 'Rejected by Deal Desk';
-    }
-
-    const newAudit = {
-      user: 'Current User (Manager/Finance)',
-      action: type === 'approve' ? 'Approved Quotation' : type === 'return' ? 'Returned for Revision' : 'Rejected Quotation',
-      date: new Date().toISOString().replace('T', ' ').slice(0, 16),
-      note: actionReason || (type === 'approve' ? 'Terms approved by governance policy.' : 'Revision required on over-limit lines.'),
-    };
-
-    onUpdateQuotationStatus(selectedQuote.id, newStatus, stageName, newAudit);
-    setSelectedQuote(null);
-    setActionModal(null);
-    setActionReason('');
+    const action = type === 'approve' ? approveQuotation : type === 'reject' ? rejectQuotation : returnQuotation;
+    action(selectedQuote.id, actionReason).then(() => {
+      onUpdateQuotationStatus?.(selectedQuote.id, type === 'approve' ? 'approved' : 'draft', '', {});
+      onRefreshQuotations?.();
+      setSelectedQuote(null);
+      setActionModal(null);
+      setActionReason('');
+    }).catch((requestError) => setError(requestError.message));
   };
+
+  if (loading) return <div className="space-y-4"><Skeleton height="6rem" /><Skeleton variant="rounded" height="28rem" /></div>;
+  if (error) return <Card className="p-6 text-status-danger">Unable to load approval data: {error}</Card>;
 
   return (
     <div data-tour="approval" className="w-full max-w-max-width mx-auto space-y-6 animate-in fade-in duration-300">
@@ -126,7 +129,7 @@ export default function ApprovalsHub({
               </div>
             ) : (
               approvalQuotes.map((q) => {
-                const risk = calculateBlendedRisk(q.lines, q.customerTier);
+                const risk = { score: q.blended_risk_score || 0, level: q.blended_risk_score > 60 ? 'HIGH' : q.blended_risk_score > 25 ? 'MEDIUM' : 'LOW', flaggedLines: [] };
                 return (
                   <ListItem
                     key={q.id}
@@ -258,7 +261,7 @@ export default function ApprovalsHub({
 
           {/* "Why This Quote Was Flagged" Panel */}
           {(() => {
-            const risk = calculateBlendedRisk(selectedQuote.lines, selectedQuote.customerTier);
+            const risk = approval || { score: selectedQuote.blended_risk_score || 0, level: 'MEDIUM', flaggedLines: [] };
             return (
               <Card className="p-6">
                 <div className="flex items-center justify-between pb-3 border-b border-border-subtle mb-4">

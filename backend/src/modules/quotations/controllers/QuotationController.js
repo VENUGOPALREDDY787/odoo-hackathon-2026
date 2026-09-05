@@ -22,6 +22,11 @@ export class QuotationController {
       assigned_rep_id: req.query.assigned_rep_id,
       status: req.query.status,
     };
+    if (req.user?.role === 'rep') { filters.assigned_rep_id = req.user.id; }
+    if (req.user?.role === 'customer') {
+      const customer = await this.service.db('customers').where({ user_id: req.user.id, deleted_at: null }).select('id').first();
+      filters.customer_id = customer?.id || '00000000-0000-0000-0000-000000000000';
+    }
     const options = {
       page: req.query.page || 1,
       limit: req.query.limit || 20,
@@ -80,6 +85,11 @@ export class QuotationController {
 
     const result = await this.service.submitForApproval(req.params.id, user, idempotencyKey, expectedVersion, reqMeta);
     res.json({ data: result });
+  });
+
+  accept = asyncHandler(async (req, res) => {
+    const quotation = await this.service.acceptQuotation(req.params.id, req.user);
+    res.json({ data: quotation });
   });
 }
 

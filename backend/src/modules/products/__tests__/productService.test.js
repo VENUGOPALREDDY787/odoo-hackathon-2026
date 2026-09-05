@@ -63,7 +63,7 @@ describe('ProductService Unit Tests', () => {
         name: 'Sample Widget',
         category_id: 'cat-uuid-1',
         base_price: 99.99,
-      });
+      }, { role: 'admin' });
 
       expect(result).toBeDefined();
       expect(mockDb.insert).toHaveBeenCalled();
@@ -82,7 +82,7 @@ describe('ProductService Unit Tests', () => {
           name: 'Duplicate Widget',
           category_id: 'cat-uuid-1',
           base_price: 99.99,
-        })
+        }, { role: 'admin' })
       ).rejects.toThrow(ValidationError);
     });
   });
@@ -108,7 +108,7 @@ describe('ProductService Unit Tests', () => {
         .mockResolvedValueOnce(sampleProduct) // getProduct
         .mockResolvedValueOnce({ ...sampleProduct, name: 'Updated Widget' }); // findById after update
 
-      const result = await service.updateProduct('prod-uuid-1', { name: 'Updated Widget' });
+      const result = await service.updateProduct('prod-uuid-1', { name: 'Updated Widget' }, { role: 'admin' });
 
       expect(result.name).toBe('Updated Widget');
       expect(mockDb.update).toHaveBeenCalled();

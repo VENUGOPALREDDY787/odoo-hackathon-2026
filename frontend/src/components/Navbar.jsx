@@ -24,7 +24,7 @@ export default function Navbar({
     ],
     rep: [
       ['dashboard', 'Dashboard', 'dashboard'], ['quotations', 'Quotations', 'description'],
-      ['products', 'Products', 'inventory_2'], ['fulfillment', 'Fulfillment', 'local_shipping'],
+      ['products', 'Product Catalog', 'inventory_2'], ['fulfillment', 'Fulfillment', 'local_shipping'],
       ['subscriptions', 'Subscriptions', 'autorenew'], ['invoices', 'Invoices', 'receipt_long'], ['deal-health', 'Deal Health', 'monitor_heart'],
     ],
     manager: [
@@ -206,7 +206,7 @@ export default function Navbar({
             </div>
           )}
 
-          <button type="button" onClick={() => setActiveTab('profile')} className="mt-4 w-full text-left text-sm text-text-secondary hover:text-text-primary transition-colors">View Profile</button>
+          <button type="button" onClick={() => setActiveTab('profile')} data-tour="account" className="mt-4 w-full text-left text-sm text-text-secondary hover:text-text-primary transition-colors">View Profile</button>
           <button type="button" onClick={onLogout} className="mt-3 w-full text-left text-sm text-status-danger hover:underline">Logout</button>
 
           {/* New Quotation CTA (Desktop) */}

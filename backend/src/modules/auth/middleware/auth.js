@@ -43,6 +43,15 @@ export function requireRole(...allowedRoles) {
   };
 }
 
+export function authorize(...allowedRoles) {
+  return (req, res, next) => {
+    if (!req.user || !allowedRoles.includes(req.user.role)) {
+      return res.status(403).json({ error: { code: 'FORBIDDEN', message: 'Forbidden' } });
+    }
+    return next();
+  };
+}
+
 export function requireInternal() {
   return (req, res, next) => {
     if (!req.user) {
@@ -106,6 +115,30 @@ export function requireOwnershipOrRole(resourceUserIdField = 'assigned_rep_id', 
   };
 }
 
+export function requireQuotationAccess(...managerRoles) {
+  return async (req, res, next) => {
+    if (!req.user) { throw new AuthenticationError('Authentication required'); }
+    if (managerRoles.includes(req.user.role)) { return next(); }
+
+    const quotationId = req.params.id || req.params.quotationId || req.body.quotation_id;
+    if (!quotationId) { throw new AuthorizationError('Quotation reference required'); }
+
+    const db = container.get('database');
+    const quotation = await db('quotations as q')
+      .leftJoin('customers as c', 'c.id', 'q.customer_id')
+      .where({ 'q.id': quotationId, 'q.deleted_at': null })
+      .select('q.assigned_rep_id', 'c.user_id as customer_user_id')
+      .first();
+
+    if (!quotation) { throw new AuthorizationError('Quotation not found'); }
+    const permitted = req.user.role === 'rep'
+      ? quotation.assigned_rep_id === req.user.id
+      : req.user.role === 'customer' && quotation.customer_user_id === req.user.id;
+    if (!permitted) { throw new AuthorizationError('You cannot access this quotation'); }
+    next();
+  };
+}
+
 export function optionalAuth() {
   return async (req, res, next) => {
     const authHeader = req.headers.authorization;
@@ -132,7 +165,7 @@ export const canManageUsers = requireRole('admin');
 export const canManageFinance = requireRole('admin', 'finance');
 export const canManageApprovals = requireRole('admin', 'manager', 'finance');
 export const canViewReports = requireRole('admin', 'manager', 'finance');
-export const canManageProducts = requireRole('admin', 'manager');
+export const canManageProducts = requireRole('admin');
 export const canManageDiscounts = requireRole('admin', 'manager', 'finance');
 export const canManageWarehouses = requireRole('admin', 'manager');
 export const canManageSubscriptions = requireRole('admin', 'manager', 'finance');
@@ -143,9 +176,11 @@ export const canViewDealHealth = requireRole('admin', 'manager', 'rep');
 export default {
   authenticate,
   requireRole,
+  authorize,
   requireInternal,
   requireCustomer,
   requireOwnershipOrRole,
+  requireQuotationAccess,
   optionalAuth,
   canManageUsers,
   canManageFinance,
