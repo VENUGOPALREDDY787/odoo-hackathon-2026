@@ -1,0 +1,158 @@
+# =========================================================
+# DealFlow360 - Git Ignore
+# =========================================================
+
+# -------------------------
+# OS / Editor
+# -------------------------
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+.vscode/
+.idea/
+
+# -------------------------
+# Environment / Secrets
+# -------------------------
+.env
+.env.*
+!.env.example
+
+*.pem
+*.key
+*.crt
+
+# -------------------------
+# Python
+# -------------------------
+__pycache__/
+*.py[cod]
+*$py.class
+
+*.so
+*.egg
+*.egg-info/
+dist/
+build/
+.eggs/
+
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+.coverage
+htmlcov/
+
+# Python virtual environments
+venv/
+.venv/
+env/
+ENV/
+
+# -------------------------
+# Odoo
+# -------------------------
+*.log
+odoo.log
+odoo-server.log
+
+# Odoo generated files
+filestore/
+sessions/
+
+# Odoo configuration
+odoo.conf
+
+# Odoo database dumps
+*.dump
+*.sql
+*.sql.gz
+
+# -------------------------
+# PostgreSQL
+# -------------------------
+*.sqlite
+*.sqlite3
+
+# -------------------------
+# Node / React
+# -------------------------
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+.npm/
+.yarn/
+.pnpm-store/
+
+# React / frontend builds
+dist/
+build/
+.next/
+out/
+coverage/
+
+# -------------------------
+# Temporary files
+# -------------------------
+*.tmp
+*.temp
+*.cache
+
+tmp/
+temp/
+
+# -------------------------
+# Logs
+# -------------------------
+logs/
+*.log
+
+# -------------------------
+# Docker
+# -------------------------
+docker-compose.override.yml
+
+# -------------------------
+# Testing
+# -------------------------
+.pytest_cache/
+.tox/
+.nox/
+
+# -------------------------
+# Local databases / data
+# -------------------------
+data/
+database/
+*.db
+
+# -------------------------
+# Secrets / credentials
+# -------------------------
+secrets/
+credentials/
+*.secret
+
+# -------------------------
+# Backup files
+# -------------------------
+*.bak
+*.backup
+*~
+
+# -------------------------
+# IDE local settings
+# -------------------------
+.vscode/settings.json
+.vscode/launch.json
+.vscode/tasks.json
+
+# -------------------------
+# Generated files
+# -------------------------
+generated/
+uploads/

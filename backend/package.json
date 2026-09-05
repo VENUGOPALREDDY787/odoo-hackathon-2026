@@ -1,0 +1,47 @@
+{
+  "name": "dealflow360-backend",
+  "version": "1.0.0",
+  "description": "DealFlow360 B2B Sales Operations Backend",
+  "main": "src/server.js",
+  "type": "module",
+  "scripts": {
+    "start": "node src/server.js",
+    "dev": "node --watch src/server.js",
+    "test": "node --experimental-vm-modules node_modules/jest/bin/jest.js --coverage",
+    "test:watch": "node --experimental-vm-modules node_modules/jest/bin/jest.js --watch",
+    "lint": "eslint src/",
+    "db:migrate": "node src/scripts/migrate.js",
+    "db:seed": "node src/scripts/seed.js"
+  },
+  "keywords": ["dealflow", "b2b", "sales", "operations"],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "express": "^4.19.2",
+    "cors": "^2.8.5",
+    "helmet": "^7.1.0",
+    "compression": "^1.7.4",
+    "express-rate-limit": "^7.2.0",
+    "pino": "^9.0.0",
+    "pino-http": "^10.1.0",
+    "pino-pretty": "^11.0.0",
+    "zod": "^3.23.0",
+    "dotenv": "^16.4.5",
+    "uuid": "^9.0.1",
+    "mysql2": "^3.9.7",
+    "knex": "^3.1.0",
+    "bcryptjs": "^2.4.3",
+    "jsonwebtoken": "^9.0.2",
+    "joi": "^17.13.1"
+  },
+  "devDependencies": {
+    "jest": "^29.7.0",
+    "supertest": "^7.0.0",
+    "eslint": "^8.57.0",
+    "@eslint/js": "^9.2.0",
+    "globals": "^15.2.0"
+  },
+  "engines": {
+    "node": ">=20.0.0"
+  }
+}
