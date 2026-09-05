@@ -40,6 +40,17 @@ const envSchema = z.object({
 
   // Feature flags
   ENABLE_SWAGGER: z.coerce.boolean().default(false),
+
+  // Redis (optional — deal health dashboard cache)
+  REDIS_URL: z.string().optional(),
+  REDIS_HOST: z.string().optional(),
+  REDIS_PORT: z.coerce.number().int().positive().default(6379),
+
+  // Deal health detection thresholds
+  DEAL_HEALTH_CRON: z.string().default('0,30 * * * *'),
+  STALLED_DEAL_DAYS: z.coerce.number().int().positive().default(7),
+  ANOMALY_STDDEV_MULTIPLIER: z.coerce.number().positive().default(1.5),
+  MIN_HISTORICAL_QUOTATIONS: z.coerce.number().int().positive().default(3),
 });
 
 let config;

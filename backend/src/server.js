@@ -3,6 +3,7 @@ import config from './config/index.js';
 import { logger } from './utils/logger.js';
 import { getDatabase, closeDatabase } from './utils/database.js';
 import { container } from './container/index.js';
+import { Server as SocketIOServer } from 'socket.io';
 
 import { registerAuthModule } from './modules/auth/index.js';
 import { registerProductModule } from './modules/products/index.js';
@@ -25,6 +26,33 @@ async function bootstrap() {
 
   const server = app.listen(config.PORT, config.HOST, () => {
     logger.info({ port: config.PORT, host: config.HOST, env: config.NODE_ENV }, 'Server started');
+  });
+
+  // Attach Socket.IO to the HTTP server
+  const io = new SocketIOServer(server, {
+    cors: {
+      origin: config.CORS_ORIGIN === '*' ? true : config.CORS_ORIGIN.split(','),
+      methods: ['GET', 'POST'],
+      credentials: true,
+    },
+  });
+
+  // Register io in the container so services (DealHealthService) can use it
+  container.registerSingleton('io', io);
+
+  io.on('connection', (socket) => {
+    logger.debug({ socketId: socket.id }, 'Socket.IO client connected');
+
+    // Clients join 'deal-health' room to receive real-time deal health alerts
+    socket.on('subscribe:deal-health', () => {
+      socket.join('deal-health');
+      logger.debug({ socketId: socket.id }, 'Client subscribed to deal-health room');
+      socket.emit('subscribed', { room: 'deal-health', timestamp: new Date().toISOString() });
+    });
+
+    socket.on('disconnect', () => {
+      logger.debug({ socketId: socket.id }, 'Socket.IO client disconnected');
+    });
   });
 
   const shutdown = async (signal) => {
