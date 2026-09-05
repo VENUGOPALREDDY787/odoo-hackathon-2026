@@ -58,7 +58,7 @@ export default function ProductCatalog({ onSelectProduct, onNewProduct }) {
 
       {/* Filter Bar */}
       <div className="flex flex-wrap items-center justify-between gap-3 bg-surface-card border border-border-subtle rounded-2xl p-4">
-        <div className="relative w-72">
+        <div className="relative w-full sm:w-72">
           <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-[18px] text-text-secondary">
             search
           </span>
@@ -79,7 +79,7 @@ export default function ProductCatalog({ onSelectProduct, onNewProduct }) {
               className={`px-3 py-1.5 rounded-full text-xs font-mono transition-colors whitespace-nowrap ${
                 categoryFilter === cat
                   ? 'bg-accent-blue text-surface-base font-bold'
-                  : 'bg-surface-interactive border border-border-subtle text-text-secondary hover:text-white'
+                  : 'bg-surface-interactive border border-border-subtle text-text-secondary hover:text-text-primary'
               }`}
             >
               {cat === 'ALL' ? t('common.all', 'ALL') : cat}
@@ -91,7 +91,7 @@ export default function ProductCatalog({ onSelectProduct, onNewProduct }) {
       {/* Product Table */}
       <Card className="p-0 overflow-hidden">
         <div className="overflow-x-auto">
-          <table className="w-full text-left text-xs border-collapse">
+          <table className="w-full min-w-[760px] text-left text-xs border-collapse">
             <thead>
               <tr className="border-b border-border-subtle bg-surface-interactive/60 font-label-caps text-text-secondary uppercase text-[10px]">
                 <th className="py-3.5 px-6">{t('builder.productName', 'Product Name')}</th>

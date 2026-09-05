@@ -178,14 +178,14 @@ export default function QuotationBuilder({
   };
 
   return (
-    <div className="w-full max-w-max-width mx-auto space-y-6 animate-in fade-in duration-300">
+    <div data-tour="quotation-builder" className="w-full max-w-max-width mx-auto space-y-6 animate-in fade-in duration-300">
       {/* Top Header & Breadcrumb */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div className="flex items-center gap-3">
           {onBack && (
             <button
               onClick={onBack}
-              className="w-9 h-9 rounded-full bg-surface-interactive border border-border-subtle flex items-center justify-center text-text-secondary hover:text-white hover:border-accent-blue transition-colors"
+              className="w-9 h-9 rounded-full bg-surface-interactive border border-border-subtle flex items-center justify-center text-text-secondary hover:text-text-primary hover:border-accent-blue transition-colors"
             >
               <span className="material-symbols-outlined text-[18px]">arrow_back</span>
             </button>
@@ -231,7 +231,7 @@ export default function QuotationBuilder({
                 className={`px-3 py-1 rounded-full text-xs transition-colors cursor-pointer ${
                   customerTier === t
                     ? 'bg-accent-blue text-surface-base font-bold'
-                    : 'text-text-secondary hover:text-white'
+                    : 'text-text-secondary hover:text-text-primary'
                 }`}
               >
                 {t}
@@ -247,6 +247,7 @@ export default function QuotationBuilder({
         <div className="lg:col-span-7 space-y-6 min-w-0">
           {/* Running Blended Risk Score KPI Strip */}
           <Card
+            dataTour="risk"
             className={`transition-all duration-500 ${
               highlightScore
                 ? 'border-status-warning bg-surface-card/90 shadow-[0_0_24px_rgba(245,158,11,0.2)] ring-1 ring-status-warning/30'
@@ -388,6 +389,7 @@ export default function QuotationBuilder({
                               min="0"
                               max="100"
                               step="0.5"
+                              data-tour="discount"
                               value={line.discountPct}
                               onChange={(e) =>
                                 handleUpdateLine(
@@ -457,7 +459,7 @@ export default function QuotationBuilder({
                   </span>
                   <button
                     onClick={() => setShowProductPicker(false)}
-                    className="text-text-secondary hover:text-white p-1"
+                    className="text-text-secondary hover:text-text-primary p-1"
                   >
                     <span className="material-symbols-outlined text-[18px]">close</span>
                   </button>
@@ -579,7 +581,7 @@ export default function QuotationBuilder({
       </div>
 
       {/* Footer Sticky Toolbar */}
-      <div className="sticky bottom-4 z-40 bg-surface-card/90 backdrop-blur-xl border border-border-subtle rounded-full p-3.5 shadow-[0_10px_35px_rgba(0,0,0,0.6)] flex flex-col sm:flex-row sm:items-center justify-between gap-4 max-w-max-width mx-auto px-3">
+      <div className="sticky bottom-4 z-40 bg-surface-card/90 backdrop-blur-xl border border-border-subtle rounded-full p-3.5 shadow-[0_10px_35px_rgb(0 0 0 / 0.28)] flex flex-col sm:flex-row sm:items-center justify-between gap-4 max-w-max-width mx-auto px-3">
         <div className="flex items-center gap-3 flex-wrap">
           <span className="font-mono-tag text-xs text-text-secondary">{t('common.details', 'Summary')}:</span>
           <span className="font-mono-data font-semibold text-text-primary text-sm">

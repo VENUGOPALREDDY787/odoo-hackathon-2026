@@ -1,8 +1,10 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { useTranslation } from 'react-i18next';
 import Navbar from './components/Navbar';
 import LanguageSwitcher from './components/LanguageSwitcher';
+import ThemeToggle from './components/ThemeToggle';
+import useViewport from './hooks/useViewport';
 import SalesDashboard from './screens/SalesDashboard';
 import QuotationsKanban from './screens/QuotationsKanban';
 import QuotationBuilder from './screens/QuotationBuilder';
@@ -17,6 +19,7 @@ import ProductDetail from './screens/ProductDetail';
 import DiscountConfig from './screens/DiscountConfig';
 import CustomerPortal from './screens/CustomerPortal';
 import LoginScreen from './screens/LoginScreen';
+import { createProductTour, hasCompletedProductTour } from './tour/productTour';
 
 import { INITIAL_QUOTATIONS } from './data/mockData';
 
@@ -29,6 +32,7 @@ const pageVariants = {
 
 export default function App() {
   const { t } = useTranslation();
+  const viewport = useViewport();
   const [activeTab, setActiveTab] = useState('login');
   const [userRole, setUserRole] = useState('rep');
   const [currentUser, setCurrentUser] = useState({
@@ -38,11 +42,20 @@ export default function App() {
   });
   const [scrolled, setScrolled] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [theme, setTheme] = useState(() => {
+    if (typeof window === 'undefined') return 'dark';
+    return (
+      localStorage.getItem('dealflow360-theme') ||
+      (window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark')
+    );
+  });
 
   const [quotations, setQuotations] = useState(INITIAL_QUOTATIONS);
   const [selectedQuotation, setSelectedQuotation] = useState(null);
   const [selectedProduct, setSelectedProduct] = useState(null);
   const [toastMessage, setToastMessage] = useState(null);
+  const tourRef = useRef(null);
+  const autoTourStartedRef = useRef(false);
 
   // Sync hash routing
   useEffect(() => {
@@ -66,6 +79,14 @@ export default function App() {
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
+  useEffect(() => {
+    const root = document.documentElement;
+    root.classList.toggle('light', theme === 'light');
+    root.classList.toggle('dark', theme === 'dark');
+    root.dataset.theme = theme;
+    localStorage.setItem('dealflow360-theme', theme);
+  }, [theme]);
+
   const showToast = (msg) => {
     setToastMessage(msg);
     setTimeout(() => setToastMessage(null), 3500);
@@ -75,13 +96,52 @@ export default function App() {
     setActiveTab(tab);
     window.location.hash = tab;
     // Don't scroll to top on mobile - let content scroll naturally
-    if (window.innerWidth >= 768) {
+    if (!viewport.isMobile) {
       window.scrollTo({ top: 0, behavior: 'smooth' });
     }
-    if (window.innerWidth < 768) {
+    if (viewport.isMobile) {
       setMobileMenuOpen(false);
     }
   };
+
+  const startProductTour = () => {
+    if (tourRef.current) {
+      tourRef.current.destroy();
+      tourRef.current = null;
+    }
+
+    if (activeTab !== 'dashboard') {
+      handleTabChange('dashboard');
+    }
+
+    window.setTimeout(() => {
+      const tour = createProductTour({
+        navigate: handleTabChange,
+        isMobile: viewport.isMobile,
+        onStartExploring: () => {
+          tourRef.current = null;
+        },
+      });
+      tourRef.current = tour;
+      tour.drive();
+    }, activeTab === 'dashboard' ? 0 : 180);
+  };
+
+  useEffect(() => {
+    if (
+      activeTab !== 'dashboard' ||
+      hasCompletedProductTour() ||
+      autoTourStartedRef.current
+    ) {
+      return undefined;
+    }
+
+    autoTourStartedRef.current = true;
+    const timeoutId = window.setTimeout(startProductTour, 700);
+    return () => window.clearTimeout(timeoutId);
+    // The tour should auto-start once for the first dashboard visit.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeTab]);
 
   const handleSelectQuotation = (quote) => {
     setSelectedQuotation(quote);
@@ -166,9 +226,9 @@ export default function App() {
 
   // Compute sidebar width for content margin
   const getSidebarWidth = () => {
-    if (window.innerWidth < 768) return 0;
-    if (window.innerWidth < 1024) return 64; // w-16
-    return 260; // w-[260px]
+    if (viewport.isMobile) return 0;
+    if (viewport.isTablet) return 72;
+    return 260;
   };
 
   return (
@@ -182,7 +242,7 @@ export default function App() {
           transition={{ duration: 0.3 }}
           className="fixed top-20 right-6 z-50"
         >
-          <div className="bg-surface-card border border-accent-blue/50 text-white px-5 py-3 rounded-2xl shadow-2xl flex items-center gap-3 backdrop-blur-xl">
+          <div className="bg-surface-card border border-accent-blue/50 text-text-primary px-5 py-3 rounded-2xl shadow-2xl flex items-center gap-3 backdrop-blur-xl">
             <motion.span
               animate={{ opacity: [1, 0.5, 1] }}
               transition={{ duration: 1, repeat: Infinity }}
@@ -212,6 +272,7 @@ export default function App() {
           currentUser={currentUser}
           mobileMenuOpen={mobileMenuOpen}
           setMobileMenuOpen={setMobileMenuOpen}
+          viewport={viewport}
         />
       )}
 
@@ -228,9 +289,9 @@ export default function App() {
             initial={{ y: -100, opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
             className="sticky top-0 z-30 bg-surface-card/80 backdrop-blur-xl border-b border-border-subtle transition-all duration-300"
-            style={{ boxShadow: scrolled ? '0 10px 30px rgba(0,0,0,0.5)' : 'none' }}
+            style={{ boxShadow: scrolled ? '0 10px 30px rgb(0 0 0 / 0.22)' : 'none' }}
           >
-            <div className="max-w-[1200px] mx-auto px-4 sm:px-6 py-3 flex items-center justify-between gap-4">
+            <div className="max-w-max-width mx-auto px-page-padding-mobile md:px-page-padding py-3 flex items-center justify-between gap-4">
               {/* Search */}
               <div className="relative flex-1 max-w-md hidden sm:block">
                 <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-[18px] text-text-secondary">
@@ -245,13 +306,32 @@ export default function App() {
 
               {/* Right Actions */}
               <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={startProductTour}
+                  className="inline-flex min-h-10 items-center gap-2 rounded-full border border-border-subtle bg-surface-interactive px-3 text-xs font-semibold text-text-secondary transition-colors hover:border-accent-blue hover:text-text-primary"
+                  aria-label="Start product tour"
+                >
+                  <span className="material-symbols-outlined text-[18px]">help</span>
+                  <span className="hidden sm:inline">Product Tour</span>
+                </button>
+
                 {/* Multilingual Switcher */}
                 <LanguageSwitcher />
 
+                <ThemeToggle
+                  theme={theme}
+                  onToggle={() => setTheme((value) => (value === 'dark' ? 'light' : 'dark'))}
+                />
+
                 {/* Notification Bell */}
-                <button className="relative w-10 h-10 rounded-full bg-surface-interactive border border-border-subtle flex items-center justify-center text-text-secondary hover:text-white hover:border-accent-blue transition-all">
+                <button
+                  type="button"
+                  aria-label={t('navigation.notifications', 'Notifications')}
+                  className="relative w-10 h-10 rounded-full bg-surface-interactive border border-border-subtle flex items-center justify-center text-text-secondary hover:text-text-primary hover:border-accent-blue transition-all"
+                >
                   <span className="material-symbols-outlined text-[20px]">notifications</span>
-                  <span className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-status-warning flex items-center justify-center font-mono text-[9px] font-bold text-white">
+                  <span className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-status-warning flex items-center justify-center font-mono text-[9px] font-bold text-surface-base">
                     3
                   </span>
                 </button>
@@ -272,10 +352,12 @@ export default function App() {
                 </motion.button>
 
                 {/* Mobile Menu Button - only on tablet/desktop when sidebar is icon-only */}
-                {window.innerWidth >= 768 && window.innerWidth < 1024 && (
+                {viewport.isTablet && (
                   <button
+                    type="button"
                     onClick={() => setMobileMenuOpen(true)}
-                    className="w-10 h-10 rounded-full bg-surface-interactive border border-border-subtle flex items-center justify-center text-text-secondary hover:text-white"
+                    aria-label={t('navigation.openMenu', 'Open navigation menu')}
+                    className="w-10 h-10 rounded-full bg-surface-interactive border border-border-subtle flex items-center justify-center text-text-secondary hover:text-text-primary"
                   >
                     <span className="material-symbols-outlined text-[24px]">menu</span>
                   </button>
@@ -286,7 +368,7 @@ export default function App() {
         )}
 
         {/* Page Content with AnimatePresence */}
-        <div className="max-w-[1200px] mx-auto px-4 sm:px-6 py-8 pb-16">
+        <div className="max-w-max-width mx-auto px-page-padding-mobile md:px-page-padding py-8 pb-16">
           <AnimatePresence mode="wait">
             <motion.div
               key={activeTab}
@@ -399,7 +481,7 @@ export default function App() {
         </div>
 
         {/* Global Footer */}
-        <footer className="w-full max-w-[1200px] mx-auto px-6 py-6 border-t border-border-subtle/40 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-text-secondary">
+        <footer className="w-full max-w-max-width mx-auto px-page-padding-mobile md:px-page-padding py-6 border-t border-border-subtle/40 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-text-secondary">
           <div className="flex items-center gap-2">
             <img src="/brand-mark.svg" alt="DealFlow360" className="h-5 w-auto opacity-70" />
             <span className="font-mono">DealFlow360 × AETHER Dark Bento Design System</span>
@@ -408,7 +490,7 @@ export default function App() {
           <div className="flex items-center gap-4 font-mono text-[11px]">
             <button
               onClick={() => handleTabChange('login')}
-              className="hover:text-white transition-colors"
+              className="hover:text-text-primary transition-colors"
             >
               {t('navigation.login', 'Auth Screen')}
             </button>

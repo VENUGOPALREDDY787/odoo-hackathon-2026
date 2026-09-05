@@ -74,7 +74,7 @@ export default function LanguageSwitcher({ className = '', dropDirection = 'down
                   className={`w-full flex items-center justify-between px-3 py-2 text-xs transition-colors select-none ${
                     isSelected
                       ? 'bg-accent-blue/15 text-accent-blue font-semibold'
-                      : 'text-text-primary hover:bg-surface-interactive text-text-secondary hover:text-white'
+                      : 'text-text-primary hover:bg-surface-interactive text-text-secondary hover:text-text-primary'
                   }`}
                 >
                   <div className="flex items-center gap-2.5">

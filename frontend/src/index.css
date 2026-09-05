@@ -1,29 +1,102 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap');
-
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 @layer base {
   :root {
-    --bg: #0F0F0F;
-    --card: #181818;
-    --border: #2A2A2A;
-    --blue: #B9C9E1;
-    --pink: #E3B6D8;
-    --text-pri: #FFFFFF;
-    --text-sec: #8C8C8C;
-    --green: #4ADE80;
-    --warning: #F59E0B;
-    --danger: #EF4444;
-    --interactive: #252525;
+    color-scheme: dark;
+    --background: 19 19 19;
+    --surface-base: 15 15 15;
+    --surface-card: 24 24 24;
+    --surface-interactive: 37 37 37;
+    --surface-dim: 19 19 19;
+    --surface: 19 19 19;
+    --surface-container: 32 31 31;
+    --surface-container-low: 28 27 27;
+    --surface-container-high: 42 42 42;
+    --surface-container-highest: 53 53 52;
+    --surface-container-lowest: 14 14 14;
+    --surface-bright: 58 57 57;
+    --border-subtle: 42 42 42;
+    --outline-variant: 68 71 76;
+    --outline: 142 145 151;
+    --primary: 213 229 254;
+    --primary-container: 185 201 225;
+    --primary-fixed: 212 228 252;
+    --on-primary: 34 49 68;
+    --accent-blue: 185 201 225;
+    --accent-pink: 227 182 216;
+    --text-primary: 255 255 255;
+    --text-secondary: 156 163 175;
+    --text-muted: 115 115 115;
+    --text-pri: var(--text-primary);
+    --text-sec: var(--text-secondary);
+    --status-live: 74 222 128;
+    --status-warning: 245 158 11;
+    --status-danger: 239 68 68;
+    --info: 96 165 250;
+    --success: var(--status-live);
+    --warning: var(--status-warning);
+    --danger: var(--status-danger);
+    --tertiary: 113 255 158;
+    --tertiary-container: 79 226 131;
+    --secondary: 230 185 219;
+    --secondary-container: 96 62 90;
+    --on-surface: 229 226 225;
+    --on-surface-variant: 196 198 205;
+    --on-background: 229 226 225;
+    --bg: var(--surface-base);
+    --card: var(--surface-card);
+    --border: var(--border-subtle);
+    --blue: var(--accent-blue);
+    --pink: var(--accent-pink);
+    --green: var(--status-live);
+    --interactive: var(--surface-interactive);
+  }
+
+  :root.light {
+    color-scheme: light;
+    --background: 246 247 249;
+    --surface-base: 248 249 251;
+    --surface-card: 255 255 255;
+    --surface-interactive: 239 242 246;
+    --surface-dim: 232 236 241;
+    --surface: 246 247 249;
+    --surface-container: 244 246 249;
+    --surface-container-low: 249 250 252;
+    --surface-container-high: 226 231 238;
+    --surface-container-highest: 213 220 230;
+    --surface-container-lowest: 255 255 255;
+    --surface-bright: 255 255 255;
+    --border-subtle: 217 223 232;
+    --outline-variant: 186 197 210;
+    --outline: 111 124 141;
+    --primary: 33 48 67;
+    --primary-container: 79 105 137;
+    --primary-fixed: 213 229 254;
+    --on-primary: 255 255 255;
+    --accent-blue: 79 105 137;
+    --accent-pink: 151 82 133;
+    --text-primary: 21 27 36;
+    --text-secondary: 88 99 113;
+    --text-muted: 112 123 138;
+    --status-live: 22 163 74;
+    --status-warning: 180 83 9;
+    --status-danger: 220 38 38;
+    --info: 37 99 235;
+    --tertiary: 28 124 66;
+    --tertiary-container: 34 197 94;
+    --secondary: 151 82 133;
+    --secondary-container: 248 231 244;
+    --on-surface: 21 27 36;
+    --on-surface-variant: 82 93 108;
   }
 
   html, body {
     margin: 0;
     padding: 0;
-    background-color: var(--bg);
-    color: var(--text-pri);
+    background-color: rgb(var(--bg));
+    color: rgb(var(--text-pri));
     font-family: 'Inter', sans-serif;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
@@ -36,6 +109,17 @@
 
   * {
     box-sizing: border-box;
+  }
+
+  button, input, textarea, select {
+    font: inherit;
+  }
+
+  button:focus-visible,
+  a:focus-visible,
+  [role='button']:focus-visible {
+    outline: 2px solid rgb(var(--accent-blue));
+    outline-offset: 3px;
   }
 }
 
@@ -50,8 +134,8 @@ html {
 
 /* AETHER dot-grid background */
 .canvas-dot-bg {
-  background-color: #0F0F0F;
-  background-image: radial-gradient(circle, rgba(42, 42, 42, 0.4) 1px, transparent 1px);
+  background-color: rgb(var(--surface-base));
+  background-image: radial-gradient(circle, rgb(var(--border-subtle) / 0.4) 1px, transparent 1px);
   background-size: 40px 40px;
   background-attachment: fixed;
 }
@@ -69,27 +153,138 @@ html {
 /* Custom focus styles */
 input:focus, textarea:focus, select:focus {
   outline: none;
-  border-color: var(--blue);
-  box-shadow: 0 0 0 2px rgba(185, 201, 225, 0.15);
+  border-color: rgb(var(--blue));
+  box-shadow: 0 0 0 2px rgb(var(--blue) / 0.18);
 }
 
 /* Form input styling */
 .aether-input {
-  background-color: var(--interactive);
-  border: 1px solid var(--border);
+  background-color: rgb(var(--interactive));
+  border: 1px solid rgb(var(--border));
   border-radius: 12px;
   padding: 12px 16px;
-  color: var(--text-pri);
+  color: rgb(var(--text-pri));
   font-family: 'Inter', sans-serif;
   font-size: 14px;
   transition: border-color 0.2s ease, box-shadow 0.2s ease;
 }
 
 .aether-input::placeholder {
-  color: var(--text-sec);
+  color: rgb(var(--text-sec));
 }
 
 .aether-input:focus {
-  border-color: var(--blue);
-  box-shadow: 0 0 0 2px rgba(185, 201, 225, 0.15);
+  border-color: rgb(var(--blue));
+  box-shadow: 0 0 0 2px rgb(var(--blue) / 0.18);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    scroll-behavior: auto !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* DealFlow360 product tour skin */
+.dealflow-tour-popover {
+  max-width: min(360px, calc(100vw - 32px));
+  padding: 20px;
+  border: 1px solid rgb(var(--border-subtle));
+  border-radius: 20px;
+  background: rgb(var(--surface-card));
+  color: rgb(var(--text-primary));
+  box-shadow: 0 20px 60px rgb(0 0 0 / 0.35);
+  font-family: 'Inter', sans-serif;
+}
+
+.driver-popover.dealflow-tour-popover {
+  --driver-popover-bg: rgb(var(--surface-card));
+  --driver-popover-text-color: rgb(var(--text-primary));
+  --driver-popover-close-btn-color: rgb(var(--text-secondary));
+  --driver-popover-arrow-size: 12px;
+  --driver-popover-arrow-offset: 12px;
+  --driver-popover-arrow-border: rgb(var(--border-subtle));
+  --driver-popover-arrow-bg: rgb(var(--surface-card));
+  border-radius: 20px;
+  padding: 20px;
+  background: rgb(var(--surface-card));
+  color: rgb(var(--text-primary));
+}
+
+.dealflow-tour-popover .driver-popover-title {
+  margin: 0 24px 8px 0;
+  color: rgb(var(--text-primary));
+  font-size: 18px;
+  line-height: 1.35;
+  font-weight: 700;
+}
+
+.dealflow-tour-popover .driver-popover-description {
+  color: rgb(var(--text-secondary));
+  font-size: 14px;
+  line-height: 1.55;
+}
+
+.dealflow-tour-popover .driver-popover-progress-text {
+  color: rgb(var(--text-secondary));
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+}
+
+.dealflow-tour-popover .driver-popover-footer {
+  gap: 8px;
+  margin-top: 20px;
+}
+
+.dealflow-tour-popover button {
+  min-height: 40px;
+  border: 1px solid rgb(var(--border-subtle));
+  border-radius: 999px;
+  padding: 0 14px;
+  color: rgb(var(--text-primary));
+  background: rgb(var(--surface-interactive));
+  font-family: 'Inter', sans-serif;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.dealflow-tour-popover .driver-popover-next-btn,
+.dealflow-tour-popover .driver-popover-close-btn {
+  border-color: rgb(var(--accent-blue));
+  color: rgb(var(--surface-base));
+  background: rgb(var(--accent-blue));
+}
+
+.dealflow-tour-popover .driver-popover-prev-btn {
+  margin-right: auto;
+}
+
+.dealflow-tour-popover button:hover,
+.dealflow-tour-popover button:focus-visible {
+  filter: brightness(1.08);
+}
+
+.dealflow-tour-popover .driver-popover-close-btn {
+  color: rgb(var(--text-secondary));
+  background: transparent;
+  border-color: transparent;
+}
+
+@media (max-width: 640px) {
+  .dealflow-tour-popover {
+    width: min(360px, calc(100vw - 24px));
+    padding: 16px;
+  }
+
+  .dealflow-tour-popover .driver-popover-footer {
+    flex-wrap: wrap;
+  }
+
+  .dealflow-tour-popover .driver-popover-prev-btn {
+    margin-right: 0;
+  }
 }

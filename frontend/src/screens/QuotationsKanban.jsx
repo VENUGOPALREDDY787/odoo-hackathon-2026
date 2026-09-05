@@ -70,7 +70,7 @@ export default function QuotationsKanban({
                 className={`px-2.5 py-1 rounded-full font-mono text-[11px] transition-colors cursor-pointer ${
                   tierFilter === tier
                     ? 'bg-accent-blue text-surface-base font-bold'
-                    : 'text-text-secondary hover:text-white'
+                    : 'text-text-secondary hover:text-text-primary'
                 }`}
               >
                 {tier === 'ALL' ? t('common.all', 'ALL') : tier}
@@ -85,7 +85,7 @@ export default function QuotationsKanban({
               className={`flex items-center gap-1 px-3 py-1 rounded-full font-medium transition-colors cursor-pointer ${
                 viewMode === 'kanban'
                   ? 'bg-text-primary text-surface-base'
-                  : 'text-text-secondary hover:text-white'
+                  : 'text-text-secondary hover:text-text-primary'
               }`}
             >
               <span className="material-symbols-outlined text-[16px]">view_kanban</span>
@@ -96,7 +96,7 @@ export default function QuotationsKanban({
               className={`flex items-center gap-1 px-3 py-1 rounded-full font-medium transition-colors cursor-pointer ${
                 viewMode === 'table'
                   ? 'bg-text-primary text-surface-base'
-                  : 'text-text-secondary hover:text-white'
+                  : 'text-text-secondary hover:text-text-primary'
               }`}
             >
               <span className="material-symbols-outlined text-[16px]">table_rows</span>
@@ -214,7 +214,7 @@ export default function QuotationsKanban({
         /* Data Table View */
         <Card className="p-0 overflow-hidden">
           <div className="overflow-x-auto">
-            <table className="w-full text-left border-collapse">
+            <table className="w-full min-w-[780px] text-left border-collapse">
               <thead>
                 <tr className="border-b border-border-subtle bg-surface-interactive/60 font-label-caps text-xs text-text-secondary uppercase">
                   <th className="py-3.5 px-6">Quote ID</th>

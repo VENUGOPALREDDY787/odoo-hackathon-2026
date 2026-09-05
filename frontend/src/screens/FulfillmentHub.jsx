@@ -52,7 +52,7 @@ export default function FulfillmentHub() {
   };
 
   return (
-    <div className="w-full max-w-max-width mx-auto space-y-6 animate-in fade-in duration-300">
+    <div data-tour="fulfillment" className="w-full max-w-max-width mx-auto space-y-6 animate-in fade-in duration-300">
       {/* Top Header */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
@@ -217,7 +217,7 @@ export default function FulfillmentHub() {
               </div>
 
               <div className="overflow-x-auto">
-                <table className="w-full text-left text-xs">
+                <table className="w-full min-w-[640px] text-left text-xs">
                   <thead>
                     <tr className="border-b border-border-subtle font-label-caps text-text-secondary uppercase text-[10px]">
                       <th className="py-3">Fulfillment Warehouse / Facility</th>
@@ -262,15 +262,15 @@ export default function FulfillmentHub() {
 
       {/* Manual Override Modal */}
       {showOverrideModal && (
-        <div className="fixed inset-0 z-50 bg-black/75 backdrop-blur-md flex items-center justify-center p-4">
-          <Card className="max-w-md w-full p-6 space-y-4" radiance>
+        <div className="fixed inset-0 z-50 bg-surface-base/75 backdrop-blur-md flex items-center justify-center p-4 overflow-y-auto">
+          <Card className="max-w-md w-full p-6 space-y-4 max-h-[calc(100vh-2rem)] overflow-y-auto" radiance>
             <div className="flex items-center justify-between pb-2 border-b border-border-subtle">
               <h3 className="font-headline-sm text-lg font-bold text-text-primary">
                 Manual Fulfillment Override
               </h3>
               <button
                 onClick={() => setShowOverrideModal(false)}
-                className="text-text-secondary hover:text-white"
+                className="text-text-secondary hover:text-text-primary"
               >
                 <span className="material-symbols-outlined text-[18px]">close</span>
               </button>

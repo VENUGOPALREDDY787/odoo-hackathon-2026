@@ -86,7 +86,7 @@ export default function ReportingDashboard() {
                   className={`px-3 py-1 rounded-full font-medium transition-colors ${
                     period === p.id
                       ? 'bg-text-primary text-surface-base'
-                      : 'text-text-secondary hover:text-white'
+                      : 'text-text-secondary hover:text-text-primary'
                   }`}
                 >
                   {p.label}
@@ -106,7 +106,7 @@ export default function ReportingDashboard() {
                   className={`px-3 py-1 rounded-full font-medium transition-colors ${
                     team === t
                       ? 'bg-text-primary text-surface-base'
-                      : 'text-text-secondary hover:text-white'
+                      : 'text-text-secondary hover:text-text-primary'
                   }`}
                 >
                   {t}
@@ -126,7 +126,7 @@ export default function ReportingDashboard() {
                   className={`px-3 py-1 rounded-full font-medium transition-colors ${
                     approvalStatus === s
                       ? 'bg-text-primary text-surface-base'
-                      : 'text-text-secondary hover:text-white'
+                      : 'text-text-secondary hover:text-text-primary'
                   }`}
                 >
                   {s}
@@ -185,7 +185,7 @@ export default function ReportingDashboard() {
         </div>
 
         <div className="overflow-x-auto">
-          <table className="w-full text-left text-xs">
+          <table className="w-full min-w-[640px] text-left text-xs">
             <thead>
               <tr className="border-b border-border-subtle font-label-caps text-text-secondary uppercase text-[10px]">
                 <th className="py-3">Commercial Segment</th>

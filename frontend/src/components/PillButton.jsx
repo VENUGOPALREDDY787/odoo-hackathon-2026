@@ -18,7 +18,7 @@ export default function PillButton({
 
   const variantClasses = {
     primary:
-      'bg-white text-surface-base hover:opacity-90 hover:shadow-[0_0_24px_rgba(255,255,255,0.25)] active:scale-[0.98]',
+      'bg-text-primary text-surface-base hover:opacity-90 hover:shadow-[0_0_24px_rgb(var(--text-primary)/0.2)] active:scale-[0.98]',
     secondary:
       'bg-surface-interactive text-text-primary border border-border-subtle hover:border-text-secondary/50 hover:text-accent-blue active:scale-[0.98]',
     outline:
