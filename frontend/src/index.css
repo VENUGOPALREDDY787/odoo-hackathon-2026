@@ -1,0 +1,95 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --bg: #0F0F0F;
+    --card: #181818;
+    --border: #2A2A2A;
+    --blue: #B9C9E1;
+    --pink: #E3B6D8;
+    --text-pri: #FFFFFF;
+    --text-sec: #8C8C8C;
+    --green: #4ADE80;
+    --warning: #F59E0B;
+    --danger: #EF4444;
+    --interactive: #252525;
+  }
+
+  html, body {
+    margin: 0;
+    padding: 0;
+    background-color: var(--bg);
+    color: var(--text-pri);
+    font-family: 'Inter', sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  body {
+    overscroll-behavior: none;
+    min-height: 100vh;
+  }
+
+  * {
+    box-sizing: border-box;
+  }
+}
+
+/* Scrollbar hiding */
+::-webkit-scrollbar {
+  display: none;
+}
+html {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+/* AETHER dot-grid background */
+.canvas-dot-bg {
+  background-color: #0F0F0F;
+  background-image: radial-gradient(circle, rgba(42, 42, 42, 0.4) 1px, transparent 1px);
+  background-size: 40px 40px;
+  background-attachment: fixed;
+}
+
+/* Pulse animation for status dots */
+@keyframes status-pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}
+
+.status-pulse {
+  animation: status-pulse 2s ease-in-out infinite;
+}
+
+/* Custom focus styles */
+input:focus, textarea:focus, select:focus {
+  outline: none;
+  border-color: var(--blue);
+  box-shadow: 0 0 0 2px rgba(185, 201, 225, 0.15);
+}
+
+/* Form input styling */
+.aether-input {
+  background-color: var(--interactive);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 12px 16px;
+  color: var(--text-pri);
+  font-family: 'Inter', sans-serif;
+  font-size: 14px;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.aether-input::placeholder {
+  color: var(--text-sec);
+}
+
+.aether-input:focus {
+  border-color: var(--blue);
+  box-shadow: 0 0 0 2px rgba(185, 201, 225, 0.15);
+}
