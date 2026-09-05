@@ -1,4 +1,4 @@
-import { ValidationError, AuthenticationError, ConflictError, NotFoundError } from '../../errors/AppError.js';
+import { ValidationError, AuthenticationError, ConflictError, NotFoundError } from '../../../errors/AppError.js';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 
@@ -10,7 +10,15 @@ export class AuthService {
   }
 
   async register(data) {
-    const { email, password, fullName, role = 'customer' } = data;
+    const { email, password, fullName } = data;
+
+    if (!email || !password || !fullName) {
+      throw new ValidationError('Email, password, and full name are required');
+    }
+
+    if (password.length < 8) {
+      throw new ValidationError('Password must be at least 8 characters long');
+    }
 
     const existing = await this.db('users').where({ email, deleted_at: null }).first();
     if (existing) {
@@ -19,16 +27,16 @@ export class AuthService {
 
     const passwordHash = await bcrypt.hash(password, this.config.BCRYPT_ROUNDS);
 
-    const [user] = await this.db('users')
-      .insert({
-        email,
-        password_hash: passwordHash,
-        full_name: fullName,
-        role,
-        created_at: new Date(),
-        updated_at: new Date(),
-      })
-      .returning('*');
+    await this.db('users').insert({
+      email,
+      password_hash: passwordHash,
+      full_name: fullName,
+      role: 'customer',
+      created_at: new Date(),
+      updated_at: new Date(),
+    });
+
+    const user = await this.db('users').where({ email, deleted_at: null }).first();
 
     this.logger.info({ userId: user.id, email }, 'User registered');
     return this.generateTokens(user);
@@ -100,15 +108,18 @@ export class AuthService {
       throw new ValidationError('No valid fields to update');
     }
 
-    const [user] = await this.db('users')
+    await this.db('users')
       .where({ id: userId, deleted_at: null })
-      .update({ ...updateData, updated_at: new Date() })
-      .returning(['id', 'email', 'full_name', 'role', 'phone', 'avatar_url', 'is_active', 'updated_at']);
+      .update({ ...updateData, updated_at: new Date() });
 
-    return user;
+    return this.getProfile(userId);
   }
 
   async changePassword(userId, currentPassword, newPassword) {
+    if (!newPassword || newPassword.length < 8) {
+      throw new ValidationError('Password must be at least 8 characters long');
+    }
+
     const user = await this.db('users').where({ id: userId, deleted_at: null }).first();
     if (!user) {
       throw new NotFoundError('User');

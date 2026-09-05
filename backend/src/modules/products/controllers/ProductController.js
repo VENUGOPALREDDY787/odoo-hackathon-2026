@@ -1,5 +1,4 @@
-import { asyncHandler } from '../../middleware/errorHandler.js';
-import { ValidationError } from '../../errors/AppError.js';
+import { asyncHandler } from '../../../middleware/errorHandler.js';
 
 export class ProductController {
   constructor(productService) {
@@ -55,8 +54,13 @@ export class ProductController {
   });
 
   updateVariant = asyncHandler(async (req, res) => {
-    const variant = await this.service.updateVariant(req.params.variantId, req.body);
+    const variant = await this.service.updateVariant(req.params.id, req.params.variantId, req.body);
     res.json({ data: variant });
+  });
+
+  deleteVariant = asyncHandler(async (req, res) => {
+    await this.service.deleteVariant(req.params.id, req.params.variantId);
+    res.status(204).send();
   });
 }
 

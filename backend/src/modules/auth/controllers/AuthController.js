@@ -1,4 +1,4 @@
-import { asyncHandler } from '../../middleware/errorHandler.js';
+import { asyncHandler } from '../../../middleware/errorHandler.js';
 
 export class AuthController {
   constructor(authService) {

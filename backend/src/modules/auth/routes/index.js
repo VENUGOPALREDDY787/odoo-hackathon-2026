@@ -1,5 +1,6 @@
 import { Router } from 'express';
-import { container } from '../../container/index.js';
+import { container } from '../../../container/index.js';
+import { hasPermission } from '../permissions.js';
 
 const router = Router();
 
@@ -53,6 +54,24 @@ export function authorize(...roles) {
     if (!roles.includes(req.user.role)) {
       return res.status(403).json({
         error: { code: 'AUTHORIZATION_ERROR', message: 'Insufficient permissions', details: null },
+      });
+    }
+
+    next();
+  };
+}
+
+export function authorizePermission(resource, action) {
+  return (req, res, next) => {
+    if (!req.user) {
+      return res.status(401).json({
+        error: { code: 'AUTHENTICATION_ERROR', message: 'Authentication required', details: null },
+      });
+    }
+
+    if (!hasPermission(req.user.role, resource, action)) {
+      return res.status(403).json({
+        error: { code: 'AUTHORIZATION_ERROR', message: 'Insufficient permissions', details: { resource, action } },
       });
     }
 

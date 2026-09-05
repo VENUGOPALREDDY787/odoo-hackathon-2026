@@ -1,4 +1,4 @@
-import BaseRepository from '../../utils/BaseRepository.js';
+import BaseRepository from '../../../utils/BaseRepository.js';
 
 export class ProductRepository extends BaseRepository {
   constructor(db) {

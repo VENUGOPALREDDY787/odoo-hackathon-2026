@@ -30,8 +30,8 @@ CREATE TABLE `users` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 CREATE INDEX `idx_users_role` ON `users` (`role`);
-CREATE INDEX `idx_users_active` ON `users` (`is_active`) WHERE `is_active` = 1;
-CREATE INDEX `idx_users_deleted` ON `users` (`deleted_at`) WHERE `deleted_at` IS NULL;
+CREATE INDEX `idx_users_active` ON `users` (`is_active`);
+CREATE INDEX `idx_users_deleted` ON `users` (`deleted_at`);
 
 -- Customers table
 CREATE TABLE `customers` (
@@ -62,7 +62,7 @@ CREATE TABLE `customers` (
 CREATE INDEX `idx_customers_tier` ON `customers` (`tier`);
 CREATE INDEX `idx_customers_assigned_rep` ON `customers` (`assigned_rep_id`);
 CREATE INDEX `idx_customers_company_name` ON `customers` (`company_name`);
-CREATE INDEX `idx_customers_deleted` ON `customers` (`deleted_at`) WHERE `deleted_at` IS NULL;
+CREATE INDEX `idx_customers_deleted` ON `customers` (`deleted_at`);
 
 -- Product categories (self-referencing for hierarchy)
 CREATE TABLE `product_categories` (
@@ -79,7 +79,7 @@ CREATE TABLE `product_categories` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 CREATE INDEX `idx_product_categories_parent` ON `product_categories` (`parent_id`);
-CREATE INDEX `idx_product_categories_deleted` ON `product_categories` (`deleted_at`) WHERE `deleted_at` IS NULL;
+CREATE INDEX `idx_product_categories_deleted` ON `product_categories` (`deleted_at`);
 
 -- Products table
 CREATE TABLE `products` (
@@ -105,8 +105,8 @@ CREATE TABLE `products` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 CREATE INDEX `idx_products_category` ON `products` (`category_id`);
-CREATE INDEX `idx_products_active` ON `products` (`is_active`) WHERE `is_active` = 1;
-CREATE INDEX `idx_products_deleted` ON `products` (`deleted_at`) WHERE `deleted_at` IS NULL;
+CREATE INDEX `idx_products_active` ON `products` (`is_active`);
+CREATE INDEX `idx_products_deleted` ON `products` (`deleted_at`);
 
 -- Product variants (e.g., size, color, configuration)
 CREATE TABLE `product_variants` (
@@ -128,8 +128,8 @@ CREATE TABLE `product_variants` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 CREATE INDEX `idx_product_variants_product` ON `product_variants` (`product_id`);
-CREATE INDEX `idx_product_variants_active` ON `product_variants` (`is_active`) WHERE `is_active` = 1;
-CREATE INDEX `idx_product_variants_deleted` ON `product_variants` (`deleted_at`) WHERE `deleted_at` IS NULL;
+CREATE INDEX `idx_product_variants_active` ON `product_variants` (`is_active`);
+CREATE INDEX `idx_product_variants_deleted` ON `product_variants` (`deleted_at`);
 
 -- Warehouses
 CREATE TABLE `warehouses` (
@@ -148,8 +148,8 @@ CREATE TABLE `warehouses` (
     UNIQUE KEY `uk_warehouses_code` (`code`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
-CREATE INDEX `idx_warehouses_active` ON `warehouses` (`is_active`) WHERE `is_active` = 1;
-CREATE INDEX `idx_warehouses_deleted` ON `warehouses` (`deleted_at`) WHERE `deleted_at` IS NULL;
+CREATE INDEX `idx_warehouses_active` ON `warehouses` (`is_active`);
+CREATE INDEX `idx_warehouses_deleted` ON `warehouses` (`deleted_at`);
 
 -- Stock levels (current inventory per warehouse per product/variant)
 CREATE TABLE `stock_levels` (
@@ -175,8 +175,8 @@ CREATE TABLE `stock_levels` (
 
 CREATE INDEX `idx_stock_warehouse_product` ON `stock_levels` (`warehouse_id`, `product_id`);
 CREATE INDEX `idx_stock_variant` ON `stock_levels` (`variant_id`);
-CREATE INDEX `idx_stock_available` ON `stock_levels` (`quantity_available`) WHERE `quantity_available` > 0;
-CREATE INDEX `idx_stock_deleted` ON `stock_levels` (`deleted_at`) WHERE `deleted_at` IS NULL;
+CREATE INDEX `idx_stock_available` ON `stock_levels` (`quantity_available`);
+CREATE INDEX `idx_stock_deleted` ON `stock_levels` (`deleted_at`);
 
 -- Price lists (base pricing per customer tier, product, variant)
 CREATE TABLE `price_lists` (
@@ -194,8 +194,8 @@ CREATE TABLE `price_lists` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 CREATE INDEX `idx_price_lists_dates` ON `price_lists` (`effective_from`, `effective_to`);
-CREATE INDEX `idx_price_lists_default` ON `price_lists` (`is_default`) WHERE `is_default` = 1;
-CREATE INDEX `idx_price_lists_deleted` ON `price_lists` (`deleted_at`) WHERE `deleted_at` IS NULL;
+CREATE INDEX `idx_price_lists_default` ON `price_lists` (`is_default`);
+CREATE INDEX `idx_price_lists_deleted` ON `price_lists` (`deleted_at`);
 
 -- Price list items (actual prices)
 CREATE TABLE `price_list_items` (
@@ -217,7 +217,7 @@ CREATE TABLE `price_list_items` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 CREATE INDEX `idx_price_list_items_lookup` ON `price_list_items` (`price_list_id`, `product_id`, `variant_id`, `customer_tier`);
-CREATE INDEX `idx_price_list_items_deleted` ON `price_list_items` (`deleted_at`) WHERE `deleted_at` IS NULL;
+CREATE INDEX `idx_price_list_items_deleted` ON `price_list_items` (`deleted_at`);
 
 -- Discount tiers (per customer tier + per product category)
 CREATE TABLE `discount_tiers` (
@@ -247,7 +247,7 @@ CREATE TABLE `discount_tiers` (
 
 CREATE INDEX `idx_discount_tiers_lookup` ON `discount_tiers` (`customer_tier`, `category_id`, `product_id`, `is_active`);
 CREATE INDEX `idx_discount_tiers_dates` ON `discount_tiers` (`effective_from`, `effective_to`);
-CREATE INDEX `idx_discount_tiers_deleted` ON `discount_tiers` (`deleted_at`) WHERE `deleted_at` IS NULL;
+CREATE INDEX `idx_discount_tiers_deleted` ON `discount_tiers` (`deleted_at`);
 
 -- Approval chains (discount range -> required approval levels)
 CREATE TABLE `approval_chains` (
@@ -266,8 +266,8 @@ CREATE TABLE `approval_chains` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 CREATE INDEX `idx_approval_chains_discount_range` ON `approval_chains` (`min_discount_percent`, `max_discount_percent`);
-CREATE INDEX `idx_approval_chains_active` ON `approval_chains` (`is_active`) WHERE `is_active` = 1;
-CREATE INDEX `idx_approval_chains_deleted` ON `approval_chains` (`deleted_at`) WHERE `deleted_at` IS NULL;
+CREATE INDEX `idx_approval_chains_active` ON `approval_chains` (`is_active`);
+CREATE INDEX `idx_approval_chains_deleted` ON `approval_chains` (`deleted_at`);
 
 -- Subscription plans
 CREATE TABLE `subscription_plans` (
@@ -289,8 +289,8 @@ CREATE TABLE `subscription_plans` (
     PRIMARY KEY (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
-CREATE INDEX `idx_subscription_plans_active` ON `subscription_plans` (`is_active`) WHERE `is_active` = 1;
-CREATE INDEX `idx_subscription_plans_deleted` ON `subscription_plans` (`deleted_at`) WHERE `deleted_at` IS NULL;
+CREATE INDEX `idx_subscription_plans_active` ON `subscription_plans` (`is_active`);
+CREATE INDEX `idx_subscription_plans_deleted` ON `subscription_plans` (`deleted_at`);
 
 -- Upsell rules
 CREATE TABLE `upsell_rules` (
@@ -321,8 +321,8 @@ CREATE TABLE `upsell_rules` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 CREATE INDEX `idx_upsell_rules_trigger` ON `upsell_rules` (`trigger_product_id`, `trigger_category_id`);
-CREATE INDEX `idx_upsell_rules_active` ON `upsell_rules` (`is_active`) WHERE `is_active` = 1;
-CREATE INDEX `idx_upsell_rules_deleted` ON `upsell_rules` (`deleted_at`) WHERE `deleted_at` IS NULL;
+CREATE INDEX `idx_upsell_rules_active` ON `upsell_rules` (`is_active`);
+CREATE INDEX `idx_upsell_rules_deleted` ON `upsell_rules` (`deleted_at`);
 
 -- ============================================================================
 -- QUOTATION & ORDER TABLES
@@ -387,9 +387,9 @@ CREATE INDEX `idx_quotations_rep` ON `quotations` (`assigned_rep_id`);
 CREATE INDEX `idx_quotations_status` ON `quotations` (`status`);
 CREATE INDEX `idx_quotations_date_range` ON `quotations` (`created_at`);
 CREATE INDEX `idx_quotations_valid_until` ON `quotations` (`valid_until`);
-CREATE INDEX `idx_quotations_risk_score` ON `quotations` (`blended_risk_score`) WHERE `blended_risk_score` IS NOT NULL;
+CREATE INDEX `idx_quotations_risk_score` ON `quotations` (`blended_risk_score`);
 CREATE INDEX `idx_quotations_composite_lookup` ON `quotations` (`customer_id`, `status`, `assigned_rep_id`);
-CREATE INDEX `idx_quotations_deleted` ON `quotations` (`deleted_at`) WHERE `deleted_at` IS NULL;
+CREATE INDEX `idx_quotations_deleted` ON `quotations` (`deleted_at`);
 
 -- Quotation lines (support both one-time and recurring on same quotation)
 CREATE TABLE `quotation_lines` (
@@ -453,7 +453,7 @@ CREATE TABLE `quotation_lines` (
 CREATE INDEX `idx_quotation_lines_quotation` ON `quotation_lines` (`quotation_id`);
 CREATE INDEX `idx_quotation_lines_product` ON `quotation_lines` (`product_id`);
 CREATE INDEX `idx_quotation_lines_type` ON `quotation_lines` (`line_type`);
-CREATE INDEX `idx_quotation_lines_deleted` ON `quotation_lines` (`deleted_at`) WHERE `deleted_at` IS NULL;
+CREATE INDEX `idx_quotation_lines_deleted` ON `quotation_lines` (`deleted_at`);
 
 -- Approval logs (audit trail for approval workflow)
 CREATE TABLE `approval_logs` (
@@ -479,7 +479,7 @@ CREATE INDEX `idx_approval_logs_quotation` ON `approval_logs` (`quotation_id`);
 CREATE INDEX `idx_approval_logs_approver` ON `approval_logs` (`approver_id`);
 CREATE INDEX `idx_approval_logs_action` ON `approval_logs` (`action`);
 CREATE INDEX `idx_approval_logs_created` ON `approval_logs` (`created_at`);
-CREATE INDEX `idx_approval_logs_deleted` ON `approval_logs` (`deleted_at`) WHERE `deleted_at` IS NULL;
+CREATE INDEX `idx_approval_logs_deleted` ON `approval_logs` (`deleted_at`);
 
 -- Fulfillment splits (single line can split across warehouses/shipments)
 CREATE TABLE `fulfillment_splits` (
@@ -504,7 +504,7 @@ CREATE TABLE `fulfillment_splits` (
 CREATE INDEX `idx_fulfillment_splits_line` ON `fulfillment_splits` (`quotation_line_id`);
 CREATE INDEX `idx_fulfillment_splits_warehouse` ON `fulfillment_splits` (`warehouse_id`);
 CREATE INDEX `idx_fulfillment_splits_status` ON `fulfillment_splits` (`status`);
-CREATE INDEX `idx_fulfillment_splits_deleted` ON `fulfillment_splits` (`deleted_at`) WHERE `deleted_at` IS NULL;
+CREATE INDEX `idx_fulfillment_splits_deleted` ON `fulfillment_splits` (`deleted_at`);
 
 -- Billing schedules (for recurring lines)
 CREATE TABLE `billing_schedules` (
@@ -542,7 +542,7 @@ CREATE INDEX `idx_billing_schedules_customer` ON `billing_schedules` (`customer_
 CREATE INDEX `idx_billing_schedules_status` ON `billing_schedules` (`status`);
 CREATE INDEX `idx_billing_schedules_due_date` ON `billing_schedules` (`due_date`);
 CREATE INDEX `idx_billing_schedules_period` ON `billing_schedules` (`period_start`, `period_end`);
-CREATE INDEX `idx_billing_schedules_deleted` ON `billing_schedules` (`deleted_at`) WHERE `deleted_at` IS NULL;
+CREATE INDEX `idx_billing_schedules_deleted` ON `billing_schedules` (`deleted_at`);
 
 -- Negotiation logs (track back-and-forth on quotations)
 CREATE TABLE `negotiation_logs` (
@@ -570,7 +570,7 @@ CREATE TABLE `negotiation_logs` (
 CREATE INDEX `idx_negotiation_logs_quotation` ON `negotiation_logs` (`quotation_id`);
 CREATE INDEX `idx_negotiation_logs_initiator` ON `negotiation_logs` (`initiated_by`);
 CREATE INDEX `idx_negotiation_logs_status` ON `negotiation_logs` (`status`);
-CREATE INDEX `idx_negotiation_logs_deleted` ON `negotiation_logs` (`deleted_at`) WHERE `deleted_at` IS NULL;
+CREATE INDEX `idx_negotiation_logs_deleted` ON `negotiation_logs` (`deleted_at`);
 
 -- Deal health alerts
 CREATE TABLE `deal_health_alerts` (
@@ -597,9 +597,9 @@ CREATE TABLE `deal_health_alerts` (
 
 CREATE INDEX `idx_deal_health_alerts_quotation` ON `deal_health_alerts` (`quotation_id`);
 CREATE INDEX `idx_deal_health_alerts_severity` ON `deal_health_alerts` (`severity`);
-CREATE INDEX `idx_deal_health_alerts_acknowledged` ON `deal_health_alerts` (`is_acknowledged`) WHERE `is_acknowledged` = 0;
+CREATE INDEX `idx_deal_health_alerts_acknowledged` ON `deal_health_alerts` (`is_acknowledged`);
 CREATE INDEX `idx_deal_health_alerts_created` ON `deal_health_alerts` (`created_at`);
-CREATE INDEX `idx_deal_health_alerts_deleted` ON `deal_health_alerts` (`deleted_at`) WHERE `deleted_at` IS NULL;
+CREATE INDEX `idx_deal_health_alerts_deleted` ON `deal_health_alerts` (`deleted_at`);
 
 -- ============================================================================
 -- AUDIT TRAIL (immutable, append-only)
