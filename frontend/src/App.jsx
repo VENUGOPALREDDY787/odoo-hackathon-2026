@@ -21,6 +21,7 @@ import CustomerPortal from './screens/CustomerPortal';
 import LoginScreen from './screens/LoginScreen';
 import ProfileScreen from './screens/ProfileScreen';
 import { clearSession, createProduct, createProductVariant, deleteProduct, recoverSession, signIn, signUp, updateProduct } from './auth/authApi';
+import { roleBasedRedirect } from './auth/roleRedirect';
 import { createProductTour, hasCompletedProductTour } from './tour/productTour';
 
 import { INITIAL_QUOTATIONS } from './data/mockData';
@@ -39,6 +40,10 @@ const ROLE_TABS = {
   finance: ['dashboard', 'approvals', 'subscriptions', 'invoices', 'reports', 'profile'],
   admin: ['dashboard', 'products', 'product-detail', 'discounts', 'approvals', 'reports', 'profile'],
 };
+
+function getRouteParts(hash) {
+  return hash.replace(/^#/, '').split('/').filter(Boolean);
+}
 
 export default function App() {
   const { t } = useTranslation();
@@ -70,10 +75,14 @@ export default function App() {
       setCurrentUser(user);
       setAuthStatus(user ? 'authenticated' : 'anonymous');
       if (user) {
-        const requestedTab = window.location.hash.replace('#', '');
+        const routeParts = getRouteParts(window.location.hash);
+        const requestedRole = routeParts.length === 2 ? routeParts[0] : null;
+        const requestedTab = routeParts.length === 2 ? routeParts[1] : routeParts[0];
         const allowedTabs = ROLE_TABS[user.role] || [];
-        const nextTab = requestedTab && allowedTabs.includes(requestedTab) ? requestedTab : 'dashboard';
-        window.location.hash = `#${nextTab}`;
+        const nextTab = requestedRole && requestedRole !== user.role
+          ? 'dashboard'
+          : requestedTab && allowedTabs.includes(requestedTab) ? requestedTab : 'dashboard';
+        window.location.hash = nextTab === 'dashboard' ? roleBasedRedirect(user.role) : `#${nextTab}`;
         setActiveTab(nextTab);
       } else {
         window.location.hash = '#login';
@@ -85,16 +94,19 @@ export default function App() {
   // Sync hash routing
   useEffect(() => {
     const handleHash = () => {
-      const hash = window.location.hash.replace('#', '');
-      if (hash) {
+      const routeParts = getRouteParts(window.location.hash);
+      if (routeParts.length) {
         if (authStatus !== 'authenticated') {
           setActiveTab('login');
           return;
         }
+        const requestedRole = routeParts.length === 2 ? routeParts[0] : null;
+        const hash = routeParts.length === 2 ? routeParts[1] : routeParts[0];
         const allowedTabs = ROLE_TABS[currentUser?.role] || [];
-        setActiveTab(allowedTabs.includes(hash) ? hash : 'dashboard');
-        if (!allowedTabs.includes(hash)) {
-          window.location.hash = '#dashboard';
+        const roleMismatch = requestedRole && requestedRole !== currentUser?.role;
+        setActiveTab(!roleMismatch && allowedTabs.includes(hash) ? hash : 'dashboard');
+        if (roleMismatch || !allowedTabs.includes(hash)) {
+          window.location.hash = roleBasedRedirect(currentUser?.role);
         }
       }
     };
@@ -137,7 +149,7 @@ export default function App() {
       tab = 'dashboard';
     }
     setActiveTab(tab);
-    window.location.hash = tab;
+    window.location.hash = tab === 'dashboard' ? roleBasedRedirect(currentUser?.role) : `#${tab}`;
     // Don't scroll to top on mobile - let content scroll naturally
     if (!viewport.isMobile) {
       window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -478,13 +490,17 @@ export default function App() {
                   error={authError}
                   loading={authStatus === 'authenticating'}
                   onLoginSuccess={async ({ email, password }) => {
+                    if (!email || !password) {
+                      setAuthError('Email and password are required.');
+                      return;
+                    }
                     setAuthError('');
                     setAuthStatus('authenticating');
                     try {
                       const user = await signIn(email, password);
                       setCurrentUser(user);
                       setAuthStatus('authenticated');
-                      window.location.hash = '#dashboard';
+                      window.location.hash = roleBasedRedirect(user.role);
                       setActiveTab('dashboard');
                     } catch (error) {
                       setAuthError(error.message);
@@ -502,7 +518,7 @@ export default function App() {
                       const user = await signUp(payload.name, payload.email, payload.password);
                       setCurrentUser(user);
                       setAuthStatus('authenticated');
-                      window.location.hash = '#dashboard';
+                      window.location.hash = roleBasedRedirect(user.role);
                       setActiveTab('dashboard');
                     } catch (error) {
                       setAuthError(error.message);

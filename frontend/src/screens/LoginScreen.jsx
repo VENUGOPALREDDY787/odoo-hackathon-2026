@@ -43,14 +43,26 @@ export default function LoginScreen({ onLoginSuccess, onSignup, error, loading }
   const handleSubmit = (e) => {
     e.preventDefault();
     if (tab === 'signup') {
+      if (!name.trim() || !email.trim() || !password) {
+        onSignup?.({ error: 'Name, email, and password are required.' });
+        return;
+      }
+      if (password.length < 8) {
+        onSignup?.({ error: 'Password must be at least 8 characters.' });
+        return;
+      }
       if (password !== confirmPassword) {
         onSignup?.({ error: 'Passwords do not match.' });
         return;
       }
-      onSignup?.({ name, email, password });
+      onSignup?.({ name: name.trim(), email: email.trim(), password });
       return;
     }
-    onLoginSuccess?.({ email, password });
+    if (!email.trim() || !password) {
+      onLoginSuccess?.({ error: 'Email and password are required.' });
+      return;
+    }
+    onLoginSuccess?.({ email: email.trim(), password });
   };
 
   const chooseAudience = (nextAudience, nextTab = 'login') => {

@@ -37,7 +37,7 @@ export async function signIn(email, password) {
 }
 
 export async function signUp(fullName, email, password) {
-  const response = await apiRequest('/auth/register', {
+  const response = await apiRequest('/auth/register/customer', {
     method: 'POST',
     body: JSON.stringify({ fullName, email, password }),
   });

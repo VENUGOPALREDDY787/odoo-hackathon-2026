@@ -46,7 +46,11 @@ export class AuthService {
   }
 
   async registerCustomer(data) {
-    const { email, fullName, companyName } = data;
+    const { email, password, fullName } = data;
+
+    if (!password || password.length < 8) {
+      throw new ValidationError('Password must be at least 8 characters');
+    }
 
     const existing = await this.db('users').where({ email, deleted_at: null }).first();
     if (existing) {
@@ -55,13 +59,12 @@ export class AuthService {
 
     const trx = await this.db.transaction();
     try {
-      // Customer authentication is magic-link-only, but MySQL requires a non-null password hash.
-      const unusablePasswordHash = await bcrypt.hash(crypto.randomBytes(32).toString('hex'), this.config.BCRYPT_ROUNDS);
+      const passwordHash = await bcrypt.hash(password, this.config.BCRYPT_ROUNDS);
       const userId = crypto.randomUUID();
       await trx('users').insert({
           id: userId,
           email,
-          password_hash: unusablePasswordHash,
+          password_hash: passwordHash,
           full_name: fullName,
           role: CUSTOMER_ROLE,
           is_active: true,
@@ -70,15 +73,17 @@ export class AuthService {
         });
       const user = await trx('users').where({ id: userId }).first();
 
-      await trx('customers')
-        .insert({
+      const customerProfile = await trx('customers').where({ user_id: user.id }).first();
+      if (!customerProfile) {
+        await trx('customers').insert({
           user_id: user.id,
-          company_name: companyName,
+          company_name: fullName,
           tier: 'Bronze',
           billing_address: JSON.stringify({}),
           created_at: new Date(),
           updated_at: new Date(),
         });
+      }
 
       await trx.commit();
 
@@ -97,11 +102,6 @@ export class AuthService {
     if (!user) {
       await this.recordLoginAttempt(email, reqMeta.ip, false, reqMeta.userAgent);
       throw new AuthenticationError('Invalid credentials');
-    }
-
-    if (user.role === CUSTOMER_ROLE) {
-      await this.recordLoginAttempt(email, reqMeta.ip, false, reqMeta.userAgent);
-      throw new AuthenticationError('Use magic link to sign in');
     }
 
     if (!user.is_active) {
@@ -270,7 +270,10 @@ export class AuthService {
       throw new NotFoundError('User');
     }
 
-    return user;
+    return {
+      ...user,
+      status: user.is_active ? 'active' : 'disabled',
+    };
   }
 
   async updateProfile(userId, data) {
@@ -360,6 +363,7 @@ export class AuthService {
         email: user.email,
         fullName: user.full_name,
         role: user.role,
+        status: user.is_active ? 'active' : 'disabled',
       },
       accessToken,
       refreshToken: rawRefreshToken,

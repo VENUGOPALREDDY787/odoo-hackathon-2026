@@ -77,10 +77,10 @@ export async function registerInternal({ email, password, fullName, role }) {
   return { ...response.data, token: response.data.accessToken }
 }
 
-export async function registerCustomer({ email, fullName, companyName }) {
+export async function registerCustomer({ email, fullName, password }) {
   const response = await request('/auth/register/customer', {
     method: 'POST',
-    body: JSON.stringify({ email, fullName, companyName }),
+    body: JSON.stringify({ email, fullName, password }),
   })
   return { ...response.data, token: response.data.accessToken }
 }

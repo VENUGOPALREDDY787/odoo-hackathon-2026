@@ -13,7 +13,7 @@ services:
       - mysql_data:/var/lib/mysql
       - ./backend/schema_mysql.sql:/docker-entrypoint-initdb.d/01_schema.sql
     healthcheck:
-      test: ['CMD-SHELL', "mysql -h localhost -u dealflow -pdealflow_pass_2026 -e 'SELECT 1 FROM users LIMIT 1' >/dev/null 2>&1"]
+      test: ['CMD-SHELL', "mysql -h localhost -u dealflow -pdealflow_pass_2026 -D dealflow360 -e 'SELECT 1 FROM users LIMIT 1' >/dev/null 2>&1"]
       interval: 5s
       timeout: 5s
       retries: 10

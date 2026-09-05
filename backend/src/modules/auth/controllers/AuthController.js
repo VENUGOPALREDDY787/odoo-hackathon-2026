@@ -16,11 +16,11 @@ export class AuthController {
   });
 
   registerCustomer = asyncHandler(async (req, res) => {
-    const { email, fullName, companyName } = req.body;
-    if (!email || !fullName || !companyName) {
-      throw new ValidationError('Email, fullName, and companyName are required');
+    const { email, password, fullName } = req.body;
+    if (!email || !password || !fullName) {
+      throw new ValidationError('Email, password, and fullName are required');
     }
-    const result = await this.service.registerCustomer({ email, fullName, companyName });
+    const result = await this.service.registerCustomer({ email, password, fullName });
     res.status(201).json({ data: result });
   });
 
