@@ -1,7 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useTranslation } from 'react-i18next';
 import { USER_ROLES } from '../data/mockData';
 import Tag from './Tag';
+import LanguageSwitcher from './LanguageSwitcher';
 
 export default function Navbar({
   activeTab,
@@ -14,19 +16,20 @@ export default function Navbar({
   mobileMenuOpen,
   setMobileMenuOpen,
 }) {
+  const { t } = useTranslation();
   const [isScrolled, setIsScrolled] = useState(false);
   const navItems = [
-    { id: 'dashboard', label: 'Dashboard', icon: 'dashboard' },
-    { id: 'quotations', label: 'Quotations', icon: 'description' },
-    { id: 'approvals', label: 'Approvals', icon: 'gavel', badge: pendingApprovalsCount > 0 ? pendingApprovalsCount : null },
-    { id: 'fulfillment', label: 'Fulfillment', icon: 'local_shipping' },
-    { id: 'subscriptions', label: 'Subscriptions', icon: 'autorenew' },
-    { id: 'invoices', label: 'Invoices', icon: 'receipt_long' },
-    { id: 'deal-health', label: 'Deal Health', icon: 'monitor_heart' },
-    { id: 'reports', label: 'Reports', icon: 'analytics' },
-    { id: 'products', label: 'Product', icon: 'inventory_2' },
-    { id: 'discounts', label: 'Discounts', icon: 'tune' },
-    { id: 'customer-portal', label: 'Portal', icon: 'public', isPortal: true },
+    { id: 'dashboard', label: t('navigation.dashboard', 'Dashboard'), icon: 'dashboard' },
+    { id: 'quotations', label: t('navigation.quotations', 'Quotations'), icon: 'description' },
+    { id: 'approvals', label: t('navigation.approvals', 'Approvals'), icon: 'gavel', badge: pendingApprovalsCount > 0 ? pendingApprovalsCount : null },
+    { id: 'fulfillment', label: t('navigation.fulfillment', 'Fulfillment'), icon: 'local_shipping' },
+    { id: 'subscriptions', label: t('navigation.subscriptions', 'Subscriptions'), icon: 'autorenew' },
+    { id: 'invoices', label: t('navigation.invoices', 'Invoices'), icon: 'receipt_long' },
+    { id: 'deal-health', label: t('navigation.dealHealth', 'Deal Health'), icon: 'monitor_heart' },
+    { id: 'reports', label: t('navigation.reports', 'Reports'), icon: 'analytics' },
+    { id: 'products', label: t('navigation.products', 'Product'), icon: 'inventory_2' },
+    { id: 'discounts', label: t('navigation.discounts', 'Discounts'), icon: 'tune' },
+    { id: 'customer-portal', label: t('navigation.customerPortal', 'Portal'), icon: 'public', isPortal: true },
   ];
 
   const getIcon = (name) => {
@@ -197,7 +200,7 @@ export default function Navbar({
           {window.innerWidth >= 640 && (
             <div className="mt-4">
               <label className="block font-label-caps text-[10px] uppercase text-text-secondary mb-2">
-                Active Role
+                {t('navigation.activeRole', 'Active Role')}
               </label>
               <select
                 value={userRole}
@@ -206,7 +209,7 @@ export default function Navbar({
               >
                 {USER_ROLES.map((role) => (
                   <option key={role} value={role} className="bg-surface-card text-white">
-                    {role.charAt(0).toUpperCase() + role.slice(1)}
+                    {t(`roles.${role}`, role.charAt(0).toUpperCase() + role.slice(1))}
                   </option>
                 ))}
               </select>
@@ -220,7 +223,7 @@ export default function Navbar({
               className="mt-4 w-full inline-flex items-center justify-center gap-2 px-4 py-3 rounded-full bg-white text-surface-base text-sm font-semibold hover:opacity-90 active:scale-[0.98] transition-all shadow-[0_0_12px_rgba(255,255,255,0.2)]"
             >
               <span className="material-symbols-outlined text-[18px]">add</span>
-              <span>New Quotation</span>
+              <span>{t('navigation.newQuotation', 'New Quotation')}</span>
             </button>
           )}
         </div>

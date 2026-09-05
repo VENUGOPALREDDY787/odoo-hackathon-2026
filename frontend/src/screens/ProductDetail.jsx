@@ -1,9 +1,11 @@
 import React, { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import Card from '../components/Card';
 import PillButton from '../components/PillButton';
 import Tag from '../components/Tag';
 
 export default function ProductDetail({ product, onBack, onSave }) {
+  const { t } = useTranslation();
   const [name, setName] = useState(product?.name || '');
   const [category, setCategory] = useState(product?.category || 'SaaS Licenses');
   const [price, setPrice] = useState(product?.price || 0);
@@ -77,7 +79,7 @@ export default function ProductDetail({ product, onBack, onSave }) {
               </Tag>
             </div>
             <h1 className="font-headline-lg text-2xl sm:text-3xl font-bold tracking-tight text-text-primary mt-1">
-              {name || 'New Product Definition'}
+              {name || t('products.addProduct', 'New Product Definition')}
             </h1>
           </div>
         </div>
@@ -85,11 +87,11 @@ export default function ProductDetail({ product, onBack, onSave }) {
         <div className="flex items-center gap-2">
           {onBack && (
             <PillButton variant="ghost" size="md" onClick={onBack}>
-              Cancel
+              {t('common.cancel', 'Cancel')}
             </PillButton>
           )}
           <PillButton variant="primary" size="md" icon="save" onClick={handleSave}>
-            Save Configuration
+            {t('common.save', 'Save Configuration')}
           </PillButton>
         </div>
       </div>
@@ -99,7 +101,7 @@ export default function ProductDetail({ product, onBack, onSave }) {
         <Card className="p-6 sm:p-8 space-y-6">
           <div className="border-b border-border-subtle pb-3">
             <h3 className="font-headline-sm text-lg font-bold text-text-primary">
-              General SKU Information
+              {t('productDetail.productOverview', 'General SKU Information')}
             </h3>
             <p className="text-body-sm text-text-secondary text-xs">
               Base catalog parameters and commercial descriptors

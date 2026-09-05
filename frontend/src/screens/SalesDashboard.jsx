@@ -1,5 +1,6 @@
 import React from 'react';
 import { motion } from 'framer-motion';
+import { useTranslation } from 'react-i18next';
 import Card from '../components/Card';
 import PillButton from '../components/PillButton';
 import BarChart from '../components/BarChart';
@@ -11,6 +12,7 @@ export default function SalesDashboard({
   _quotations = [],
   pendingApprovalsCount = 14,
 }) {
+  const { t } = useTranslation();
   const recentActivities = [
     {
       user: 'Marcus Vance',
@@ -75,17 +77,17 @@ export default function SalesDashboard({
                 <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-status-live shadow-[0_0_8px_rgba(74,222,128,0.8)]" />
               </span>
               <span className="font-mono-tag text-mono-tag uppercase tracking-wider text-text-primary">
-                {pendingApprovalsCount} PENDING APPROVALS
+                {pendingApprovalsCount} {t('status.pending_approval', 'PENDING APPROVALS').toUpperCase()}
               </span>
             </div>
 
             {/* Headline & Subhead */}
             <div className="mt-8 md:mt-10 space-y-3 flex-1">
               <h1 className="font-kpi-value text-4xl sm:text-5xl md:text-kpi-value text-text-primary tracking-tight font-bold leading-[1.05]">
-                DealFlow Operations
+                {t('dashboard.title', 'DealFlow Operations')}
               </h1>
               <p className="font-body-md text-body-md text-text-secondary max-w-xl leading-relaxed">
-                Real-time pricing governance, blended risk analysis, and multi-tier quotation pipeline.
+                {t('dashboard.subtitle', 'Real-time pricing governance, blended risk analysis, and multi-tier quotation pipeline.')}
               </p>
             </div>
 
@@ -98,7 +100,7 @@ export default function SalesDashboard({
                   icon="add"
                   onClick={() => onNavigate('quotation-builder')}
                 >
-                  + New Quotation
+                  {t('navigation.newQuotation', '+ New Quotation')}
                 </PillButton>
                 <PillButton
                   variant="secondary"
@@ -106,7 +108,7 @@ export default function SalesDashboard({
                   icon="rule"
                   onClick={() => onNavigate('approvals')}
                 >
-                  View Approvals ({pendingApprovalsCount})
+                  {t('dashboard.reviewApprovalsCTA', 'View Approvals')} ({pendingApprovalsCount})
                 </PillButton>
                 <PillButton
                   variant="outline"
@@ -114,7 +116,7 @@ export default function SalesDashboard({
                   icon="view_kanban"
                   onClick={() => onNavigate('quotations')}
                 >
-                  Quotations Pipeline
+                  {t('navigation.quotations', 'Quotations Pipeline')}
                 </PillButton>
               </div>
 
@@ -122,7 +124,7 @@ export default function SalesDashboard({
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-6 border-t border-border-subtle bg-surface-base/30 rounded-2xl p-4 md:p-5">
                 <div>
                   <div className="font-label-caps text-label-caps text-text-secondary uppercase">
-                    Gross Velocity
+                    {t('dashboard.dealVelocity', 'Gross Velocity')}
                   </div>
                   <div className="font-mono-data text-mono-data text-text-primary mt-1 font-semibold flex items-center gap-1.5">
                     <span>$3.82M</span>
@@ -131,7 +133,7 @@ export default function SalesDashboard({
                 </div>
                 <div>
                   <div className="font-label-caps text-label-caps text-text-secondary uppercase">
-                    SLA Compliance
+                    {t('dashboard.targetPacing', 'SLA Compliance')}
                   </div>
                   <div className="font-mono-data text-mono-data text-text-primary mt-1 font-semibold">
                     99.4%
@@ -139,7 +141,7 @@ export default function SalesDashboard({
                 </div>
                 <div>
                   <div className="font-label-caps text-label-caps text-text-secondary uppercase">
-                    Median Margin
+                    {t('dashboard.marginHealth', 'Median Margin')}
                   </div>
                   <div className="font-mono-data text-mono-data text-accent-pink mt-1 font-semibold">
                     31.8%
@@ -159,7 +161,7 @@ export default function SalesDashboard({
           >
             <div className="flex items-center justify-between">
               <span className="font-mono-tag text-mono-tag tracking-wider font-semibold uppercase text-surface-base/80">
-                OPEN QUOTATIONS
+                {t('dashboard.activeQuotations', 'OPEN QUOTATIONS').toUpperCase()}
               </span>
               <span className="font-mono-tag text-mono-tag px-2 py-0.5 rounded bg-surface-base/10 text-surface-base font-semibold">
                 T-8 DAYS
@@ -172,7 +174,7 @@ export default function SalesDashboard({
               </div>
               <div className="text-right">
                 <span className="font-mono-tag text-mono-tag text-surface-base/70 block">
-                  ACTIVE STAGE
+                  {t('common.active', 'ACTIVE')} STAGE
                 </span>
                 <span className="font-body-sm text-body-sm font-semibold text-surface-base">
                   $2.14M Blended
@@ -192,11 +194,11 @@ export default function SalesDashboard({
           <div className="flex-1 bg-surface-card border border-border-subtle rounded-[32px] p-6 sm:p-7 flex flex-col justify-between relative overflow-hidden min-h-[190px]">
             <div className="flex items-center justify-between">
               <span className="font-mono-tag text-mono-tag tracking-wider uppercase text-text-secondary">
-                ACTIVE SALES REPS
+                {t('reports.repLeaderboard', 'ACTIVE SALES REPS').toUpperCase()}
               </span>
               <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-status-live/15 border border-status-live/30 text-status-live font-mono-tag text-[10px]">
                 <span className="w-1.5 h-1.5 rounded-full bg-status-live animate-pulse" />
-                <span>LIVE</span>
+                <span>{t('common.live', 'LIVE')}</span>
               </div>
             </div>
 
@@ -235,20 +237,20 @@ export default function SalesDashboard({
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-border-subtle">
           <div>
             <h2 className="font-headline-sm text-xl font-bold text-text-primary tracking-tight">
-              Recent Deal Governance & Audit Trail
+              {t('approvals.approvalHistory', 'Recent Deal Governance & Audit Trail')}
             </h2>
             <p className="text-body-sm text-text-secondary mt-0.5">
               Live updates emitted from Socket.IO pricing event mesh
             </p>
           </div>
           <div className="flex items-center gap-2">
-            <Tag variant="blue">LIVE STREAM</Tag>
+            <Tag variant="blue">{t('common.live', 'LIVE')} STREAM</Tag>
             <PillButton
               variant="outline"
               size="sm"
               onClick={() => onNavigate('deal-health')}
             >
-              Deal Health View
+              {t('navigation.dealHealth', 'Deal Health View')}
             </PillButton>
           </div>
         </div>

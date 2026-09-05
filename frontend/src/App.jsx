@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
+import { useTranslation } from 'react-i18next';
 import Navbar from './components/Navbar';
+import LanguageSwitcher from './components/LanguageSwitcher';
 import SalesDashboard from './screens/SalesDashboard';
 import QuotationsKanban from './screens/QuotationsKanban';
 import QuotationBuilder from './screens/QuotationBuilder';
@@ -26,6 +28,7 @@ const pageVariants = {
 };
 
 export default function App() {
+  const { t } = useTranslation();
   const [activeTab, setActiveTab] = useState('login');
   const [userRole, setUserRole] = useState('rep');
   const [currentUser, setCurrentUser] = useState({
@@ -235,13 +238,16 @@ export default function App() {
                 </span>
                 <input
                   type="text"
-                  placeholder="Search deals, customers, products..."
+                  placeholder={t('navigation.searchPlaceholder', 'Search deals, customers, products...')}
                   className="w-full bg-surface-interactive border border-border-subtle rounded-full pl-9 pr-4 py-2 text-sm text-text-primary placeholder:text-text-secondary focus:outline-none focus:border-accent-blue"
                 />
               </div>
 
               {/* Right Actions */}
               <div className="flex items-center gap-2">
+                {/* Multilingual Switcher */}
+                <LanguageSwitcher />
+
                 {/* Notification Bell */}
                 <button className="relative w-10 h-10 rounded-full bg-surface-interactive border border-border-subtle flex items-center justify-center text-text-secondary hover:text-white hover:border-accent-blue transition-all">
                   <span className="material-symbols-outlined text-[20px]">notifications</span>
@@ -262,7 +268,7 @@ export default function App() {
                     transition={{ duration: 1.5, repeat: Infinity }}
                     className="w-1.5 h-1.5 rounded-full bg-status-live"
                   />
-                  <span>{pendingApprovalsCount} PENDING APPROVALS</span>
+                  <span>{pendingApprovalsCount} {t('status.pending_approval', 'PENDING APPROVALS').toUpperCase()}</span>
                 </motion.button>
 
                 {/* Mobile Menu Button - only on tablet/desktop when sidebar is icon-only */}
@@ -404,14 +410,14 @@ export default function App() {
               onClick={() => handleTabChange('login')}
               className="hover:text-white transition-colors"
             >
-              Auth Screen
+              {t('navigation.login', 'Auth Screen')}
             </button>
             <span>•</span>
             <button
               onClick={() => handleTabChange('customer-portal')}
               className="hover:text-accent-blue transition-colors"
             >
-              Customer Portal View
+              {t('navigation.customerPortal', 'Customer Portal View')}
             </button>
             <span>•</span>
             <span className="text-status-live flex items-center gap-1">
@@ -420,7 +426,7 @@ export default function App() {
                 transition={{ duration: 1.5, repeat: Infinity }}
                 className="w-1.5 h-1.5 rounded-full bg-status-live"
               />
-              Socket.IO Active
+              Socket.IO {t('common.live', 'Active')}
             </span>
           </div>
         </footer>

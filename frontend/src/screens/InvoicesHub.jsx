@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import Card from '../components/Card';
 import PillButton from '../components/PillButton';
 import StatusBadge from '../components/StatusBadge';
@@ -8,6 +9,7 @@ import ListItem from '../components/ListItem';
 import { INVOICES_DATA } from '../data/mockData';
 
 export default function InvoicesHub() {
+  const { t } = useTranslation();
   const [invoices, setInvoices] = useState(INVOICES_DATA);
   const [selectedInvoice, setSelectedInvoice] = useState(null);
 
@@ -34,23 +36,23 @@ export default function InvoicesHub() {
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
           <h1 className="font-headline-lg text-3xl font-bold tracking-tight text-text-primary">
-            Invoicing & Accounts Receivable
+            {t('invoices.title', 'Invoicing & Accounts Receivable')}
           </h1>
           <p className="text-body-sm text-text-secondary mt-1">
-            Partial milestone billing, fulfillment reconciliations, and payment logging
+            {t('invoices.subtitle', 'Partial milestone billing, fulfillment reconciliations, and payment logging')}
           </p>
         </div>
 
         {/* Summary Stat Chips */}
         <div className="flex items-center gap-3">
           <div className="bg-surface-card border border-border-subtle rounded-2xl px-4 py-2 flex items-center gap-2">
-            <span className="font-label-caps text-xs text-text-secondary uppercase">Unpaid:</span>
+            <span className="font-label-caps text-xs text-text-secondary uppercase">{t('status.unpaid', 'Unpaid')}:</span>
             <span className="font-mono text-base font-bold text-status-warning">
               ${(totalUnpaid / 1000).toFixed(1)}k
             </span>
           </div>
           <div className="bg-surface-card border border-border-subtle rounded-2xl px-4 py-2 flex items-center gap-2">
-            <span className="font-label-caps text-xs text-text-secondary uppercase">Paid:</span>
+            <span className="font-label-caps text-xs text-text-secondary uppercase">{t('status.paid', 'Paid')}:</span>
             <span className="font-mono text-base font-bold text-status-live">
               ${(totalPaid / 1000).toFixed(1)}k
             </span>
@@ -63,7 +65,7 @@ export default function InvoicesHub() {
         <Card className="p-6">
           <div className="flex items-center justify-between pb-4 border-b border-border-subtle mb-2">
             <span className="font-label-caps text-xs uppercase text-text-secondary font-semibold">
-              Commercial Invoices
+              {t('navigation.invoices', 'Commercial Invoices')}
             </span>
             <span className="font-mono-tag text-xs text-text-secondary">
               {invoices.length} invoices
@@ -118,7 +120,7 @@ export default function InvoicesHub() {
                   className="inline-flex items-center gap-1 font-mono-tag text-xs text-accent-blue hover:underline mb-2 cursor-pointer"
                 >
                   <span className="material-symbols-outlined text-[14px]">arrow_back</span>
-                  <span>Back to Invoices</span>
+                  <span>{t('common.back', 'Back to Invoices')}</span>
                 </button>
                 <div className="flex flex-wrap items-center gap-3">
                   <h2 className="font-headline-sm text-2xl font-bold text-text-primary">
@@ -136,9 +138,9 @@ export default function InvoicesHub() {
                 <PillButton
                   variant="outline"
                   size="md"
-                  onClick={() => alert('PDF invoice statement downloaded.')}
+                  onClick={() => alert(`Invoice ${selectedInvoice.id} PDF compiled and downloaded.`)}
                 >
-                  Download Summary
+                  {t('invoices.downloadPdf', 'Download PDF')}
                 </PillButton>
                 <PillButton
                   variant="primary"
@@ -147,7 +149,7 @@ export default function InvoicesHub() {
                   onClick={handleRecordPayment}
                   disabled={selectedInvoice.status === 'Paid'}
                 >
-                  {selectedInvoice.status === 'Paid' ? 'Payment Recorded' : 'Record Payment'}
+                  {selectedInvoice.status === 'Paid' ? t('invoices.paymentRecorded', 'Payment Recorded') : t('invoices.recordPayment', 'Record Payment')}
                 </PillButton>
               </div>
             </div>

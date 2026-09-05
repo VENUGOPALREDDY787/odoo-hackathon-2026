@@ -1,10 +1,12 @@
 import React, { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import Card from '../components/Card';
 import PillButton from '../components/PillButton';
 import BigNumber from '../components/BigNumber';
 import Tag from '../components/Tag';
 
 export default function ReportingDashboard() {
+  const { t } = useTranslation();
   const [period, setPeriod] = useState('Quarter'); // 'Month' | 'Quarter' | 'Year'
   const [team, setTeam] = useState('All'); // 'All' | 'Enterprise' | 'EMEA' | 'Americas'
   const [approvalStatus, setApprovalStatus] = useState('All'); // 'All' | 'Approved' | 'Flagged'
@@ -37,10 +39,10 @@ export default function ReportingDashboard() {
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
           <h1 className="font-headline-lg text-3xl font-bold tracking-tight text-text-primary">
-            Executive Analytics & Reporting
+            {t('reports.title', 'Executive Analytics & Reporting')}
           </h1>
           <p className="text-body-sm text-text-secondary mt-1">
-            Global deal throughput, approval cycle latencies, and cross-sell attach metrics
+            {t('reports.subtitle', 'Global deal throughput, approval cycle latencies, and cross-sell attach metrics')}
           </p>
         </div>
 
@@ -52,7 +54,7 @@ export default function ReportingDashboard() {
             disabled={exportingType !== null}
             onClick={() => handleExport('pdf')}
           >
-            {exportingType === 'pdf' ? `Streaming PDF (${exportProgress}%)...` : 'Export PDF'}
+            {exportingType === 'pdf' ? `Streaming PDF (${exportProgress}%)...` : `${t('common.export', 'Export')} PDF`}
           </PillButton>
           <PillButton
             variant="secondary"
@@ -61,7 +63,7 @@ export default function ReportingDashboard() {
             disabled={exportingType !== null}
             onClick={() => handleExport('xls')}
           >
-            {exportingType === 'xls' ? `Streaming XLS (${exportProgress}%)...` : 'Export XLS'}
+            {exportingType === 'xls' ? `Streaming XLS (${exportProgress}%)...` : `${t('common.export', 'Export')} XLS`}
           </PillButton>
         </div>
       </div>
@@ -71,19 +73,23 @@ export default function ReportingDashboard() {
         <div className="flex flex-wrap items-center justify-between gap-4">
           {/* Period Filter */}
           <div className="flex items-center gap-2">
-            <span className="font-label-caps text-xs text-text-secondary uppercase">Period:</span>
+            <span className="font-label-caps text-xs text-text-secondary uppercase">{t('reports.dateRange', 'Period')}:</span>
             <div className="flex items-center bg-surface-interactive border border-border-subtle rounded-full p-1 text-xs">
-              {['Month', 'Quarter', 'Year'].map((p) => (
+              {[
+                { id: 'Month', label: t('reports.thisMonth', 'Month') },
+                { id: 'Quarter', label: t('reports.thisQuarter', 'Quarter') },
+                { id: 'Year', label: t('reports.thisYear', 'Year') },
+              ].map((p) => (
                 <button
-                  key={p}
-                  onClick={() => setPeriod(p)}
+                  key={p.id}
+                  onClick={() => setPeriod(p.id)}
                   className={`px-3 py-1 rounded-full font-medium transition-colors ${
-                    period === p
+                    period === p.id
                       ? 'bg-text-primary text-surface-base'
                       : 'text-text-secondary hover:text-white'
                   }`}
                 >
-                  {p}
+                  {p.label}
                 </button>
               ))}
             </div>

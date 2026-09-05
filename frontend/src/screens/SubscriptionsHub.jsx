@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import Card from '../components/Card';
 import PillButton from '../components/PillButton';
 import StatusBadge from '../components/StatusBadge';
@@ -7,6 +8,7 @@ import ListItem from '../components/ListItem';
 import { SUBSCRIPTIONS_DATA, calculateProration } from '../data/mockData';
 
 export default function SubscriptionsHub() {
+  const { t } = useTranslation();
   const [subscriptions, setSubscriptions] = useState(SUBSCRIPTIONS_DATA);
   const [selectedSub, setSelectedSub] = useState(null);
   const [modifyModalOpen, setModifyModalOpen] = useState(false);
@@ -46,16 +48,16 @@ export default function SubscriptionsHub() {
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
           <h1 className="font-headline-lg text-3xl font-bold tracking-tight text-text-primary">
-            Subscriptions & Billing Engine
+            {t('subscriptions.title', 'Subscriptions & Billing Engine')}
           </h1>
           <p className="text-body-sm text-text-secondary mt-1">
-            Automated recurring cycles, proration math, and contractual credit note generation
+            {t('subscriptions.subtitle', 'Automated recurring cycles, proration math, and contractual credit note generation')}
           </p>
         </div>
 
         <div className="flex items-center gap-3">
           <div className="bg-surface-card border border-border-subtle rounded-2xl px-4 py-2 flex items-center gap-2">
-            <span className="font-label-caps text-xs text-text-secondary uppercase">Active ARR:</span>
+            <span className="font-label-caps text-xs text-text-secondary uppercase">{t('subscriptions.arr', 'Active ARR')}:</span>
             <span className="font-mono text-base font-bold text-accent-blue">${(totalARR / 1000).toFixed(1)}k</span>
           </div>
           <PillButton
@@ -74,7 +76,7 @@ export default function SubscriptionsHub() {
         <Card className="p-6">
           <div className="flex items-center justify-between pb-4 border-b border-border-subtle mb-2">
             <span className="font-label-caps text-xs uppercase text-text-secondary font-semibold">
-              Active Recurring Contracts
+              {t('subscriptions.activeSubscriptions', 'Active Recurring Contracts')}
             </span>
             <span className="font-mono-tag text-xs text-text-secondary">
               {subscriptions.length} subscriptions
@@ -139,7 +141,7 @@ export default function SubscriptionsHub() {
                   className="inline-flex items-center gap-1 font-mono-tag text-xs text-accent-blue hover:underline mb-2 cursor-pointer"
                 >
                   <span className="material-symbols-outlined text-[14px]">arrow_back</span>
-                  <span>Back to Subscriptions</span>
+                  <span>{t('common.back', 'Back to Subscriptions')}</span>
                 </button>
                 <div className="flex flex-wrap items-center gap-3">
                   <h2 className="font-headline-sm text-2xl font-bold text-text-primary">
@@ -168,7 +170,7 @@ export default function SubscriptionsHub() {
                   onClick={() => setCancelConfirmOpen(true)}
                   disabled={selectedSub.status === 'Cancelled'}
                 >
-                  Cancel Subscription
+                  {t('subscriptions.cancelSubscription', 'Cancel Subscription')}
                 </PillButton>
               </div>
             </div>

@@ -1,8 +1,11 @@
 import React, { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import Card from '../components/Card';
 import PillButton from '../components/PillButton';
+import LanguageSwitcher from '../components/LanguageSwitcher';
 
 export default function LoginScreen({ onLoginSuccess }) {
+  const { t } = useTranslation();
   const [tab, setTab] = useState('login'); // 'login' | 'signup'
   const [email, setEmail] = useState('marcus.vance@dealflow360.io');
   const [password, setPassword] = useState('••••••••••••');
@@ -17,7 +20,12 @@ export default function LoginScreen({ onLoginSuccess }) {
   };
 
   return (
-    <div className="min-h-[85vh] flex items-center justify-center px-4 pt-20 pb-12">
+    <div className="min-h-[85vh] flex items-center justify-center px-4 pt-20 pb-12 relative">
+      {/* Language Switcher in Top Right */}
+      <div className="absolute top-6 right-6 z-20">
+        <LanguageSwitcher />
+      </div>
+
       <Card className="max-w-md w-full p-8 md:p-10 relative overflow-hidden" radiance>
         {/* Header with Brand Mark */}
         <div className="flex flex-col items-center text-center mb-8">
@@ -25,7 +33,7 @@ export default function LoginScreen({ onLoginSuccess }) {
             <img src="/brand-mark.svg" alt="DealFlow360" className="h-9 w-auto" />
           </div>
           <p className="text-body-sm text-text-secondary">
-            Autonomous Pricing Governance & Enterprise Deal Desk
+            {t('auth.subtitle', 'Autonomous Pricing Governance & Enterprise Deal Desk')}
           </p>
         </div>
 
@@ -40,7 +48,7 @@ export default function LoginScreen({ onLoginSuccess }) {
                 : 'text-text-secondary hover:text-white'
             }`}
           >
-            Log In
+            {t('navigation.login', 'Log In')}
           </button>
           <button
             type="button"
@@ -51,7 +59,7 @@ export default function LoginScreen({ onLoginSuccess }) {
                 : 'text-text-secondary hover:text-white'
             }`}
           >
-            Sign Up
+            {t('auth.signUp', 'Sign Up')}
           </button>
         </div>
 
@@ -60,7 +68,7 @@ export default function LoginScreen({ onLoginSuccess }) {
           {tab === 'signup' && (
             <div>
               <label className="block font-label-caps text-label-caps text-text-secondary uppercase mb-1.5">
-                Full Name
+                {t('auth.fullName', 'Full Name')}
               </label>
               <input
                 type="text"
@@ -75,7 +83,7 @@ export default function LoginScreen({ onLoginSuccess }) {
 
           <div>
             <label className="block font-label-caps text-label-caps text-text-secondary uppercase mb-1.5">
-              Work Email
+              {t('auth.emailLabel', 'Work Email')}
             </label>
             <input
               type="email"
@@ -90,7 +98,7 @@ export default function LoginScreen({ onLoginSuccess }) {
           <div>
             <div className="flex items-center justify-between mb-1.5">
               <label className="font-label-caps text-label-caps text-text-secondary uppercase">
-                Password
+                {t('auth.passwordLabel', 'Password')}
               </label>
               {tab === 'login' && (
                 <a
@@ -101,7 +109,7 @@ export default function LoginScreen({ onLoginSuccess }) {
                   }}
                   className="font-mono-tag text-[11px] text-accent-blue hover:underline"
                 >
-                  Forgot Password?
+                  {t('auth.forgotPassword', 'Forgot Password?')}
                 </a>
               )}
             </div>
@@ -118,15 +126,15 @@ export default function LoginScreen({ onLoginSuccess }) {
           {/* Role selector for demo convenience */}
           <div className="pt-2">
             <label className="block font-label-caps text-label-caps text-text-secondary uppercase mb-2">
-              Sign In As Role (Demo Access)
+              {t('auth.demoRolesTitle', 'Sign In As Role (Demo Access)')}
             </label>
             <div className="grid grid-cols-3 gap-2">
               {[
-                { id: 'rep', label: 'Sales Rep' },
-                { id: 'manager', label: 'Sales Mgr' },
-                { id: 'finance', label: 'Finance VP' },
-                { id: 'admin', label: 'Admin' },
-                { id: 'customer', label: 'Customer' },
+                { id: 'rep', key: 'roles.rep', fallback: 'Sales Rep' },
+                { id: 'manager', key: 'roles.manager', fallback: 'Sales Mgr' },
+                { id: 'finance', key: 'roles.finance', fallback: 'Finance VP' },
+                { id: 'admin', key: 'roles.admin', fallback: 'Admin' },
+                { id: 'customer', key: 'roles.customer', fallback: 'Customer' },
               ].map((r) => (
                 <button
                   key={r.id}
@@ -138,7 +146,7 @@ export default function LoginScreen({ onLoginSuccess }) {
                       : 'bg-surface-interactive border-border-subtle text-text-secondary hover:text-white'
                   }`}
                 >
-                  {r.label}
+                  {t(r.key, r.fallback)}
                 </button>
               ))}
             </div>
@@ -146,14 +154,14 @@ export default function LoginScreen({ onLoginSuccess }) {
 
           <div className="pt-4">
             <PillButton type="submit" variant="primary" size="lg" className="w-full">
-              {tab === 'login' ? 'Authenticate & Enter' : 'Create Enterprise Account'}
+              {tab === 'login' ? t('auth.signInBtn', 'Authenticate & Enter') : t('auth.createAccount', 'Create Enterprise Account')}
             </PillButton>
           </div>
         </form>
 
         <div className="mt-6 pt-4 border-t border-border-subtle/50 text-center">
           <span className="font-mono-tag text-[11px] text-text-secondary">
-            Enforced with AETHER RBAC • Socket.IO Event Mesh
+            {t('auth.securityNote', 'Enforced with AETHER RBAC • Socket.IO Event Mesh')}
           </span>
         </div>
       </Card>

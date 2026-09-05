@@ -1,5 +1,6 @@
 import React, { useState, useRef } from 'react';
 import { motion } from 'framer-motion';
+import { useTranslation } from 'react-i18next';
 import Card from '../components/Card';
 import PillButton from '../components/PillButton';
 import Tag from '../components/Tag';
@@ -19,6 +20,7 @@ export default function QuotationBuilder({
   onSubmitApproval,
   onBack,
 }) {
+  const { t } = useTranslation();
   const lineCounterRef = useRef(0);
   const [quotationId] = useState(() =>
     initialQuotation?.id || `QT-2026-${Math.floor(1000 + Math.random() * 9000)}`
@@ -194,14 +196,14 @@ export default function QuotationBuilder({
                 {quotationId}
               </span>
               <Tag variant={customerTier === 'Gold' ? 'pink' : customerTier === 'Silver' ? 'blue' : 'neutral'}>
-                {customerTier} Tier Customer
+                {customerTier} Tier {t('common.customer', 'Customer')}
               </Tag>
               {riskAnalysis.requiresFinance && (
                 <Tag variant="danger">DUAL APPROVAL MANDATE</Tag>
               )}
             </div>
             <h1 className="font-headline-lg text-2xl sm:text-3xl font-bold tracking-tight text-text-primary mt-1">
-              Quotation Builder & Risk Engine
+              {t('builder.title', 'Quotation Builder & Risk Engine')}
             </h1>
           </div>
         </div>
@@ -254,7 +256,7 @@ export default function QuotationBuilder({
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
               <div className="flex-1 min-w-0">
                 <span className="font-label-caps text-label-caps text-text-secondary uppercase">
-                  Running Blended Risk Score
+                  {t('builder.riskScore', 'Running Blended Risk Score')}
                 </span>
                 <div className="flex items-baseline gap-3 mt-1 flex-wrap">
                   <motion.div
@@ -279,7 +281,7 @@ export default function QuotationBuilder({
                         : 'green'
                     }
                   >
-                    {riskAnalysis.level} RISK
+                    {t(`status.${riskAnalysis.level.toLowerCase()}`, `${riskAnalysis.level} RISK`)}
                   </Tag>
                 </div>
                 <p className="text-body-sm text-text-secondary mt-1">
@@ -292,7 +294,7 @@ export default function QuotationBuilder({
               {/* Running Value Telemetry */}
               <div className="text-left sm:text-right border-t sm:border-t-0 sm:border-l border-border-subtle pt-3 sm:pt-0 sm:pl-6 flex-shrink-0">
                 <span className="font-label-caps text-label-caps text-text-secondary uppercase block sm:hidden mb-2">
-                  Net Quotation Value
+                  {t('builder.totalAmount', 'Net Quotation Value')}
                 </span>
                 <div className="font-kpi-value text-3xl font-bold text-text-primary mt-1 sm:mt-0">
                   ${totals.total.toLocaleString()}
@@ -309,7 +311,7 @@ export default function QuotationBuilder({
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-border-subtle">
               <div className="flex items-center gap-2">
                 <h3 className="font-headline-sm text-lg font-bold text-text-primary">
-                  Quotation Line Items
+                  {t('builder.lineItems', 'Quotation Line Items')}
                 </h3>
                 <span className="font-mono-tag text-xs text-text-secondary">
                   ({lines.length})
@@ -321,7 +323,7 @@ export default function QuotationBuilder({
                 icon="add"
                 onClick={() => setShowProductPicker(true)}
               >
-                + Add Product
+                {t('builder.addProduct', '+ Add Product')}
               </PillButton>
             </div>
 
@@ -330,14 +332,14 @@ export default function QuotationBuilder({
               <table className="w-full min-w-[700px] text-left border-collapse text-xs">
                 <thead>
                   <tr className="border-b border-border-subtle text-text-secondary font-label-caps uppercase text-[11px]">
-                    <th className="py-2.5 pr-3">Product</th>
-                    <th className="py-2.5 px-2 text-center w-20">Type</th>
-                    <th className="py-2.5 px-2 text-center w-16">Qty</th>
-                    <th className="py-2.5 px-2 text-right w-28">Unit Price</th>
-                    <th className="py-2.5 px-2 text-center w-24">Disc %</th>
+                    <th className="py-2.5 pr-3">{t('builder.productName', 'Product')}</th>
+                    <th className="py-2.5 px-2 text-center w-20">{t('common.status', 'Type')}</th>
+                    <th className="py-2.5 px-2 text-center w-16">{t('builder.quantity', 'Qty')}</th>
+                    <th className="py-2.5 px-2 text-right w-28">{t('builder.unitPrice', 'Unit Price')}</th>
+                    <th className="py-2.5 px-2 text-center w-24">{t('builder.discount', 'Disc %')}</th>
                     <th className="py-2.5 px-2 text-center w-20">Limit</th>
-                    <th className="py-2.5 px-2 text-center w-28">Status</th>
-                    <th className="py-2.5 px-2 text-right w-28">Net Total</th>
+                    <th className="py-2.5 px-2 text-center w-28">{t('common.status', 'Status')}</th>
+                    <th className="py-2.5 px-2 text-right w-28">{t('builder.subtotal', 'Net Total')}</th>
                     <th className="py-2.5 pl-2 text-center w-10"></th>
                   </tr>
                 </thead>
@@ -579,15 +581,15 @@ export default function QuotationBuilder({
       {/* Footer Sticky Toolbar */}
       <div className="sticky bottom-4 z-40 bg-surface-card/90 backdrop-blur-xl border border-border-subtle rounded-full p-3.5 shadow-[0_10px_35px_rgba(0,0,0,0.6)] flex flex-col sm:flex-row sm:items-center justify-between gap-4 max-w-max-width mx-auto px-3">
         <div className="flex items-center gap-3 flex-wrap">
-          <span className="font-mono-tag text-xs text-text-secondary">Summary:</span>
+          <span className="font-mono-tag text-xs text-text-secondary">{t('common.details', 'Summary')}:</span>
           <span className="font-mono-data font-semibold text-text-primary text-sm">
-            {lines.length} Line Items &bull; ${totals.total.toLocaleString()} Total
+            {lines.length} Line Items &bull; ${totals.total.toLocaleString()} {t('common.total', 'Total')}
           </span>
         </div>
 
         <div className="flex items-center gap-3">
           <PillButton variant="secondary" size="md" onClick={handleSave}>
-            Save Draft
+            {t('builder.saveDraft', 'Save Draft')}
           </PillButton>
           <PillButton
             variant="primary"
@@ -595,7 +597,7 @@ export default function QuotationBuilder({
             icon="send"
             onClick={handleSubmit}
           >
-            Submit for Approval
+            {t('builder.submitForApproval', 'Submit for Approval')}
           </PillButton>
         </div>
       </div>
