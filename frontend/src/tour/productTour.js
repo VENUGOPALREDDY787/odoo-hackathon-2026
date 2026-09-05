@@ -21,8 +21,8 @@ const waitForElement = (selector, timeout = 8000) =>
     find();
   });
 
-export const hasCompletedProductTour = () =>
-  window.localStorage.getItem(TOUR_STORAGE_KEY) === 'true';
+export const hasCompletedProductTour = (role = 'customer') =>
+  window.localStorage.getItem(`${TOUR_STORAGE_KEY}:${role}`) === 'true';
 
 const TOUR_STEPS_BY_ROLE = {
   rep: [
@@ -100,7 +100,7 @@ export const createProductTour = ({ navigate, isMobile, onStartExploring, role }
   const steps = TOUR_STEPS_BY_ROLE[role] || TOUR_STEPS_BY_ROLE.rep;
 
   const completeTour = () => {
-    window.localStorage.setItem(TOUR_STORAGE_KEY, 'true');
+    window.localStorage.setItem(`${TOUR_STORAGE_KEY}:${role}`, 'true');
   };
 
   const destroyTour = () => {
@@ -129,7 +129,6 @@ export const createProductTour = ({ navigate, isMobile, onStartExploring, role }
         currentStepIndex = targetIndex;
         tour.moveTo(targetIndex);
       } else {
-        console.log(`[Tour] Skipping step ${targetStep.id} - target not found`);
         if (targetIndex < steps.length - 1) {
           await moveToStep(targetIndex + 1);
         } else {

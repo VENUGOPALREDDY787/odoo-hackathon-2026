@@ -44,6 +44,13 @@ export async function signUp(fullName, email, password) {
   return saveSession(response.data);
 }
 
+export async function requestMagicLink(email) {
+  return apiRequest('/auth/magic-link/request', {
+    method: 'POST',
+    body: JSON.stringify({ email }),
+  });
+}
+
 export async function recoverSession() {
   const accessToken = localStorage.getItem(ACCESS_TOKEN_KEY);
   const refreshToken = localStorage.getItem(REFRESH_TOKEN_KEY);

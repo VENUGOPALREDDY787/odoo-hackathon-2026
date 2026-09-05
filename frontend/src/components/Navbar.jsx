@@ -210,7 +210,7 @@ export default function Navbar({
           <button type="button" onClick={onLogout} className="mt-3 w-full text-left text-sm text-status-danger hover:underline">Logout</button>
 
           {/* New Quotation CTA (Desktop) */}
-          {viewport.isDesktop && onNewQuotation && (
+          {viewport.isDesktop && onNewQuotation && role !== 'customer' && (
             <button
               type="button"
               onClick={onNewQuotation}

@@ -170,6 +170,10 @@ export async function listSubscriptionPlans() {
   return unwrapList(await request('/subscriptions/plans'))
 }
 
+export async function createSubscriptionPlan(payload) {
+  return (await request('/subscriptions/plans', { method: 'POST', body: JSON.stringify(payload) })).data
+}
+
 export async function generateSchedules(payload) {
   return unwrapList(await request('/subscriptions/schedules/generate', { method: 'POST', body: JSON.stringify(payload) }))
 }

@@ -48,7 +48,7 @@ export default function FulfillmentHub() {
   const handleManualOverride = async (e) => {
     e.preventDefault();
     if (!overrideReason.trim()) {
-      alert('Override rationale is required for audit trail.');
+      setError('Override rationale is required for audit trail.');
       return;
     }
 

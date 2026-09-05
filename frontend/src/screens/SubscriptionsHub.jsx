@@ -7,7 +7,7 @@ import Tag from '../components/Tag';
 import ListItem from '../components/ListItem';
 import { calculateProration } from '../utils/quotationCalculations';
 import Skeleton from '../components/Skeleton';
-import { cancelSubscriptionLine, generateSchedules, listSubscriptionPlans } from '../api/client';
+import { cancelSubscriptionLine, createSubscriptionPlan, generateSchedules, listSubscriptionPlans } from '../api/client';
 
 export default function SubscriptionsHub() {
   const { t } = useTranslation();
@@ -18,6 +18,11 @@ export default function SubscriptionsHub() {
   const [newQty, setNewQty] = useState(15);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [planModalOpen, setPlanModalOpen] = useState(false);
+  const [planName, setPlanName] = useState('');
+  const [planInterval, setPlanInterval] = useState('monthly');
+  const [planPrice, setPlanPrice] = useState('');
+  const [planSaving, setPlanSaving] = useState(false);
 
   useEffect(() => {
     listSubscriptionPlans().then((plans) => setSubscriptions(plans.map((plan) => ({
@@ -62,6 +67,39 @@ export default function SubscriptionsHub() {
     } catch (requestError) { setError(requestError.message); }
   };
 
+  const handleCreatePlan = async (event) => {
+    event.preventDefault();
+    setPlanSaving(true);
+    setError('');
+    try {
+      const created = await createSubscriptionPlan({
+        name: planName.trim(),
+        interval_type: planInterval,
+        base_price: Number(planPrice),
+      });
+      setSubscriptions((previous) => [{
+        ...created,
+        id: created.id,
+        customer: 'Unassigned plan',
+        customerTier: 'Bronze',
+        plan: created.name,
+        cycle: created.interval_type,
+        amount: created.base_price,
+        nextBill: 'Not scheduled',
+        status: 'Active',
+        recurringLines: [],
+        oneTimeLines: [],
+      }, ...previous]);
+      setPlanName('');
+      setPlanPrice('');
+      setPlanModalOpen(false);
+    } catch (requestError) {
+      setError(requestError.message);
+    } finally {
+      setPlanSaving(false);
+    }
+  };
+
   if (loading) return <div className="space-y-4"><Skeleton height="6rem" /><Skeleton variant="rounded" height="28rem" /></div>;
   if (error) return <Card className="p-6 text-status-danger">Unable to load subscriptions: {error}</Card>;
 
@@ -87,7 +125,7 @@ export default function SubscriptionsHub() {
             variant="primary"
             size="md"
             icon="add"
-            onClick={() => alert('New plan configuration template generated.')}
+            onClick={() => setPlanModalOpen(true)}
           >
             + New Plan (Admin)
           </PillButton>
@@ -267,6 +305,32 @@ export default function SubscriptionsHub() {
               </div>
             </Card>
           </div>
+        </div>
+      )}
+
+      {planModalOpen && (
+        <div className="fixed inset-0 z-50 bg-surface-base/75 backdrop-blur-md flex items-center justify-center p-4" role="dialog" aria-modal="true" aria-labelledby="new-plan-title">
+          <Card className="max-w-md w-full p-6 space-y-4" radiance>
+            <div className="flex items-center justify-between border-b border-border-subtle pb-3">
+              <h2 id="new-plan-title" className="font-headline-sm text-lg font-bold text-text-primary">New Subscription Plan</h2>
+              <button type="button" onClick={() => setPlanModalOpen(false)} aria-label="Close" className="text-text-secondary hover:text-text-primary">
+                <span className="material-symbols-outlined text-[18px]">close</span>
+              </button>
+            </div>
+            <form onSubmit={handleCreatePlan} className="space-y-4">
+              <input required value={planName} onChange={(event) => setPlanName(event.target.value)} placeholder="Plan name" className="w-full aether-input" />
+              <select value={planInterval} onChange={(event) => setPlanInterval(event.target.value)} className="w-full aether-input">
+                <option value="monthly">Monthly</option>
+                <option value="quarterly">Quarterly</option>
+                <option value="yearly">Yearly</option>
+              </select>
+              <input required min="0" step="0.01" type="number" value={planPrice} onChange={(event) => setPlanPrice(event.target.value)} placeholder="Base price" className="w-full aether-input" />
+              <div className="flex justify-end gap-3">
+                <PillButton type="button" variant="ghost" onClick={() => setPlanModalOpen(false)}>Cancel</PillButton>
+                <PillButton type="submit" variant="primary" disabled={planSaving}>{planSaving ? 'Saving...' : 'Create Plan'}</PillButton>
+              </div>
+            </form>
+          </Card>
         </div>
       )}
 

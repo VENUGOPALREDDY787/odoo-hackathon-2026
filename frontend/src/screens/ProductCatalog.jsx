@@ -20,7 +20,7 @@ function mapProduct(product) {
   };
 }
 
-export default function ProductCatalog({ onSelectProduct, onNewProduct, onDeleteProduct, canDelete = false, reloadKey = 0 }) {
+export default function ProductCatalog({ onSelectProduct, onNewProduct, onDeleteProduct, canDelete = false, canEdit = false, reloadKey = 0 }) {
   const { t } = useTranslation();
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -81,9 +81,9 @@ export default function ProductCatalog({ onSelectProduct, onNewProduct, onDelete
             <span className="font-label-caps text-xs text-text-secondary uppercase">Variants:</span>
             <span className="font-mono text-sm font-bold text-text-primary">{totalVariants}</span>
           </div>
-          <PillButton variant="primary" icon="add" onClick={onNewProduct}>
+          {canEdit && <PillButton variant="primary" icon="add" onClick={onNewProduct}>
             {t('products.addProduct', '+ New Product')}
-          </PillButton>
+          </PillButton>}
         </div>
       </div>
 

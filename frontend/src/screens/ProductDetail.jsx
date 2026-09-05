@@ -4,7 +4,7 @@ import Card from '../components/Card';
 import PillButton from '../components/PillButton';
 import Tag from '../components/Tag';
 
-export default function ProductDetail({ product, onBack, onSave }) {
+export default function ProductDetail({ product, onBack, onSave, canEdit = false }) {
   const { t } = useTranslation();
   const [sku, setSku] = useState(product?.sku || '');
   const [name, setName] = useState(product?.name || '');
@@ -15,6 +15,8 @@ export default function ProductDetail({ product, onBack, onSave }) {
   const [description, setDescription] = useState(product?.description || '');
   const [isSubscription, setIsSubscription] = useState(product?.isSubscription || false);
   const [recurringCycle, setRecurringCycle] = useState(product?.recurringCycle || 'yearly');
+  const [saving, setSaving] = useState(false);
+  const [saveError, setSaveError] = useState('');
 
   const [variants, setVariants] = useState(
     product?.variants || [
@@ -37,8 +39,10 @@ export default function ProductDetail({ product, onBack, onSave }) {
     ]);
   };
 
-  const handleSave = (e) => {
+  const handleSave = async (e) => {
     e.preventDefault();
+    setSaveError('');
+    setSaving(true);
     const updated = {
       id: product?.id || `prod-${Date.now()}`,
       sku: sku || `DF-${Date.now()}`,
@@ -54,8 +58,13 @@ export default function ProductDetail({ product, onBack, onSave }) {
       pricelists,
       status: 'Active',
     };
-    if (onSave) onSave(updated);
-    alert('Product configuration and pricelist resolution matrix saved.');
+    try {
+      await onSave?.(updated);
+    } catch (requestError) {
+      setSaveError(requestError.message);
+    } finally {
+      setSaving(false);
+    }
   };
 
   return (
@@ -92,13 +101,15 @@ export default function ProductDetail({ product, onBack, onSave }) {
               {t('common.cancel', 'Cancel')}
             </PillButton>
           )}
-          <PillButton variant="primary" size="md" icon="save" onClick={handleSave}>
-            {t('common.save', 'Save Configuration')}
-          </PillButton>
+          {canEdit && <PillButton variant="primary" size="md" icon="save" onClick={handleSave} disabled={saving}>
+            {saving ? 'Saving...' : t('common.save', 'Save Configuration')}
+          </PillButton>}
         </div>
       </div>
 
       <form onSubmit={handleSave} className="space-y-6">
+        <fieldset disabled={!canEdit} className="space-y-6">
+        {saveError && <p className="text-sm text-status-danger" role="alert">{saveError}</p>}
         {/* General Info Card */}
         <Card className="p-6 sm:p-8 space-y-6">
           <div className="border-b border-border-subtle pb-3">
@@ -122,7 +133,7 @@ export default function ProductDetail({ product, onBack, onSave }) {
                 onChange={(e) => setSku(e.target.value)}
                 className="w-full aether-input font-mono"
                 placeholder="e.g. AETHER-X4"
-                disabled={Boolean(product?.id)}
+                disabled={!canEdit || Boolean(product?.id)}
               />
             </div>
             <div className="sm:col-span-2">
@@ -135,6 +146,7 @@ export default function ProductDetail({ product, onBack, onSave }) {
                 value={name}
                 onChange={(e) => setName(e.target.value)}
                 className="w-full aether-input"
+                disabled={!canEdit}
                 placeholder="e.g. AETHER Edge Compute Node X4"
               />
             </div>
@@ -356,6 +368,7 @@ export default function ProductDetail({ product, onBack, onSave }) {
             </table>
           </div>
         </Card>
+        </fieldset>
       </form>
     </div>
   );

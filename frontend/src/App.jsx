@@ -20,7 +20,7 @@ import DiscountConfig from './screens/DiscountConfig';
 import CustomerPortal from './screens/CustomerPortal';
 import LoginScreen from './screens/LoginScreen';
 import ProfileScreen from './screens/ProfileScreen';
-import { clearSession, createProduct, createProductVariant, deleteProduct, recoverSession, signIn, signUp, updateProduct } from './auth/authApi';
+import { clearSession, createProduct, createProductVariant, deleteProduct, recoverSession, requestMagicLink, signIn, signUp, updateProduct } from './auth/authApi';
 import { roleBasedRedirect } from './auth/roleRedirect';
 import { createProductTour, hasCompletedProductTour } from './tour/productTour';
 import { listQuotations, normalizeQuotation, submitQuotation as submitQuotationApi, createQuotation as createQuotationApi } from './api/client';
@@ -210,7 +210,7 @@ export default function App() {
     if (
       activeTab !== 'dashboard' ||
       viewport.isMobile ||
-      hasCompletedProductTour() ||
+      hasCompletedProductTour(currentUser?.role || 'customer') ||
       autoTourStartedRef.current
     ) {
       return undefined;
@@ -429,18 +429,6 @@ export default function App() {
                   onToggle={() => setTheme((value) => (value === 'dark' ? 'light' : 'dark'))}
                 />
 
-                {/* Notification Bell */}
-                <button
-                  type="button"
-                  aria-label={t('navigation.notifications', 'Notifications')}
-                  className="relative w-10 h-10 rounded-full bg-surface-interactive border border-border-subtle flex items-center justify-center text-text-secondary hover:text-text-primary hover:border-accent-blue transition-all"
-                >
-                  <span className="material-symbols-outlined text-[20px]">notifications</span>
-                  <span className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-status-warning flex items-center justify-center font-mono text-[9px] font-bold text-surface-base">
-                    3
-                  </span>
-                </button>
-
                 {/* Pending Approvals Live Pill */}
                 <motion.button
                   whileHover={{ scale: 1.02 }}
@@ -523,6 +511,10 @@ export default function App() {
                       setAuthStatus('anonymous');
                     }
                   }}
+                  onForgotPassword={async (email) => {
+                    if (!email) throw new Error('Enter your email address first.');
+                    await requestMagicLink(email);
+                  }}
                 />
               )}
 
@@ -593,6 +585,7 @@ export default function App() {
                 <ProductCatalog
                   reloadKey={productReloadKey}
                   canDelete={currentUser?.role === 'admin'}
+                  canEdit={currentUser?.role === 'admin'}
                   onDeleteProduct={handleDeleteProduct}
                   onSelectProduct={(prod) => {
                     setSelectedProduct(prod);
@@ -610,6 +603,7 @@ export default function App() {
                   product={selectedProduct}
                   onBack={() => handleTabChange('products')}
                   onSave={handleSaveProduct}
+                  canEdit={currentUser?.role === 'admin'}
                 />
               )}
 

@@ -7,7 +7,7 @@ import Tag from '../components/Tag';
 import Skeleton from '../components/Skeleton';
 import { apiDownload, getSalesReport } from '../api/client';
 
-function getReportParams(period, approvalStatus) {
+function getReportParams(period, approvalStatus, tier) {
   const end = new Date();
   const start = new Date(end);
   start.setMonth(end.getMonth() - (period === 'Month' ? 1 : period === 'Year' ? 12 : 3));
@@ -15,31 +15,32 @@ function getReportParams(period, approvalStatus) {
     start_date: start.toISOString().slice(0, 10),
     end_date: end.toISOString().slice(0, 10),
     status: approvalStatus === 'All' ? '' : approvalStatus === 'Approved' ? 'approved' : 'pending_approval',
+    customer_tier: tier === 'All' ? '' : tier,
   };
 }
 
 export default function ReportingDashboard() {
   const { t } = useTranslation();
   const [period, setPeriod] = useState('Quarter'); // 'Month' | 'Quarter' | 'Year'
-  const [team, setTeam] = useState('All'); // 'All' | 'Enterprise' | 'EMEA' | 'Americas'
+  const [team, setTeam] = useState('All');
   const [approvalStatus, setApprovalStatus] = useState('All'); // 'All' | 'Approved' | 'Flagged'
-  const [exportingType, setExportingType] = useState(null); // 'pdf' | 'xls' | null
+  const [exportingType, setExportingType] = useState(null); // 'csv' | 'xlsx' | null
   const [report, setReport] = useState({});
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
   useEffect(() => {
-    getSalesReport(getReportParams(period, approvalStatus))
+    getSalesReport(getReportParams(period, approvalStatus, team))
       .then(setReport).catch((requestError) => setError(requestError.message)).finally(() => setLoading(false));
   }, [period, team, approvalStatus]);
 
   const handleExport = async (type) => {
     setExportingType(type);
     try {
-      const query = new URLSearchParams(getReportParams(period, approvalStatus)).toString();
-      const blob = await apiDownload(`/reporting/export/${type === 'pdf' ? 'csv' : 'xlsx'}?${query}`);
+      const query = new URLSearchParams(getReportParams(period, approvalStatus, team)).toString();
+      const blob = await apiDownload(`/reporting/export/${type}?${query}`);
       const url = URL.createObjectURL(blob);
-      const link = document.createElement('a'); link.href = url; link.download = `sales-report.${type === 'pdf' ? 'csv' : 'xlsx'}`; link.click(); URL.revokeObjectURL(url);
+      const link = document.createElement('a'); link.href = url; link.download = `sales-report.${type}`; link.click(); URL.revokeObjectURL(url);
     } catch (requestError) { setError(requestError.message); }
     finally { setExportingType(null); }
   };
@@ -64,20 +65,20 @@ export default function ReportingDashboard() {
           <PillButton
             variant="outline"
             size="md"
-            icon="picture_as_pdf"
+            icon="download"
             disabled={exportingType !== null}
-            onClick={() => handleExport('pdf')}
+            onClick={() => handleExport('csv')}
           >
-            {exportingType === 'pdf' ? 'Downloading...' : `${t('common.export', 'Export')} PDF`}
+            {exportingType === 'csv' ? 'Downloading...' : `${t('common.export', 'Export')} CSV`}
           </PillButton>
           <PillButton
             variant="secondary"
             size="md"
             icon="table_view"
             disabled={exportingType !== null}
-            onClick={() => handleExport('xls')}
+            onClick={() => handleExport('xlsx')}
           >
-            {exportingType === 'xls' ? 'Downloading...' : `${t('common.export', 'Export')} XLS`}
+            {exportingType === 'xlsx' ? 'Downloading...' : `${t('common.export', 'Export')} XLSX`}
           </PillButton>
         </div>
       </div>
@@ -109,11 +110,11 @@ export default function ReportingDashboard() {
             </div>
           </div>
 
-          {/* Sales Team Filter */}
+          {/* Customer Tier Filter */}
           <div className="flex items-center gap-2">
-            <span className="font-label-caps text-xs text-text-secondary uppercase">Team:</span>
+            <span className="font-label-caps text-xs text-text-secondary uppercase">Tier:</span>
             <div className="flex items-center bg-surface-interactive border border-border-subtle rounded-full p-1 text-xs">
-              {['All', 'Enterprise', 'EMEA', 'Americas'].map((t) => (
+              {['All', 'Bronze', 'Silver', 'Gold'].map((t) => (
                 <button
                   key={t}
                   onClick={() => setTeam(t)}

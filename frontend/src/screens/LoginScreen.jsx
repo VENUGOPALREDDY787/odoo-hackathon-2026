@@ -31,7 +31,7 @@ function PasswordField({ label, value, onChange, placeholder }) {
   );
 }
 
-export default function LoginScreen({ onLoginSuccess, onSignup, error, loading }) {
+export default function LoginScreen({ onLoginSuccess, onSignup, onForgotPassword, error, loading }) {
   const { t } = useTranslation();
   const [audience, setAudience] = useState(null);
   const [tab, setTab] = useState('login');
@@ -39,6 +39,8 @@ export default function LoginScreen({ onLoginSuccess, onSignup, error, loading }
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [name, setName] = useState('');
+  const [resetMessage, setResetMessage] = useState('');
+  const [resetLoading, setResetLoading] = useState(false);
 
   const handleSubmit = (e) => {
     e.preventDefault();
@@ -68,6 +70,20 @@ export default function LoginScreen({ onLoginSuccess, onSignup, error, loading }
   const chooseAudience = (nextAudience, nextTab = 'login') => {
     setAudience(nextAudience);
     setTab(nextTab);
+  };
+
+  const handleForgotPassword = async (event) => {
+    event.preventDefault();
+    setResetMessage('');
+    setResetLoading(true);
+    try {
+      await onForgotPassword?.(email.trim());
+      setResetMessage('If the account exists, a sign-in link has been sent.');
+    } catch (requestError) {
+      setResetMessage(requestError.message);
+    } finally {
+      setResetLoading(false);
+    }
   };
 
   return (
@@ -147,16 +163,14 @@ export default function LoginScreen({ onLoginSuccess, onSignup, error, loading }
                 {t('auth.passwordLabel', 'Password')}
               </label>
               {tab === 'login' && (
-                <a
-                  href="#forgot"
-                  onClick={(e) => {
-                    e.preventDefault();
-                    alert('Password reset link sent to registered email.');
-                  }}
+                <button
+                  type="button"
+                  onClick={handleForgotPassword}
+                  disabled={resetLoading}
                   className="font-mono-tag text-[11px] text-accent-blue hover:underline"
                 >
-                  {t('auth.forgotPassword', 'Forgot Password?')}
-                </a>
+                  {resetLoading ? 'Sending...' : t('auth.forgotPassword', 'Forgot Password?')}
+                </button>
               )}
             </div>
             <PasswordField label="" value={password} onChange={setPassword} placeholder="At least 8 characters" />
@@ -173,7 +187,7 @@ export default function LoginScreen({ onLoginSuccess, onSignup, error, loading }
           </div>
         </form>
 
-        {tab === 'login' && <p className="mt-4 text-center"><button type="button" onClick={() => alert('Password reset is not enabled on this deployment.')} className="font-mono-tag text-[11px] text-accent-blue hover:underline">Forgot Password?</button></p>}
+        {resetMessage && <p className="mt-4 text-center text-xs text-text-secondary" role="status">{resetMessage}</p>}
 
         <div className="mt-6 pt-4 border-t border-border-subtle/50 text-center">
           <span className="font-mono-tag text-[11px] text-text-secondary">
