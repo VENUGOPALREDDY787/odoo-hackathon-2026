@@ -4,7 +4,7 @@ import NegotiationService from './services/NegotiationService.js';
 
 export function registerNegotiationModule(container) {
   container.register('negotiationService', (c) =>
-    new NegotiationService(c.get('database'), c.get('logger'))
+    new NegotiationService(c.get('database'), c.get('logger'), c.get('io'))
   );
 
   container.register('negotiationController', (c) =>

@@ -9,10 +9,11 @@ import { ProductRepository, ProductVariantRepository } from '../../products/repo
 import { recalculateQuotationTotals, calculateMarginDelta } from './recalculator.js';
 
 export class QuotationService {
-  constructor(db, logger, cache) {
+  constructor(db, logger, cache, io = null) {
     this.db = db;
     this.logger = logger || { info: () => {}, warn: () => {}, error: () => {} };
     this.cache = cache;
+    this.io = io;
     this.quotationRepo = new QuotationRepository(db);
     this.lineRepo = new QuotationLineRepository(db);
     this.idempotencyRepo = new IdempotencyKeyRepository(db);
@@ -212,6 +213,14 @@ export class QuotationService {
 
       if (this.cache) await this.cache.delPattern(`quotations:item:${quotationId}`);
 
+      if (this.io) {
+        this.io.to(`quote:${quotationId}`).emit('quotation:updated', {
+          quotationId,
+          totals: newTotals,
+          marginDelta
+        });
+      }
+
       return {
         line: addedLine,
         quotation: updatedQuotation,
@@ -298,6 +307,15 @@ export class QuotationService {
 
       const updatedQuotation = await this.quotationRepo.findWithDetails(quotationId);
       if (this.cache) await this.cache.delPattern(`quotations:item:${quotationId}`);
+
+      if (this.io) {
+        this.io.to(`quote:${quotationId}`).emit('quotation:updated', {
+          quotationId,
+          totals: newTotals,
+          marginDelta
+        });
+      }
+
       return {
         quotation: updatedQuotation,
         margin_delta: marginDelta,
@@ -373,6 +391,15 @@ export class QuotationService {
 
       const updatedQuotation = await this.quotationRepo.findWithDetails(quotationId);
       if (this.cache) await this.cache.delPattern(`quotations:item:${quotationId}`);
+
+      if (this.io) {
+        this.io.to(`quote:${quotationId}`).emit('quotation:updated', {
+          quotationId,
+          totals: newTotals,
+          marginDelta
+        });
+      }
+
       return {
         quotation: updatedQuotation,
         margin_delta: marginDelta,
@@ -480,6 +507,21 @@ export class QuotationService {
       // 2. Save Idempotency Cache if key provided
       if (idempotencyKey) {
         await this.idempotencyRepo.saveKey(idempotencyKey, requestPath, 200, responsePayload);
+      }
+
+      if (this.io) {
+        this.io.to(`quote:${quotationId}`).emit('approval:statusChanged', {
+          quotationId,
+          status: newStatus,
+          routing: totals.routing,
+        });
+        
+        if (quotation.assigned_rep_id) {
+          this.io.to(`dashboard:${quotation.assigned_rep_id}`).emit('approval:statusChanged', {
+            quotationId,
+            status: newStatus
+          });
+        }
       }
 
       await trx.commit();

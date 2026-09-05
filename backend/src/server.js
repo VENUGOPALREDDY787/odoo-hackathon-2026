@@ -4,8 +4,10 @@ import { logger } from './utils/logger.js';
 import { getDatabase, closeDatabase } from './utils/database.js';
 import { container } from './container/index.js';
 import { Server as SocketIOServer } from 'socket.io';
+import { createAdapter } from '@socket.io/redis-adapter';
 import Redis from 'ioredis';
 import { createCache } from './utils/cache.js';
+import { socketAuth } from './middleware/socketAuth.js';
 
 import { registerAuthModule } from './modules/auth/index.js';
 import { registerProductModule } from './modules/products/index.js';
@@ -59,17 +61,34 @@ async function bootstrap() {
     },
   });
 
-  // Register io in the container so services (DealHealthService) can use it
+  if (redisUrl) {
+    const pubClient = new Redis(redisUrl, { maxRetriesPerRequest: 3, lazyConnect: true });
+    const subClient = pubClient.duplicate();
+    pubClient.on('error', () => {});
+    subClient.on('error', () => {});
+    io.adapter(createAdapter(pubClient, subClient));
+    logger.info('Socket.IO using Redis adapter');
+  } else {
+    logger.info('Socket.IO using in-memory adapter');
+  }
+
+  // Register io in the container so services can emit events
   container.registerSingleton('io', io);
 
-  io.on('connection', (socket) => {
-    logger.debug({ socketId: socket.id }, 'Socket.IO client connected');
+  // Authenticate socket connections
+  io.use(socketAuth);
 
-    // Clients join 'deal-health' room to receive real-time deal health alerts
-    socket.on('subscribe:deal-health', () => {
-      socket.join('deal-health');
-      logger.debug({ socketId: socket.id }, 'Client subscribed to deal-health room');
-      socket.emit('subscribed', { room: 'deal-health', timestamp: new Date().toISOString() });
+  io.on('connection', (socket) => {
+    logger.debug({ socketId: socket.id, user: socket.user }, 'Socket.IO client connected');
+
+    socket.on('join:quote', async ({ quoteId }) => {
+      // Basic authorization: ensure user has access to this quote
+      // In a real app we would query the DB. For this hackathon, we assume 
+      // if they have the ID and are authenticated, they can subscribe to updates for it.
+      const roomName = `quote:${quoteId}`;
+      socket.join(roomName);
+      logger.debug({ socketId: socket.id, quoteId, user: socket.user }, 'Client joined quote room');
+      socket.emit('subscribed', { room: roomName, timestamp: new Date().toISOString() });
     });
 
     socket.on('disconnect', () => {

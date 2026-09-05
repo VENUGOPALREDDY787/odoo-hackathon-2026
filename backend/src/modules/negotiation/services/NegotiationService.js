@@ -15,9 +15,10 @@ import { NotFoundError, ValidationError, AuthorizationError } from '../../../err
  *  6. Immutable audit_trails entry for every outcome
  */
 export class NegotiationService {
-  constructor(db, logger) {
+  constructor(db, logger, io = null) {
     this.db = db;
     this.logger = logger;
+    this.io = io;
   }
 
   /**
@@ -169,7 +170,7 @@ export class NegotiationService {
         'Negotiation session completed'
       );
 
-      return {
+      const responsePayload = {
         negotiation_result: negotiationResult.result,
         final_price: negotiationResult.finalPrice,
         rounds: negotiationResult.rounds,
@@ -177,6 +178,15 @@ export class NegotiationService {
         quotation_id: quotationId,
         ...outcomeDetails,
       };
+
+      if (this.io) {
+        this.io.to(`quote:${quotationId}`).emit('negotiation:update', {
+          quotationId,
+          result: responsePayload
+        });
+      }
+
+      return responsePayload;
     } catch (err) {
       await trx.rollback();
       throw err;

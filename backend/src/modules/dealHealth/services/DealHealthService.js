@@ -177,16 +177,18 @@ export class DealHealthService {
   _emitAlertEvent(alert) {
     if (!this.io) return;
     try {
-      // Emit to a named room so only subscribed dashboard clients receive it
-      this.io.to('deal-health').emit('deal_health_alert', {
+      const payload = {
         event: 'new_alert',
         alert_type: alert.alert_type,
         severity: alert.severity,
         title: alert.title,
         quotation_id: alert.quotation_id,
         timestamp: new Date().toISOString(),
-      });
-      this.logger.debug({ alert_type: alert.alert_type, quotation_id: alert.quotation_id }, 'Socket.IO alert emitted');
+      };
+
+      // Emit to role-based rooms instead of global deal-health
+      this.io.to('dashboard:manager').to('dashboard:admin').emit('dealHealth:alertTriggered', payload);
+      this.logger.debug({ alert_type: alert.alert_type, quotation_id: alert.quotation_id }, 'Socket.IO dealHealth alert emitted');
     } catch (err) {
       this.logger.warn({ err: err.message }, 'Failed to emit Socket.IO alert event');
     }

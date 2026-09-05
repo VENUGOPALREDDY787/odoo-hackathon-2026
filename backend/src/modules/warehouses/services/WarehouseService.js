@@ -8,9 +8,10 @@ import { AuditTrailRepository } from '../../discounts/repositories/DiscountRepos
 import { splitFulfillment } from './fulfillmentSplitter.js';
 
 export class WarehouseService {
-  constructor(db, logger) {
+  constructor(db, logger, io = null) {
     this.db = db;
     this.logger = logger || { info: () => {}, warn: () => {}, error: () => {} };
+    this.io = io;
     this.warehouseRepo = new WarehouseRepository(db);
     this.stockLevelRepo = new StockLevelRepository(db);
     this.splitRepo = new FulfillmentSplitRepository(db);
@@ -178,7 +179,7 @@ export class WarehouseService {
 
       await trx.commit();
 
-      return {
+      const responsePayload = {
         quotation_line_id: quotationLineId,
         qty_needed: qtyNeeded,
         total_allocated: splitResult.total_allocated,
@@ -186,6 +187,15 @@ export class WarehouseService {
         is_fully_allocated: splitResult.is_fully_allocated,
         splits: createdSplits,
       };
+
+      if (this.io && line.quotation_id) {
+        this.io.to(`quote:${line.quotation_id}`).emit('fulfillment:splitUpdated', {
+          quotationId: line.quotation_id,
+          splitDetails: responsePayload,
+        });
+      }
+
+      return responsePayload;
     } catch (error) {
       await trx.rollback();
       throw error;
@@ -293,12 +303,21 @@ export class WarehouseService {
         'Ops manual split override applied successfully'
       );
 
-      return {
+      const responsePayload = {
         quotation_line_id,
         total_allocated: totalCustomQty,
         override_reason,
         splits: newSplitsCreated,
       };
+
+      if (this.io && line.quotation_id) {
+        this.io.to(`quote:${line.quotation_id}`).emit('fulfillment:splitUpdated', {
+          quotationId: line.quotation_id,
+          splitDetails: responsePayload,
+        });
+      }
+
+      return responsePayload;
     } catch (error) {
       await trx.rollback();
       throw error;
