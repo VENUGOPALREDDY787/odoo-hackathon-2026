@@ -25,6 +25,8 @@ services:
     restart: always
     ports:
       - '6379:6379'
+    volumes:
+      - redis_data:/data
     healthcheck:
       test: ['CMD', 'redis-cli', 'ping']
       interval: 5s
@@ -33,3 +35,4 @@ services:
 
 volumes:
   mysql_data:
+  redis_data:
