@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import { container } from '../../../container/index.js';
 import { validateBody, validateQuery, validateParams } from '../../../middleware/validate.js';
+import { cacheMiddleware } from '../../../middleware/cacheMiddleware.js';
 import {
   idParamSchema,
   quotationIdParamSchema,
@@ -22,8 +23,11 @@ function getController() {
 
 // ==================== DISCOUNT TIERS ====================
 
-router.get('/tiers', validateQuery(discountTierQuerySchema), (req, res, next) =>
-  getController().listDiscountTiers(req, res, next)
+router.get(
+  '/tiers', 
+  validateQuery(discountTierQuerySchema), 
+  cacheMiddleware({ key: (req) => `discounts:tiers:list:${new URLSearchParams(req.query).toString()}`, ttl: 86400 }),
+  (req, res, next) => getController().listDiscountTiers(req, res, next)
 );
 
 router.post('/tiers', validateBody(discountTierSchema), (req, res, next) =>
@@ -47,8 +51,11 @@ router.delete('/tiers/:id', validateParams(idParamSchema), (req, res, next) =>
 
 // ==================== APPROVAL CHAINS ====================
 
-router.get('/approval-chains', validateQuery(approvalChainQuerySchema), (req, res, next) =>
-  getController().listApprovalChains(req, res, next)
+router.get(
+  '/approval-chains', 
+  validateQuery(approvalChainQuerySchema), 
+  cacheMiddleware({ key: (req) => `discounts:chains:list:${new URLSearchParams(req.query).toString()}`, ttl: 86400 }),
+  (req, res, next) => getController().listApprovalChains(req, res, next)
 );
 
 router.post('/approval-chains', validateBody(approvalChainSchema), (req, res, next) =>

@@ -10,9 +10,10 @@ import { calculateBlendedRisk, routeApproval } from './riskScorer.js';
 import { validateApprovalTransition, APPROVAL_ACTIONS } from './approvalStateMachine.js';
 
 export class DiscountService {
-  constructor(db, logger) {
+  constructor(db, logger, cache) {
     this.db = db;
     this.logger = logger || { info: () => {}, warn: () => {}, error: () => {} };
+    this.cache = cache;
     this.discountTierRepo = new DiscountTierRepository(db);
     this.approvalChainRepo = new ApprovalChainRepository(db);
     this.approvalLogRepo = new ApprovalLogRepository(db);
@@ -34,6 +35,7 @@ export class DiscountService {
     const tier = await this.discountTierRepo.findById(createdId || data.id);
 
     this.logger.info({ discountTierId: tier?.id }, 'Discount tier created');
+    if (this.cache) await this.cache.delPattern('discounts:tiers:*');
     return tier || { id: createdId, ...data };
   }
 
@@ -51,12 +53,14 @@ export class DiscountService {
       .where({ id, deleted_at: null })
       .update({ ...data, updated_at: new Date() });
 
+    if (this.cache) await this.cache.delPattern('discounts:tiers:*');
     return this.discountTierRepo.findById(id);
   }
 
   async deleteDiscountTier(id) {
     await this.getDiscountTier(id);
     await this.discountTierRepo.softDelete(id);
+    if (this.cache) await this.cache.delPattern('discounts:tiers:*');
     return { success: true };
   }
 
@@ -81,6 +85,7 @@ export class DiscountService {
     const chain = await this.approvalChainRepo.findById(createdId || data.id);
 
     this.logger.info({ approvalChainId: chain?.id }, 'Approval chain created');
+    if (this.cache) await this.cache.delPattern('discounts:chains:*');
     return chain || { id: createdId, ...data };
   }
 
@@ -103,12 +108,14 @@ export class DiscountService {
       .where({ id, deleted_at: null })
       .update(updatePayload);
 
+    if (this.cache) await this.cache.delPattern('discounts:chains:*');
     return this.approvalChainRepo.findById(id);
   }
 
   async deleteApprovalChain(id) {
     await this.getApprovalChain(id);
     await this.approvalChainRepo.softDelete(id);
+    if (this.cache) await this.cache.delPattern('discounts:chains:*');
     return { success: true };
   }
 

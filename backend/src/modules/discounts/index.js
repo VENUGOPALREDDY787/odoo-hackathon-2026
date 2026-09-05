@@ -14,7 +14,7 @@ export function registerDiscountModule(container) {
   container.register('approvalLogRepository', (c) => new ApprovalLogRepository(c.get('database')));
   container.register('auditTrailRepository', (c) => new AuditTrailRepository(c.get('database')));
 
-  container.register('discountService', (c) => new DiscountService(c.get('database'), c.get('logger')));
+  container.register('discountService', (c) => new DiscountService(c.get('database'), c.get('logger'), c.get('cache')));
   container.register('discountController', (c) => new DiscountController(c.get('discountService')));
   container.register('discountsRoutes', () => discountRoutes);
 }

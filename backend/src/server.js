@@ -4,6 +4,8 @@ import { logger } from './utils/logger.js';
 import { getDatabase, closeDatabase } from './utils/database.js';
 import { container } from './container/index.js';
 import { Server as SocketIOServer } from 'socket.io';
+import Redis from 'ioredis';
+import { createCache } from './utils/cache.js';
 
 import { registerAuthModule } from './modules/auth/index.js';
 import { registerProductModule } from './modules/products/index.js';
@@ -19,6 +21,26 @@ async function bootstrap() {
     logger.error({ err: error.message }, 'Failed to connect to database');
     process.exit(1);
   }
+
+  // Build Redis client (optional)
+  let redisClient = null;
+  const redisUrl = config.REDIS_URL || (config.REDIS_HOST ? `redis://${config.REDIS_HOST}:${config.REDIS_PORT || 6379}` : null);
+  
+  if (redisUrl) {
+    redisClient = new Redis(redisUrl, {
+      maxRetriesPerRequest: 3,
+      lazyConnect: true,
+      connectTimeout: 5000,
+    });
+    
+    redisClient.on('connect', () => logger.info({ redisUrl }, 'Redis connected'));
+    redisClient.on('error', (err) => logger.warn({ err: err.message }, 'Redis error — falling back to in-process cache'));
+  }
+
+  const globalCache = createCache(redisClient);
+  container.registerSingleton('cache', globalCache);
+  // Alias for backward compatibility while we refactor
+  container.registerSingleton('dealHealthCache', globalCache);
 
   registerServices(container);
   registerModules(container);

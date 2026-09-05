@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import { container } from '../../../container/index.js';
 import { validateBody, validateQuery, validateParams } from '../../../middleware/validate.js';
+import { cacheMiddleware } from '../../../middleware/cacheMiddleware.js';
 import {
   idParamSchema,
   variantIdParamSchema,
@@ -70,8 +71,11 @@ router.delete('/price-lists/items/:itemId', validateParams(priceListItemIdParamS
 
 // ==================== PRODUCT LIST & CREATE ROUTES ====================
 
-router.get('/', validateQuery(productListQuerySchema), (req, res, next) =>
-  getController().list(req, res, next)
+router.get(
+  '/', 
+  validateQuery(productListQuerySchema), 
+  cacheMiddleware({ key: (req) => `products:list:${new URLSearchParams(req.query).toString()}`, ttl: 3600 }),
+  (req, res, next) => getController().list(req, res, next)
 );
 
 router.post('/', validateBody(productSchema), (req, res, next) =>
@@ -80,8 +84,11 @@ router.post('/', validateBody(productSchema), (req, res, next) =>
 
 // ==================== PRODUCT SINGLE & PRICE RESOLUTION ROUTES ====================
 
-router.get('/:id', validateParams(idParamSchema), (req, res, next) =>
-  getController().getById(req, res, next)
+router.get(
+  '/:id', 
+  validateParams(idParamSchema), 
+  cacheMiddleware({ key: (req) => `products:item:${req.params.id}`, ttl: 3600 }),
+  (req, res, next) => getController().getById(req, res, next)
 );
 
 router.put(

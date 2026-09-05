@@ -12,7 +12,7 @@ export function registerQuotationModule(container) {
   container.register('quotationLineRepository', (c) => new QuotationLineRepository(c.get('database')));
   container.register('idempotencyKeyRepository', (c) => new IdempotencyKeyRepository(c.get('database')));
 
-  container.register('quotationService', (c) => new QuotationService(c.get('database'), c.get('logger')));
+  container.register('quotationService', (c) => new QuotationService(c.get('database'), c.get('logger'), c.get('cache')));
   container.register('quotationController', (c) => new QuotationController(c.get('quotationService')));
   container.register('quotationsRoutes', () => quotationRoutes);
 }

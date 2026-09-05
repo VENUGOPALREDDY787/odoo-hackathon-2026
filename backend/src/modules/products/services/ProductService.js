@@ -3,9 +3,10 @@ import { ProductRepository, ProductVariantRepository, PriceListRepository, Price
 import { resolvePrice } from './priceResolver.js';
 
 export class ProductService {
-  constructor(db, logger) {
+  constructor(db, logger, cache) {
     this.db = db;
     this.logger = logger || { info: () => {}, warn: () => {}, error: () => {} };
+    this.cache = cache; // Global cache instance
     this.productRepo = new ProductRepository(db);
     this.variantRepo = new ProductVariantRepository(db);
     this.priceListRepo = new PriceListRepository(db);
@@ -33,6 +34,7 @@ export class ProductService {
     const product = await this.productRepo.findById(createdId || data.id);
     
     this.logger.info({ productId: product?.id, sku: data.sku }, 'Product created');
+    if (this.cache) await this.cache.delPattern('products:*');
     return product || { id: createdId, ...data };
   }
 
@@ -64,6 +66,7 @@ export class ProductService {
 
     const updated = await this.productRepo.findById(id);
     this.logger.info({ productId: id }, 'Product updated');
+    if (this.cache) await this.cache.delPattern('products:*');
     return updated;
   }
 
@@ -74,11 +77,13 @@ export class ProductService {
     if (hasLines) {
       await this.productRepo.softDelete(id);
       this.logger.info({ productId: id }, 'Product soft deleted (referenced by quotation lines)');
+      if (this.cache) await this.cache.delPattern('products:*');
       return { success: true, softDeleted: true, message: 'Product soft deleted because it is referenced by quotation lines' };
     }
 
     await this.productRepo.softDelete(id);
     this.logger.info({ productId: id }, 'Product soft deleted');
+    if (this.cache) await this.cache.delPattern('products:*');
     return { success: true, softDeleted: true };
   }
 

@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import { container } from '../../../container/index.js';
 import { validateBody, validateQuery, validateParams } from '../../../middleware/validate.js';
+import { cacheMiddleware } from '../../../middleware/cacheMiddleware.js';
 import {
   idParamSchema,
   lineIdParamSchema,
@@ -25,8 +26,11 @@ router.post('/', validateBody(createQuotationSchema), (req, res, next) =>
   getController().create(req, res, next)
 );
 
-router.get('/:id', validateParams(idParamSchema), (req, res, next) =>
-  getController().getById(req, res, next)
+router.get(
+  '/:id', 
+  validateParams(idParamSchema), 
+  cacheMiddleware({ key: (req) => `quotations:item:${req.params.id}`, ttl: 300 }),
+  (req, res, next) => getController().getById(req, res, next)
 );
 
 router.post(

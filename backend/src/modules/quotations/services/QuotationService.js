@@ -9,9 +9,10 @@ import { ProductRepository, ProductVariantRepository } from '../../products/repo
 import { recalculateQuotationTotals, calculateMarginDelta } from './recalculator.js';
 
 export class QuotationService {
-  constructor(db, logger) {
+  constructor(db, logger, cache) {
     this.db = db;
     this.logger = logger || { info: () => {}, warn: () => {}, error: () => {} };
+    this.cache = cache;
     this.quotationRepo = new QuotationRepository(db);
     this.lineRepo = new QuotationLineRepository(db);
     this.idempotencyRepo = new IdempotencyKeyRepository(db);
@@ -209,6 +210,8 @@ export class QuotationService {
       const updatedQuotation = await this.quotationRepo.findWithDetails(quotationId);
       const addedLine = updatedQuotation.lines.find(l => l.id === createdLineId || l.line_number === nextLineNum);
 
+      if (this.cache) await this.cache.delPattern(`quotations:item:${quotationId}`);
+
       return {
         line: addedLine,
         quotation: updatedQuotation,
@@ -294,6 +297,7 @@ export class QuotationService {
       await trx.commit();
 
       const updatedQuotation = await this.quotationRepo.findWithDetails(quotationId);
+      if (this.cache) await this.cache.delPattern(`quotations:item:${quotationId}`);
       return {
         quotation: updatedQuotation,
         margin_delta: marginDelta,
@@ -368,6 +372,7 @@ export class QuotationService {
       await trx.commit();
 
       const updatedQuotation = await this.quotationRepo.findWithDetails(quotationId);
+      if (this.cache) await this.cache.delPattern(`quotations:item:${quotationId}`);
       return {
         quotation: updatedQuotation,
         margin_delta: marginDelta,
@@ -478,6 +483,7 @@ export class QuotationService {
       }
 
       await trx.commit();
+      if (this.cache) await this.cache.delPattern(`quotations:item:${quotationId}`);
       return responsePayload;
     } catch (error) {
       await trx.rollback();
