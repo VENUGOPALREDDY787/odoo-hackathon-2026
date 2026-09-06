@@ -63,7 +63,7 @@
     "quickNav": "Quick Navigation",
     "searchPlaceholder": "Search deals, quotations, clients, SKUs...",
     "activeRole": "Active Role",
-    "newQuotation": "+ New Quotation",
+    "newQuotation": "New Quotation",
     "logout": "Sign Out"
   },
   "roles": {
@@ -145,7 +145,7 @@
   "quotations": {
     "title": "Deal Flow & Quotations Pipeline",
     "subtitle": "Track, manage, and transition commercial offers through every lifecycle stage",
-    "newQuotation": "+ Create Quotation",
+    "newQuotation": "New Quotation",
     "searchQuotation": "Search by Quotation ID, Client or Account...",
     "filterStatus": "Filter by Stage",
     "allStages": "All Stages",
@@ -169,7 +169,7 @@
     "selectCustomer": "Select Enterprise Customer",
     "dealTitle": "Quotation Title / Project Name",
     "lineItems": "Line Items & Bill of Materials",
-    "addProduct": "+ Add Product / SKU",
+    "addProduct": "Add Product / SKU",
     "sku": "SKU",
     "productName": "Product Name",
     "quantity": "Qty",
@@ -292,7 +292,7 @@
   "products": {
     "title": "Master Product & Service Catalog",
     "subtitle": "Manage enterprise hardware, SaaS licensing, service bundles, and list prices",
-    "addProduct": "+ New Catalog Item",
+    "addProduct": "New Catalog Item",
     "searchProducts": "Search products by name, SKU or category...",
     "category": "Classification",
     "stockLevel": "Available Stock",

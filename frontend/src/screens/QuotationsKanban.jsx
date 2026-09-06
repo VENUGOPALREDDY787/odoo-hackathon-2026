@@ -22,11 +22,11 @@ export default function QuotationsKanban({
   // (draft → pending_approval → approved → sent → accepted). Terminal states
   // (rejected / expired / cancelled) are deliberately excluded from the board.
   const columns = [
-    { id: 'draft', label: t('quotations.columnDraft', 'Draft'), color: 'text-text-secondary' },
+    { id: 'draft', label: t('quotations.columnDraft', 'Drafts'), color: 'text-text-secondary' },
     { id: 'pending_approval', label: t('quotations.columnPending', 'Pending Approval'), color: 'text-status-warning' },
-    { id: 'approved', label: t('quotations.columnApproved', 'Approved'), color: 'text-status-live' },
-    { id: 'sent', label: t('status.sent', 'Sent'), color: 'text-accent-blue' },
-    { id: 'accepted', label: t('status.accepted', 'Accepted'), color: 'text-status-live' },
+    { id: 'approved', label: t('quotations.columnApproved', 'Approved / Ready'), color: 'text-status-live' },
+    { id: 'sent', label: t('quotations.columnSent', 'Sent to Client'), color: 'text-accent-blue' },
+    { id: 'accepted', label: t('quotations.columnAccepted', 'Accepted / Won'), color: 'text-status-live' },
   ];
 
   const filteredQuotations = quotations.filter((q) => {
@@ -120,7 +120,7 @@ export default function QuotationsKanban({
             </div>
 
             <PillButton variant="primary" icon="add" onClick={onNewQuotation}>
-              {t('quotations.newQuotation', '+ New Quote')}
+              {t('quotations.newQuotation', 'New Quotation')}
             </PillButton>
           </div>
         </div>
@@ -160,8 +160,14 @@ export default function QuotationsKanban({
                 {/* Cards List */}
                 <div className="flex flex-col gap-3">
                   {colQuotes.length === 0 ? (
-                    <div className="py-12 text-center text-text-secondary font-mono-tag text-xs">
-                      No deals in {col.label}
+                    <div className="flex flex-col items-center justify-center py-14 gap-3">
+                      <div className="w-10 h-10 rounded-full bg-surface-card border border-border-subtle flex items-center justify-center">
+                        <span className="material-symbols-outlined text-[20px] text-text-secondary/50">inbox</span>
+                      </div>
+                      <div className="text-center">
+                        <p className="text-xs font-semibold text-text-secondary/70">No deals</p>
+                        <p className="text-[10px] text-text-secondary/40 mt-0.5 font-mono">0 quotations</p>
+                      </div>
                     </div>
                   ) : (
                     colQuotes.map((q) => {

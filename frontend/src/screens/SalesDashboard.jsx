@@ -95,7 +95,7 @@ export default function SalesDashboard({
                   icon="add"
                   onClick={() => onNavigate('quotation-builder')}
                 >
-                  {t('navigation.newQuotation', '+ New Quotation')}
+                  {t('navigation.newQuotation', 'New Quotation')}
                 </PillButton>
                 <PillButton
                   variant="secondary"

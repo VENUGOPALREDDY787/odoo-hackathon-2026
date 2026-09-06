@@ -325,7 +325,7 @@ export default function ProductDetail({ product, onBack, onSave, canEdit = false
               </p>
             </div>
             <PillButton variant="secondary" size="sm" icon="add" onClick={handleAddVariant}>
-              + Add Variant
+              Add Variant
             </PillButton>
           </div>
 
