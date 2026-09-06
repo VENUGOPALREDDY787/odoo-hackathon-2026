@@ -23,7 +23,7 @@ router.get('/', authenticate(), validateQuery(quotationQuerySchema), (req, res, 
   getController().list(req, res, next)
 );
 
-router.post('/', authenticate(), requireInternal(), validateBody(createQuotationSchema), (req, res, next) =>
+router.post('/', authenticate(), validateBody(createQuotationSchema), (req, res, next) =>
   getController().create(req, res, next)
 );
 

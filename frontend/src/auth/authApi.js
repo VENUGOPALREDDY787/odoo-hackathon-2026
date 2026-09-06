@@ -3,6 +3,37 @@ const ACCESS_TOKEN_KEY = 'dealflow360.accessToken';
 const REFRESH_TOKEN_KEY = 'dealflow360.refreshToken';
 const USER_KEY = 'dealflow360.user';
 
+// Silent access-token refresh: the token expires after 15 minutes, and
+// without this every action (e.g. creating a quotation) failed with
+// "Access token expired" until a full page reload. Concurrent 401s share a
+// single in-flight refresh; a failed refresh clears the session.
+let refreshInFlight = null;
+
+async function refreshAccessToken() {
+  const refreshToken = localStorage.getItem(REFRESH_TOKEN_KEY);
+  if (!refreshToken) throw new Error('Session expired. Please sign in again.');  if (!refreshInFlight) {
+    refreshInFlight = fetch(`${API_BASE_URL}/auth/refresh`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ refreshToken }),
+    })
+      .then(async (response) => {
+        const body = await response.json().catch(() => ({}));
+        if (!response.ok) throw new Error(body?.error?.message || 'Refresh failed');
+        localStorage.setItem(ACCESS_TOKEN_KEY, body.data.accessToken);
+        localStorage.setItem(REFRESH_TOKEN_KEY, body.data.refreshToken);
+        localStorage.setItem(USER_KEY, JSON.stringify(body.data.user));
+        return body.data.accessToken;
+      })
+      .finally(() => {
+        refreshInFlight = null;
+      });
+  }
+  return refreshInFlight;
+}
+
+export { refreshAccessToken };
+
 export async function apiRequest(path, options = {}) {
   const accessToken = localStorage.getItem(ACCESS_TOKEN_KEY);
   const response = await fetch(`${API_BASE_URL}${path}`, {
@@ -13,6 +44,27 @@ export async function apiRequest(path, options = {}) {
       ...(options.headers || {}),
     },
   });
+
+  if (response.status === 401 && !path.startsWith('/auth/')) {
+    try {
+      await refreshAccessToken();
+      const retryResponse = await fetch(`${API_BASE_URL}${path}`, {
+        ...options,
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${localStorage.getItem(ACCESS_TOKEN_KEY)}`,
+          ...(options.headers || {}),
+        },
+      });
+      const retryBody = await retryResponse.json().catch(() => ({}));
+      if (!retryResponse.ok) {
+        throw new Error(retryBody?.error?.message || 'Request failed');
+      }
+      return retryBody;
+    } catch {
+      throw new Error('Session expired. Please sign in again.');
+    }
+  }
 
   const body = await response.json().catch(() => ({}));
   if (!response.ok) {

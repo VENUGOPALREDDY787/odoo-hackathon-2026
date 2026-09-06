@@ -28,7 +28,35 @@ export class QuotationService {
   // ==================== QUOTATION CRUD ====================
 
   async createQuotation(data, user = null) {
-    const customer = await this.resolveQuotationCustomer(data);
+    // Business rule: only customers (raising deals for themselves) and sales
+    // representatives (raising deals on behalf of customers) may create
+    // quotations. Managers/finance/admin work the approval side instead.
+    const CREATION_ROLES = ['customer', 'rep'];
+    if (!user || !CREATION_ROLES.includes(user.role)) {
+      throw new AuthorizationError(
+        `Quotation creation is only allowed for customers and sales representatives (you are '${user?.role || 'unknown'}').`
+      );
+    }
+
+    // Customers may raise quotations for themselves: force the quotation onto
+    // the caller's own customer record and ignore any customer_id/name they
+    // supply, so one customer can never create quotes against another.
+    let forcedCustomerId = null;
+    if (user?.role === 'customer') {
+      const own = await this.db('customers')
+        .where({ user_id: user.id, deleted_at: null })
+        .orderBy('created_at', 'asc')
+        .select('id')
+        .first();
+      if (!own) {
+        throw new ValidationError('No customer profile is linked to this account');
+      }
+      forcedCustomerId = own.id;
+    }
+
+    const customer = await this.resolveQuotationCustomer(
+      forcedCustomerId ? { ...data, customer_id: forcedCustomerId } : data
+    );
     if (!customer) {
       throw new ValidationError('Invalid customer ID');
     }
@@ -39,7 +67,7 @@ export class QuotationService {
       id: uuidv4(),
       quotation_number: quotationNumber,
       customer_id: customer.id,
-      assigned_rep_id: data.assigned_rep_id || user?.id || null,
+      assigned_rep_id: data.assigned_rep_id || (user && user.role !== 'customer' ? user.id : null) || null,
       status: 'draft',
       currency: data.currency || customer.currency || 'USD',
       payment_terms_days: data.payment_terms_days || customer.payment_terms_days || 30,
@@ -518,9 +546,23 @@ export class QuotationService {
       const quotation = await this.quotationRepo.findWithDetails(quotationId, trx);
       if (!quotation) throw new NotFoundError('Quotation');
 
-      // Defense in depth: Verify authorization at service level
+      // Defense in depth: Verify authorization at service level. Managers,
+      // admins and the assigned rep may submit; the owning customer may also
+      // submit their own quotation (the portal supports customer-raised
+      // deals). Everyone else is rejected.
       if (user && user.role !== 'admin' && user.role !== 'manager' && quotation.assigned_rep_id !== user.id) {
-        throw new AuthorizationError('You are not authorized to submit this quotation for approval.');
+        let isOwningCustomer = false;
+        if (user.role === 'customer') {
+          const owned = await this.db('customers')
+            .where({ user_id: user.id, deleted_at: null })
+            .where('id', quotation.customer_id)
+            .select('id')
+            .first();
+          isOwningCustomer = Boolean(owned);
+        }
+        if (!isOwningCustomer) {
+          throw new AuthorizationError('You are not authorized to submit this quotation for approval.');
+        }
       }
 
       if (expectedVersion !== null && expectedVersion !== undefined && quotation.version !== expectedVersion) {
@@ -542,7 +584,11 @@ export class QuotationService {
         approvalChains: activeApprovalChains,
       });
 
-      const newStatus = totals.requires_approval ? 'pending_approval' : 'approved';
+      // Customer-raised quotations ALWAYS go through governance sign-off —
+      // they must never auto-approve, so they always surface in the approval
+      // queue for manager/finance/admin regardless of the risk score.
+      const isCustomerRaised = user?.role === 'customer';
+      const newStatus = (totals.requires_approval || isCustomerRaised) ? 'pending_approval' : 'approved';
       const now = new Date();
 
       const updatePayload = {
@@ -588,7 +634,7 @@ export class QuotationService {
         quotation_id: quotationId,
         status: newStatus,
         blended_risk_score: totals.blended_risk_score,
-        requires_approval: totals.requires_approval,
+        requires_approval: newStatus === 'pending_approval',
         routing: totals.routing,
         quotation: updatedQuotation,
       };

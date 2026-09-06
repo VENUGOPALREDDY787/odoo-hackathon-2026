@@ -24,8 +24,11 @@ export class QuotationController {
     };
     if (req.user?.role === 'rep') { filters.assigned_rep_id = req.user.id; }
     if (req.user?.role === 'customer') {
-      const customer = await this.service.db('customers').where({ user_id: req.user.id, deleted_at: null }).select('id').first();
-      filters.customer_id = customer?.id || '00000000-0000-0000-0000-000000000000';
+      // Scope to every customer record owned by this user (an account can be
+      // linked to more than one row). With no owned rows, fall back to a
+      // sentinel id that matches nothing so an empty scope stays empty.
+      const owned = await this.service.db('customers').where({ user_id: req.user.id, deleted_at: null }).select('id');
+      filters.customer_ids = owned.length ? owned.map((row) => row.id) : ['00000000-0000-0000-0000-000000000000'];
     }
     const options = {
       page: req.query.page || 1,

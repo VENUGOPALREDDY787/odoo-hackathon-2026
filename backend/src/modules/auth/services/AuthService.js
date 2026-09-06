@@ -288,8 +288,29 @@ export class AuthService {
       throw new NotFoundError('User');
     }
 
+    // Customer accounts carry their linked customer record so the UI can
+    // scope quotation building without an extra lookup.
+    let customer_id = null;
+    let customer_name = null;
+    let customer_tier = null;
+    if (user.role === 'customer') {
+      const profile = await this.db('customers')
+        .where({ user_id: userId, deleted_at: null })
+        .orderBy('created_at', 'asc')
+        .select('id', 'company_name', 'tier')
+        .first();
+      if (profile) {
+        customer_id = profile.id;
+        customer_name = profile.company_name;
+        customer_tier = profile.tier;
+      }
+    }
+
     return {
       ...user,
+      customer_id,
+      customer_name,
+      customer_tier,
       status: user.is_active ? 'active' : 'disabled',
     };
   }

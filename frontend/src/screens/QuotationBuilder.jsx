@@ -42,7 +42,13 @@ export default function QuotationBuilder({
     initialQuotation?.id || `QT-2026-${Math.floor(1000 + Math.random() * 9000)}`
   );
   const [persistedQuotationId, setPersistedQuotationId] = useState(initialQuotation?.id || null);
-  const [customer, setCustomer] = useState(initialQuotation?.customer || '');
+  // Prefill the customer name for customer-raised deals (the backend forces
+  // the quotation onto the caller's own customer record anyway). Reps type
+  // the client's company name themselves.
+  const [customer, setCustomer] = useState(
+    initialQuotation?.customer
+    || (currentUser?.role === 'customer' ? (currentUser?.full_name || currentUser?.fullName || '') : '')
+  );
   const [customerTier, setCustomerTier] = useState(initialQuotation?.customerTier || 'Bronze');
   // New quotations start empty — every line must come from the real catalog
   // (or an upsell suggestion). Existing quotations load their persisted lines.

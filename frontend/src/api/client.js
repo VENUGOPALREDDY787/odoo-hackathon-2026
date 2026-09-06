@@ -1,5 +1,10 @@
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000/api'
 
+// Silent access-token refresh shared with authApi: on a 401 the client
+// refreshes once and retries, so a 15-minute token expiry never interrupts
+// quotation building with "Access token expired".
+import { refreshAccessToken } from '../auth/authApi'
+
 async function request(path, options = {}, token = null) {
   const accessToken = token || localStorage.getItem('dealflow360.accessToken')
   const response = await fetch(`${API_URL}${path}`, {
@@ -10,6 +15,14 @@ async function request(path, options = {}, token = null) {
       ...(options.headers || {}),
     },
   })
+  if (response.status === 401 && !path.startsWith('/auth/') && !token) {
+    try {
+      await refreshAccessToken()
+      return request(path, options, localStorage.getItem('dealflow360.accessToken'))
+    } catch {
+      throw new Error('Session expired. Please sign in again.')
+    }
+  }
   const body = await response.json().catch(() => ({}))
   if (!response.ok) {
     throw new Error(body?.error?.message || `Backend request failed (${response.status})`)

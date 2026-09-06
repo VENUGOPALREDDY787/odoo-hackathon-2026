@@ -33,7 +33,8 @@ const pageVariants = {
 };
 
 const ROLE_TABS = {
-  customer: ['dashboard', 'quotations', 'customer-portal', 'invoices', 'profile'],
+  // Customers can raise their own deals, so they get the quotation builder too.
+  customer: ['dashboard', 'quotations', 'quotation-builder', 'customer-portal', 'invoices', 'profile'],
   rep: ['dashboard', 'quotations', 'quotation-builder', 'products', 'product-detail', 'fulfillment', 'subscriptions', 'invoices', 'deal-health', 'profile'],
   manager: ['dashboard', 'quotations', 'approvals', 'deal-health', 'reports', 'profile'],
   finance: ['dashboard', 'approvals', 'subscriptions', 'invoices', 'reports', 'profile'],

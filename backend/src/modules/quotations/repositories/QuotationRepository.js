@@ -102,6 +102,9 @@ export class QuotationRepository extends BaseRepository {
       .where({ 'q.deleted_at': null });
 
     if (filters.customer_id) query = query.where('q.customer_id', filters.customer_id);
+    if (Array.isArray(filters.customer_ids) && filters.customer_ids.length) {
+      query = query.whereIn('q.customer_id', filters.customer_ids);
+    }
     if (filters.assigned_rep_id) query = query.where('q.assigned_rep_id', filters.assigned_rep_id);
     if (filters.status) query = query.where('q.status', filters.status);
 
