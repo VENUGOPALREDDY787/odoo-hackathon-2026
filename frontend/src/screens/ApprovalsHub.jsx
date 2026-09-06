@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import Card from '../components/Card';
 import PillButton from '../components/PillButton';
@@ -29,8 +29,51 @@ export default function ApprovalsHub({
 
   useEffect(() => {
     if (!selectedQuote?.id) return;
-    getApproval(selectedQuote.id).then(setApproval).catch((requestError) => setError(requestError.message));
+    let stale = false;
+    setApproval(null);
+    getApproval(selectedQuote.id)
+      .then((data) => {
+        if (!stale) setApproval(data);
+      })
+      .catch((requestError) => {
+        if (!stale) setError(requestError.message);
+      });
+    return () => {
+      stale = true;
+    };
   }, [selectedQuote?.id]);
+
+  // The backend risk engine returns { blendedScore, maxSingleViolation,
+  // requiresApproval, lineDetails } — the UI consumes { score, level,
+  // flaggedLines }. Normalize once with hard defaults so a partial response
+  // can never crash the detail view with an undefined array access.
+  const normalizedApproval = useMemo(() => {
+    if (!approval) return null;
+    const lineNameById = new Map(
+      (selectedQuote?.lines || []).map((line) => [line.productId, line])
+    );
+    const violationLines = approval.lineDetails || approval.line_breakdown || [];
+    const flaggedLines =
+      approval.flaggedLines ||
+      approval.flagged_lines ||
+      violationLines
+        .filter((line) => line.has_violation)
+        .map((line) => {
+          const matched = lineNameById.get(line.product_id);
+          return {
+            product: matched?.product || line.product_name || line.product || line.product_id || 'Unknown line item',
+            category: matched?.category || line.category_name || line.category || line.category_id || 'Uncategorized',
+            discountGiven: line.discount_percent ?? line.discountGiven ?? 0,
+            limitAllowed: line.ceiling_percent ?? line.limitAllowed ?? 0,
+            overBy: line.violation_points ?? line.overBy ?? 0,
+            tierLimit: line.tierLimit ?? line.tier_limit ?? line.ceiling_percent ?? 0,
+            categoryLimit: line.categoryLimit ?? line.category_limit ?? line.ceiling_percent ?? 0,
+          };
+        });
+    const score = approval.score ?? approval.blendedScore ?? approval.blended_risk_score ?? 0;
+    const level = approval.level || (score > 60 ? 'HIGH' : score > 25 ? 'MEDIUM' : 'LOW');
+    return { ...approval, score, level, flaggedLines: flaggedLines || [] };
+  }, [approval, selectedQuote]);
 
   // Filter quotes
   const approvalQuotes = quotations.filter((q) => {
@@ -135,7 +178,7 @@ export default function ApprovalsHub({
               </div>
             ) : (
               approvalQuotes.map((q) => {
-                const risk = { score: q.blended_risk_score || 0, level: q.blended_risk_score > 60 ? 'HIGH' : q.blended_risk_score > 25 ? 'MEDIUM' : 'LOW', flaggedLines: [] };
+                const risk = { score: q.blended_risk_score || 0, level: (q.blended_risk_score || 0) > 60 ? 'HIGH' : (q.blended_risk_score || 0) > 25 ? 'MEDIUM' : 'LOW', flaggedLines: [] };
                 return (
                   <ListItem
                     key={q.id}
@@ -267,7 +310,11 @@ export default function ApprovalsHub({
 
           {/* "Why This Quote Was Flagged" Panel */}
           {(() => {
-            const risk = approval || { score: selectedQuote.blended_risk_score || 0, level: 'MEDIUM', flaggedLines: [] };
+            const risk = normalizedApproval || {
+              score: selectedQuote.blended_risk_score || 0,
+              level: 'MEDIUM',
+              flaggedLines: [],
+            };
             return (
               <Card className="p-6">
                 <div className="flex items-center justify-between pb-3 border-b border-border-subtle mb-4">
