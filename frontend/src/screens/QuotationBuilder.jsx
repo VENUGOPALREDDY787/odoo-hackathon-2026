@@ -500,7 +500,7 @@ export default function QuotationBuilder({
                 icon="add"
                 onClick={() => setShowProductPicker(true)}
               >
-                {t('builder.addProduct', '+ Add Product')}
+                {t('builder.addProduct', 'Add Product')}
               </PillButton>
             </div>
 
@@ -784,7 +784,7 @@ export default function QuotationBuilder({
                           icon="add"
                           onClick={() => handleAddUpsell(item)}
                         >
-                          + Add to Quote
+                          Add to Quote
                         </PillButton>
                       </div>
                     </div>

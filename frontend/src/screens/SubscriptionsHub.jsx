@@ -127,7 +127,7 @@ export default function SubscriptionsHub() {
             icon="add"
             onClick={() => setPlanModalOpen(true)}
           >
-            + New Plan (Admin)
+            New Plan (Admin)
           </PillButton>
         </div>
       </div>

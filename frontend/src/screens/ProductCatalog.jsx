@@ -82,7 +82,7 @@ export default function ProductCatalog({ onSelectProduct, onNewProduct, onDelete
             <span className="font-mono text-sm font-bold text-text-primary">{totalVariants}</span>
           </div>
           {canEdit && <PillButton variant="primary" icon="add" onClick={onNewProduct}>
-            {t('products.addProduct', '+ New Product')}
+            {t('products.addProduct', 'New Product')}
           </PillButton>}
         </div>
       </div>

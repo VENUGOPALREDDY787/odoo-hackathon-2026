@@ -127,6 +127,10 @@ export async function getQuotation(id) {
   return normalizeQuotation((await request(`/quotations/${id}`)).data)
 }
 
+export async function listProductCategories() {
+  return unwrapList(await request('/products/categories'))
+}
+
 export async function createQuotation(payload) {
   return normalizeQuotation((await request('/quotations', { method: 'POST', body: JSON.stringify(payload) })).data)
 }

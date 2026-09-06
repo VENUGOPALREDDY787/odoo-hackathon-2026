@@ -75,12 +75,25 @@ describe('Approval State Machine Unit Tests', () => {
   });
 
   describe('Role Reachability & Multi-Step Sequence Enforcement', () => {
-    it('rejects finance user trying to approve a manager-only quotation', () => {
+    it('allows finance to approve a manager-only quotation (senior role covers the manager step)', () => {
+      const result = validateApprovalTransition({
+        currentStatus: QUOTATION_STATUSES.PENDING_APPROVAL,
+        action: APPROVAL_ACTIONS.APPROVE,
+        user: { id: 'usr-fin-1', role: 'finance' },
+        routingRequirements: { requiredRoles: ['manager'], minApprovals: 1 },
+        existingApprovalLogs: [],
+      });
+
+      expect(result.targetStatus).toBe(QUOTATION_STATUSES.APPROVED);
+      expect(result.isFinalApproval).toBe(true);
+    });
+
+    it('still rejects non-required, non-senior roles (e.g. rep) from approving', () => {
       expect(() =>
         validateApprovalTransition({
           currentStatus: QUOTATION_STATUSES.PENDING_APPROVAL,
           action: APPROVAL_ACTIONS.APPROVE,
-          user: { id: 'usr-fin-1', role: 'finance' },
+          user: { id: 'usr-rep-1', role: 'rep' },
           routingRequirements: { requiredRoles: ['manager'], minApprovals: 1 },
           existingApprovalLogs: [],
         })

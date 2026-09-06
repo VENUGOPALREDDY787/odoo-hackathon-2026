@@ -72,8 +72,12 @@ export default function App() {
   const autoTourStartedRef = useRef(false);
 
   useEffect(() => {
-    recoverSession().then((user) => {
-      setCurrentUser(user);
+    // Watchdog: if session recovery hangs (backend down, network black hole),
+    // fall through to the sign-in screen instead of staying on
+    // "Checking authentication..." forever.
+    const timeout = new Promise((resolve) => setTimeout(() => resolve(null), 8000));
+    Promise.race([recoverSession().catch(() => null), timeout]).then((user) => {
+      setCurrentUser(user || null);
       setAuthStatus(user ? 'authenticated' : 'anonymous');
       if (user) {
         const routeParts = getRouteParts(window.location.hash);
@@ -625,38 +629,7 @@ export default function App() {
           </AnimatePresence>
         </div>
 
-        {/* Global Footer */}
-        <footer className="w-full max-w-max-width mx-auto px-page-padding-mobile md:px-page-padding py-6 border-t border-border-subtle/40 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-text-secondary">
-          <div className="flex items-center gap-2">
-            <img src="/brand-mark.svg" alt="DealFlow360" className="h-5 w-auto opacity-70" />
-            <span className="font-mono">DealFlow360 × AETHER Dark Bento Design System</span>
-          </div>
 
-          <div className="flex items-center gap-4 font-mono text-[11px]">
-            <button
-              onClick={() => handleTabChange('login')}
-              className="hover:text-text-primary transition-colors"
-            >
-              {t('navigation.login', 'Auth Screen')}
-            </button>
-            <span>•</span>
-            <button
-              onClick={() => handleTabChange('customer-portal')}
-              className="hover:text-accent-blue transition-colors"
-            >
-              {t('navigation.customerPortal', 'Customer Portal View')}
-            </button>
-            <span>•</span>
-            <span className="text-status-live flex items-center gap-1">
-              <motion.span
-                animate={{ opacity: [1, 0.5, 1] }}
-                transition={{ duration: 1.5, repeat: Infinity }}
-                className="w-1.5 h-1.5 rounded-full bg-status-live"
-              />
-              Socket.IO {t('common.live', 'Active')}
-            </span>
-          </div>
-        </footer>
       </main>
     </div>
   );

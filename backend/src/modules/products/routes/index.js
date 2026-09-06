@@ -38,6 +38,8 @@ router.put('/price-lists/items/:itemId', canManageProducts, validateParams(price
 router.delete('/price-lists/items/:itemId', canManageProducts, validateParams(priceListItemIdParamSchema), (req, res, next) => getController().deletePriceListItem(req, res, next));
 
 router.get('/', validateQuery(productListQuerySchema), cacheMiddleware({ key: (req) => `products:list:${new URLSearchParams(req.query).toString()}`, ttl: 3600 }), (req, res, next) => getController().list(req, res, next));
+// NOTE: must stay registered above GET /:id so 'categories' is not captured as an id param.
+router.get('/categories', (req, res, next) => getController().listCategories(req, res, next));
 router.post('/', canManageProducts, validateBody(productSchema), (req, res, next) => getController().create(req, res, next));
 router.get('/:id', validateParams(idParamSchema), cacheMiddleware({ key: (req) => `products:item:${req.params.id}`, ttl: 3600 }), (req, res, next) => getController().getById(req, res, next));
 router.put('/:id', canManageProducts, validateParams(idParamSchema), validateBody(productUpdateSchema), (req, res, next) => getController().update(req, res, next));
