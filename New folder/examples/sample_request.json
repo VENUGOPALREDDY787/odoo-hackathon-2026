@@ -1,0 +1,43 @@
+{
+  "invoice": {
+    "number": "INV/2026/0042",
+    "date": "2026-09-06",
+    "due_date": "2026-10-06",
+    "reference": "SO-1042",
+    "currency": "EUR",
+    "kind": "invoice",
+    "payment_terms": "Payment due within 30 days.",
+    "notes": "Thank you for your business!"
+  },
+  "company": {
+    "name": "Acme Solutions BV",
+    "address": "Keizersgracht 100\n1015 CV Amsterdam\nThe Netherlands",
+    "vat": "NL123456789B01",
+    "email": "billing@acmesolutions.nl",
+    "phone": "+31 20 123 4567",
+    "website": "www.acmesolutions.nl"
+  },
+  "customer": {
+    "name": "Jane Doe",
+    "address": "42 Customer Lane\nLondon, EC1A 1BB\nUnited Kingdom",
+    "vat": "GB987654321",
+    "email": "jane.doe@example.com"
+  },
+  "lines": [
+    {
+      "description": "Website design & development",
+      "quantity": 1,
+      "unit_price": 2500.00
+    },
+    {
+      "description": "Hosting and maintenance (monthly)",
+      "quantity": 3,
+      "unit_price": 120.00
+    },
+    {
+      "description": "Priority support hours",
+      "quantity": 5,
+      "unit_price": 90.50
+    }
+  ]
+}

@@ -1,0 +1,12 @@
+services:
+  invoice-generator:
+    build: .
+    container_name: invoice-generator
+    ports:
+      - "8000:8000"
+    environment:
+      - PDF_TTL_HOURS=24
+    volumes:
+      # Keep generated PDFs on the host so they survive container restarts.
+      - ./generated:/app/generated
+    restart: unless-stopped

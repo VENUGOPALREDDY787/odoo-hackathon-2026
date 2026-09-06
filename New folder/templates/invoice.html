@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<style>
+  @page {
+    size: A4;
+    margin: 18mm 16mm 20mm 16mm;
+    @bottom-left {
+      content: "{{ company.name }}";
+      font-size: 7.5pt;
+      color: #999;
+    }
+    @bottom-right {
+      content: "Page " counter(page) " of " counter(pages);
+      font-size: 7.5pt;
+      color: #999;
+    }
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    font-family: "DejaVu Sans", "Helvetica Neue", Arial, sans-serif;
+    font-size: 9.5pt;
+    color: #333;
+    margin: 0;
+    line-height: 1.45;
+  }
+
+  .preline { white-space: pre-line; }
+
+  /* ---------- Header ---------- */
+  .header-table { width: 100%; border-collapse: collapse; border-bottom: 2.5pt solid #7c7bad; padding-bottom: 0; }
+  .header-table td { vertical-align: top; padding-bottom: 10pt; }
+  .company-cell { width: 60%; }
+  .title-cell { width: 40%; text-align: right; }
+
+  .logo { max-height: 26mm; max-width: 55mm; }
+  .company-name { font-size: 16pt; font-weight: bold; color: #222; }
+  .company-address { margin-top: 4pt; color: #555; }
+  .company-detail { margin-top: 2pt; color: #555; }
+
+  .doc-title {
+    font-size: 24pt;
+    font-weight: bold;
+    color: #7c7bad;
+    letter-spacing: 2pt;
+    text-transform: uppercase;
+  }
+  .doc-number { font-size: 12pt; font-weight: bold; color: #222; margin-top: 2pt; }
+
+  /* ---------- Bill To / meta ---------- */
+  .info-table { width: 100%; border-collapse: collapse; margin-top: 12pt; }
+  .info-table td { vertical-align: top; }
+  .bill-to { width: 55%; }
+  .meta-cell { width: 45%; }
+
+  .info-label {
+    font-size: 7.5pt;
+    text-transform: uppercase;
+    letter-spacing: 0.8pt;
+    color: #7c7bad;
+    font-weight: bold;
+    margin-bottom: 3pt;
+  }
+  .info-value { color: #444; }
+  .info-value.strong { font-weight: bold; color: #222; font-size: 11pt; margin-top: 1pt; }
+
+  .meta-table { width: 100%; border-collapse: collapse; }
+  .meta-table td { padding: 2.5pt 0; border-bottom: 0.5pt solid #eee; }
+  .meta-label { color: #888; font-size: 8pt; text-transform: uppercase; letter-spacing: 0.4pt; }
+  .meta-value { text-align: right; font-weight: bold; color: #222; }
+
+  /* ---------- Lines ---------- */
+  .lines-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 16pt;
+  }
+  .lines-table thead th {
+    background: #7c7bad;
+    color: #fff;
+    font-size: 8pt;
+    text-transform: uppercase;
+    letter-spacing: 0.6pt;
+    padding: 5pt 6pt;
+    text-align: left;
+  }
+  .lines-table tbody td {
+    padding: 5.5pt 6pt;
+    border-bottom: 0.5pt solid #e6e6e6;
+    vertical-align: top;
+  }
+  .lines-table tbody tr:nth-child(even) { background: #faf9fd; }
+  .col-num { width: 5%; color: #999; }
+  .col-desc { width: 55%; }
+  .col-qty { width: 10%; }
+  .col-price { width: 15%; }
+  .col-amount { width: 15%; }
+  .right { text-align: right; }
+
+  /* ---------- Totals ---------- */
+  .totals-table {
+    width: 45%;
+    border-collapse: collapse;
+    margin-top: 12pt;
+    margin-left: auto;
+  }
+  .totals-table td { padding: 4pt 0; }
+  .totals-table .label { color: #666; }
+  .totals-table .value { text-align: right; font-weight: bold; color: #222; }
+  .totals-table tr.due td {
+    border-top: 1.2pt solid #7c7bad;
+    padding-top: 6pt;
+    font-size: 11pt;
+  }
+  .totals-table tr.due .label { color: #7c7bad; text-transform: uppercase; letter-spacing: 0.6pt; font-weight: bold; }
+  .totals-table tr.due .value { color: #7c7bad; }
+
+  /* ---------- Notes ---------- */
+  .notes { margin-top: 18pt; border-top: 0.5pt solid #e6e6e6; padding-top: 8pt; }
+  .note-block { margin-bottom: 8pt; }
+  .note-text { white-space: pre-line; color: #555; }
+</style>
+</head>
+<body>
+
+  <!-- Header: company branding (left) + document title/number (right) -->
+  <table class="header-table">
+    <tr>
+      <td class="company-cell">
+        {% if has_logo %}
+          <img class="logo" src="{{ logo }}" alt="{{ company.name }}">
+        {% else %}
+          <div class="company-name">{{ company.name }}</div>
+        {% endif %}
+        {% if company.address %}
+          <div class="company-address preline">{{ company.address }}</div>
+        {% endif %}
+        {% if company.vat %}
+          <div class="company-detail">VAT: {{ company.vat }}</div>
+        {% endif %}
+        {% if company.email or company.phone or company.website %}
+          <div class="company-detail">
+            {%- if company.email %}{{ company.email }}{% endif -%}
+            {%- if company.phone %}{% if company.email %} · {% endif %}{{ company.phone }}{% endif -%}
+            {%- if company.website %}{% if company.email or company.phone %} · {% endif %}{{ company.website }}{% endif -%}
+          </div>
+        {% endif %}
+      </td>
+      <td class="title-cell">
+        <div class="doc-title">{{ kind_title }}</div>
+        <div class="doc-number">{{ invoice_number }}</div>
+      </td>
+    </tr>
+  </table>
+
+  <!-- Bill To + invoice metadata -->
+  <table class="info-table">
+    <tr>
+      <td class="bill-to">
+        <div class="info-label">Bill To</div>
+        <div class="info-value strong">{{ customer.name }}</div>
+        {% if customer.address %}<div class="info-value preline">{{ customer.address }}</div>{% endif %}
+        {% if customer.vat %}<div class="info-value">VAT: {{ customer.vat }}</div>{% endif %}
+        {% if customer.email %}<div class="info-value">{{ customer.email }}</div>{% endif %}
+      </td>
+      <td class="meta-cell">
+        <table class="meta-table">
+          <tr><td class="meta-label">Invoice Number</td><td class="meta-value">{{ invoice_number }}</td></tr>
+          <tr><td class="meta-label">Invoice Date</td><td class="meta-value">{{ invoice_date }}</td></tr>
+          {% if due_date %}<tr><td class="meta-label">Due Date</td><td class="meta-value">{{ due_date }}</td></tr>{% endif %}
+          {% if reference %}<tr><td class="meta-label">Reference</td><td class="meta-value">{{ reference }}</td></tr>{% endif %}
+          {% if payment_terms %}<tr><td class="meta-label">Payment Terms</td><td class="meta-value">{{ payment_terms }}</td></tr>{% endif %}
+          <tr><td class="meta-label">Currency</td><td class="meta-value">{{ currency }}</td></tr>
+        </table>
+      </td>
+    </tr>
+  </table>
+
+  <!-- Lines -->
+  <table class="lines-table">
+    <thead>
+      <tr>
+        <th class="col-num">#</th>
+        <th class="col-desc">Description</th>
+        <th class="col-qty right">Qty</th>
+        <th class="col-price right">Unit Price</th>
+        <th class="col-amount right">Amount</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for line in lines %}
+      <tr>
+        <td class="col-num">{{ line.index }}</td>
+        <td class="col-desc">{{ line.description }}</td>
+        <td class="col-qty right">{{ line.quantity }}</td>
+        <td class="col-price right">{{ line.unit_price }}</td>
+        <td class="col-amount right">{{ line.amount }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+
+  <!-- Totals -->
+  <table class="totals-table">
+    <tr><td class="label">Untaxed Amount</td><td class="value">{{ subtotal }}</td></tr>
+    <tr><td class="label">Total</td><td class="value">{{ total }}</td></tr>
+    <tr class="due"><td class="label">Amount Due</td><td class="value">{{ amount_due }}</td></tr>
+  </table>
+
+  <!-- Notes -->
+  {% if payment_terms or notes %}
+  <div class="notes">
+    {% if payment_terms %}
+    <div class="note-block">
+      <div class="info-label">Payment Terms</div>
+      <div class="note-text">{{ payment_terms }}</div>
+    </div>
+    {% endif %}
+    {% if notes %}
+    <div class="note-block">
+      <div class="info-label">Notes</div>
+      <div class="note-text">{{ notes }}</div>
+    </div>
+    {% endif %}
+  </div>
+  {% endif %}
+
+</body>
+</html>

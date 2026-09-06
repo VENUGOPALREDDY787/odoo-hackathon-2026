@@ -1,0 +1,13 @@
+# Generated invoice PDFs and metadata
+generated/
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+venv/
+
+# IDE / OS
+.idea/
+.vscode/
+.DS_Store

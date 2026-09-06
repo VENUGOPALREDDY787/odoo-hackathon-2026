@@ -153,6 +153,7 @@ function registerRoutes(app) {
     'dealHealth',
     'reporting',
     'audit',
+    'queueAdmin',
   ];
 
   for (const moduleName of modules) {

@@ -1,0 +1,34 @@
+# Managed by resolve-upstreams.sh — the placeholder marker below is replaced
+# with the current replica list of the backend service on boot and on every
+# refresh (5s).
+upstream backend_pool {
+    least_conn;
+__SERVERS__
+    keepalive 32;
+}
+
+server {
+    listen 3000;
+
+    # Scale-up/scale-down friendly timeouts
+    proxy_connect_timeout 5s;
+    proxy_send_timeout 60s;
+    proxy_read_timeout 60s;
+
+    location / {
+        proxy_http_version 1.1;
+        proxy_set_header Connection "";
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+
+        # Scale-down safety: if a replica disappears mid-request, retry once
+        # on the next upstream — but never for non-idempotent verbs.
+        proxy_next_upstream error timeout http_502 http_503 http_504;
+        proxy_next_upstream_tries 2;
+        proxy_next_upstream_timeout 10s;
+
+        proxy_pass http://backend_pool;
+    }
+}

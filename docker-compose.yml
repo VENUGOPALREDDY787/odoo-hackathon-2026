@@ -21,6 +21,7 @@ services:
   redis:
     image: redis:7-alpine
     restart: unless-stopped
+    command: ['redis-server', '--maxmemory-policy', 'noeviction']
     ports:
       - '6379:6379'
     volumes:
@@ -55,6 +56,11 @@ services:
       mysql:
         condition: service_healthy
 
+  # ------------------------------------------------------------------
+  # Backend — CPU-limited so the autoscaler has a real ceiling to react to.
+  # Scale with:  docker compose up -d --scale backend=N
+  # Each replica runs its own BullMQ worker (embedded in the backend).
+  # ------------------------------------------------------------------
   backend:
     build:
       context: ./backend
@@ -78,10 +84,17 @@ services:
       BCRYPT_ROUNDS: 12
       LOG_LEVEL: info
       LOG_PRETTY: 'true'
-      CORS_ORIGIN: http://localhost:5173
+      CORS_ORIGIN: http://localhost:5173,http://localhost:8080
       ENABLE_SWAGGER: 'false'
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      QUEUE_CONCURRENCY: '5'
+      EXPORT_DIR: /app/exports
+      INSTANCE_ID: ${INSTANCE_ID:-backend-1}
     ports:
-      - '3000:3000'
+      - '3000'   # host port auto-assigned per replica (proxied through nginx)
+    volumes:
+      - exports_data:/app/exports
     depends_on:
       mysql:
         condition: service_healthy
@@ -95,13 +108,22 @@ services:
       timeout: 5s
       retries: 12
       start_period: 15s
+    deploy:
+      replicas: ${BACKEND_REPLICAS:-2}
+      resources:
+        limits:
+          cpus: '1.0'
+          memory: 512M
 
+  # ------------------------------------------------------------------
+  # Frontend — static SPA container (unchanged behavior, port remapped)
+  # ------------------------------------------------------------------
   frontend:
     build:
       context: ./frontend
       dockerfile: Dockerfile
       args:
-        VITE_API_URL: http://localhost:3000/api
+        VITE_API_URL: /api
     restart: unless-stopped
     ports:
       - '5173:80'
@@ -109,6 +131,65 @@ services:
       backend:
         condition: service_healthy
 
+  # ------------------------------------------------------------------
+  # nginx load balancer — single public entry point.
+  #   http://localhost:8080  -> SPA
+  #   http://localhost:8080/api -> backend replicas (least_conn)
+  #   http://localhost:8080/socket.io -> websockets
+  # ------------------------------------------------------------------
+  nginx-lb:
+    build:
+      context: ./docker/nginx
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    environment:
+      BACKEND_SERVICE: backend
+      BACKEND_PORT: '3000'
+      RESOLVE_INTERVAL: '5'
+    ports:
+      - '8080:80'
+    depends_on:
+      backend:
+        condition: service_healthy
+      frontend:
+        condition: service_started
+
+  # ------------------------------------------------------------------
+  # Autoscaler watcher — polls CPU of backend replicas via the Docker
+  # socket. Scale up at >=70% of a replica's CPU limit; scale down one
+  # replica at a time after 3 minutes of full idleness. Floor: 2, cap: 6.
+  # ------------------------------------------------------------------
+  autoscaler:
+    build:
+      context: ./docker/autoscaler
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    environment:
+      DOCKER_SOCKET: /var/run/docker.sock
+      BACKEND_SERVICE: backend
+      COMPOSE_PROJECT: ${COMPOSE_PROJECT_NAME:-}
+      COMPOSE_FILE: /compose/docker-compose.yml
+      MIN_REPLICAS: '2'
+      MAX_REPLICAS: '6'
+      SCALE_UP_CPU_THRESHOLD: '0.70'
+      SCALE_DOWN_IDLE_CPU: '0.20'
+      SCALE_DOWN_IDLE_MS: '180000'
+      SCALE_UP_COOLDOWN_MS: '60000'
+      POLL_INTERVAL_MS: '10000'
+      REDIS_HOST: redis
+      REDIS_PORT: '6379'
+      QUEUE_NAME: dealflow-requests
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - ./docker-compose.yml:/compose/docker-compose.yml:ro
+      # backend image context is NOT mounted: scale actions use --no-build
+    depends_on:
+      backend:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
 volumes:
   mysql_data:
   redis_data:
+  exports_data:

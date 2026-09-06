@@ -1,0 +1,13 @@
+{
+  "name": "dealflow360-autoscaler",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "main": "autoscaler.js",
+  "scripts": {
+    "start": "node autoscaler.js"
+  },
+  "dependencies": {
+    "ioredis": "^6.0.0"
+  }
+}

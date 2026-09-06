@@ -12,12 +12,22 @@ import { socketAuth } from './middleware/socketAuth.js';
 import { registerAuthModule } from './modules/auth/index.js';
 import { registerProductModule } from './modules/products/index.js';
 import { registerAuditModule } from './modules/audit/index.js';
+import { registerQueueAdminModule } from './modules/queueAdmin/index.js';
+import { ensureScalingSchema } from './scripts/ensureScalingSchema.js';
+import { startWorker, stopWorker } from './queue/runner.js';
+import { closeQueue } from './queue/index.js';
+import { closeConnections } from './queue/connection.js';
 
 async function bootstrap() {
   try {
     const db = getDatabase();
     await db.raw('SELECT 1');
     logger.info('Database connection established');
+
+    // Additive-only schema bootstrap for queue result tables. Idempotent and
+    // safe to run concurrently from every replica — never touches existing
+    // tables or data.
+    await ensureScalingSchema(db);
   } catch (error) {
     logger.error({ err: error.message }, 'Failed to connect to database');
     process.exit(1);
@@ -47,11 +57,14 @@ async function bootstrap() {
   await registerModules(container);
   startCleanupJobs(container);
 
+  // Embedded queue worker — every replica drains the shared Redis queue.
+  startWorker();
+
   // Register all module routes before creating the app so createApp() can mount them.
   const app = createApp();
 
   const server = app.listen(config.PORT, config.HOST, () => {
-    logger.info({ port: config.PORT, host: config.HOST, env: config.NODE_ENV }, 'Server started');
+    logger.info({ port: config.PORT, host: config.HOST, env: config.NODE_ENV, instance: config.INSTANCE_ID || 'default' }, 'Server started');
   });
 
   // Attach Socket.IO to the HTTP server
@@ -100,17 +113,21 @@ async function bootstrap() {
 
   const shutdown = async (signal) => {
     logger.info({ signal }, 'Shutdown signal received');
-    server.close(async () => {
+
+    // Stop accepting new HTTP requests and let in-flight ones finish.
+    server.close(() => {
       logger.info('HTTP server closed');
-      await closeDatabase();
-      logger.info('Graceful shutdown complete');
-      process.exit(0);
     });
 
-    setTimeout(() => {
-      logger.error('Forced shutdown after timeout');
-      process.exit(1);
-    }, 30000).unref();
+    // Close queue producer + drain worker (in-flight jobs finish; queued jobs
+    // stay in Redis and are picked up by the remaining replicas).
+    await stopWorker();
+    await closeQueue();
+    await closeConnections();
+
+    await closeDatabase();
+    logger.info('Graceful shutdown complete');
+    process.exit(0);
   };
 
   process.on('SIGTERM', () => shutdown('SIGTERM'));
@@ -139,6 +156,7 @@ async function registerModules(container) {
   registerAuthModule(container);
   registerProductModule(container);
   registerAuditModule(container);
+  registerQueueAdminModule(container);
 
   const moduleNames = [
     'discounts',

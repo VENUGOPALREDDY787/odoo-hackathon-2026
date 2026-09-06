@@ -42,10 +42,15 @@ const envSchema = z.object({
   // Feature flags
   ENABLE_SWAGGER: z.coerce.boolean().default(false),
 
-  // Redis (optional — deal health dashboard cache)
+  // Redis (optional — deal health dashboard cache + BullMQ request queue)
   REDIS_URL: z.string().optional(),
   REDIS_HOST: z.string().optional(),
   REDIS_PORT: z.coerce.number().int().positive().default(6379),
+
+  // Queue / scaling
+  QUEUE_CONCURRENCY: z.coerce.number().int().positive().default(5),
+  EXPORT_DIR: z.string().default('/tmp/exports'),
+  INSTANCE_ID: z.string().optional(),
 
   // Deal health detection thresholds
   DEAL_HEALTH_CRON: z.string().default('0,30 * * * *'),
