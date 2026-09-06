@@ -19,9 +19,15 @@ export default function ApprovalsHub({
   const [pendingOnly, setPendingOnly] = useState(true);
   const [actionModal, setActionModal] = useState(null); // 'approve' | 'return' | 'reject'
   const [actionReason, setActionReason] = useState('');
+  const [actionError, setActionError] = useState('');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [approval, setApproval] = useState(null);
+
+  // Clear the modal's error banner whenever the modal opens/closes.
+  useEffect(() => {
+    setActionError('');
+  }, [actionModal]);
 
   useEffect(() => {
     listQuotations().then(() => setError('')).catch((requestError) => setError(requestError.message)).finally(() => setLoading(false));
@@ -93,17 +99,23 @@ export default function ApprovalsHub({
     if (!selectedQuote) return;
 
     const action = type === 'approve' ? approveQuotation : type === 'reject' ? rejectQuotation : returnQuotation;
+    const nextStatus = type === 'approve' ? 'approved' : type === 'reject' ? 'rejected' : 'draft';
+    setActionError('');
     action(selectedQuote.id, actionReason).then(() => {
-      onUpdateQuotationStatus?.(selectedQuote.id, type === 'approve' ? 'approved' : 'draft', '', {});
+      onUpdateQuotationStatus?.(selectedQuote.id, nextStatus, '', {});
       onRefreshQuotations?.();
       // Re-fetch the selected quote's real risk + approval logs so the audit
       // trail card shows the entry we just created server-side.
       return getApproval(selectedQuote.id).then(setApproval).catch(() => {});
     }).then(() => {
-      setSelectedQuote((current) => (current ? { ...current, status: type === 'approve' ? 'approved' : 'draft' } : null));
+      setSelectedQuote((current) => (current ? { ...current, status: nextStatus } : null));
       setActionModal(null);
       setActionReason('');
-    }).catch((requestError) => setError(requestError.message));
+    }).catch((requestError) => {
+      // Surface the failure inside the confirmation modal instead of swapping
+      // the whole screen for the page-level error card.
+      setActionError(requestError.message);
+    });
   };
 
   if (loading) return <div className="space-y-4"><Skeleton height="6rem" /><Skeleton variant="rounded" height="28rem" /></div>;
@@ -461,8 +473,14 @@ export default function ApprovalsHub({
               />
             </div>
 
+            {actionError && (
+              <div className="text-xs font-mono text-status-danger bg-status-danger/10 border border-status-danger/30 rounded-lg px-3 py-2">
+                {actionError}
+              </div>
+ )}
+
             <div className="flex items-center justify-end gap-3 pt-2">
-              <PillButton variant="ghost" size="md" onClick={() => setActionModal(null)}>
+              <PillButton variant="ghost" size="md" onClick={() => { setActionModal(null); setActionError(''); }}>
                 {t('common.cancel', 'Cancel')}
               </PillButton>
               <PillButton

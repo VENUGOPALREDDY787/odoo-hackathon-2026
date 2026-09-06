@@ -128,9 +128,12 @@ export function validateApprovalTransition({
   const needsManager = requiredRoles.includes('manager');
   const needsFinance = requiredRoles.includes('finance');
 
-  // Check if role is required in the routing
-  if (normalizedRole !== 'admin') {
-    if (!requiredRoles.includes(normalizedRole)) {
+  // Check if role is required in the routing. Finance counts as senior to
+  // manager, so finance may cover a manager-only quotation; a genuine
+  // dual-signoff chain (manager + finance) still requires BOTH steps below.
+  if (normalizedRole !== 'admin' && !requiredRoles.includes(normalizedRole)) {
+    const canCoverWithSeniority = normalizedRole === 'finance' && !needsFinance;
+    if (!canCoverWithSeniority) {
       throw new ForbiddenError(
         `Finance/Manager approval is unreachable for this quotation: Role '${user?.role}' is not required by approval routing rules (${requiredRoles.join(', ')}).`
       );
@@ -146,8 +149,9 @@ export function validateApprovalTransition({
   const managerAlreadyApproved = previousApprovals.includes('manager') || previousApprovals.includes('admin');
   const financeAlreadyApproved = previousApprovals.includes('finance');
 
-  // Multi-step rule: Finance approval CANNOT skip manager approval if manager is required
-  if ((normalizedRole === 'finance' || (normalizedRole === 'admin' && needsFinance && !needsManager)) && needsManager && !managerAlreadyApproved) {
+  // Multi-step rule: on dual-signoff quotations finance CANNOT skip the
+  // manager step — manager must sign off first.
+  if (needsFinance && needsManager && normalizedRole === 'finance' && !managerAlreadyApproved) {
     throw new ValidationError(
       `Illegal step sequence: Finance approval cannot skip the required Manager approval step. Manager must approve first.`
     );

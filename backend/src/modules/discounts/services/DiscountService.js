@@ -356,8 +356,20 @@ export class DiscountService {
         .where({ id: quotationId })
         .update(updatePayload);
 
-      // 2. Insert approval log
-      const logAction = action === 'return_for_revision' ? 'returned' : action;
+      // 2. Insert approval log. The DB column is
+      // ENUM('pending','approved','rejected','returned','escalated') while the
+      // state machine uses its own action names, so map them explicitly —
+      // passing 'approve'/'reject' through raw triggers
+      // "Data truncated for column 'action'" and fails the whole transaction.
+      const APPROVAL_LOG_ACTIONS = {
+        approve: 'approved',
+        approved: 'approved',
+        reject: 'rejected',
+        rejected: 'rejected',
+        return_for_revision: 'returned',
+        returned: 'returned',
+      };
+      const logAction = APPROVAL_LOG_ACTIONS[action] || action;
       const [logId] = await trx('approval_logs').insert({
         quotation_id: quotationId,
         approver_id: user.id,
