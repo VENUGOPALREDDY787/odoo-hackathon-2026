@@ -873,8 +873,24 @@ function pickStatusAndDates(scenario, blendedScore, createdAt, users) {
 // MAIN
 // ============================================================================
 
+async function waitForDatabase(maxRetries = 30, intervalMs = 1000) {
+  const db = getDatabase();
+  for (let attempt = 1; attempt <= maxRetries; attempt += 1) {
+    try {
+      await db.raw('SELECT 1');
+      logger.info(`[seed] Database connection established on attempt ${attempt}.`);
+      return;
+    } catch (error) {
+      logger.warn(`[seed] Database connection attempt ${attempt}/${maxRetries} failed: ${error.message}. Retrying in ${intervalMs}ms...`);
+      if (attempt === maxRetries) {throw error;}
+      await new Promise((resolve) => setTimeout(resolve, intervalMs));
+    }
+  }
+}
+
 async function main() {
   faker.seed(20260905);
+  await waitForDatabase();
   const db = getDatabase();
   await ensureRequiredTables(db);
   const now = new Date();
