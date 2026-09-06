@@ -1,4 +1,5 @@
 import { NotFoundError, ValidationError, AuthorizationError } from '../../../errors/AppError.js';
+import { randomUUID } from 'node:crypto';
 import { ProductRepository, ProductVariantRepository, PriceListRepository, PriceListItemRepository } from '../repositories/ProductRepository.js';
 import { resolvePrice } from './priceResolver.js';
 import { AuditTrailRepository } from '../../discounts/repositories/DiscountRepository.js';
@@ -39,15 +40,17 @@ export class ProductService {
     };
     delete payload.category;
 
-    const [id] = await this.db('products').insert(payload).returning('id');
-    const createdId = typeof id === 'object' ? id.id : id;
-    const product = await this.productRepo.findById(createdId || data.id);
+    // MySQL has no INSERT ... RETURNING: generate the UUID here so the
+    // follow-up findById has a real id instead of undefined.
+    const createdId = randomUUID();
+    await this.db('products').insert({ ...payload, id: createdId });
+    const product = await this.productRepo.findById(createdId);
 
     // Role-attributed audit entry: admin created a catalog product
     await this.auditTrailRepo.logChange({
       tableName: 'products',
       recordId: createdId || data.id,
-      operation: 'CREATE',
+      operation: 'INSERT',
       changedBy: user?.id || null,
       changedByRole: user?.role || null,
       oldValues: null,
@@ -180,6 +183,19 @@ export class ProductService {
     return this.productRepo.listWithFilters(filters, options);
   }
 
+  /**
+   * Active product categories for catalog forms. The frontend category
+   * dropdown must render exactly these names — resolveCategoryId() matches
+   * on them, so a hardcoded list inevitably fails with
+   * "Unknown product category".
+   */
+  async listCategories() {
+    return this.db('product_categories')
+      .where({ deleted_at: null })
+      .orderBy('name', 'asc')
+      .select('id', 'name');
+  }
+
   async getProductWithPriceLists(productId) {
     const product = await this.getProduct(productId);
     return this.productRepo.getWithPriceLists(product.id);
@@ -236,15 +252,15 @@ export class ProductService {
       updated_at: new Date(),
     };
 
-    const [id] = await this.db('product_variants').insert(payload).returning('id');
-    const createdId = typeof id === 'object' ? id.id : id;
-    const variant = await this.variantRepo.findById(createdId || data.id);
+    const createdId = randomUUID();
+    await this.db('product_variants').insert({ ...payload, id: createdId });
+    const variant = await this.variantRepo.findById(createdId);
 
     // Role-attributed audit entry: variant added to a product
     await this.auditTrailRepo.logChange({
       tableName: 'product_variants',
       recordId: createdId || data.id,
-      operation: 'CREATE',
+      operation: 'INSERT',
       changedBy: user?.id || null,
       changedByRole: user?.role || null,
       oldValues: null,
@@ -310,9 +326,9 @@ export class ProductService {
       updated_at: new Date(),
     };
 
-    const [id] = await this.db('price_lists').insert(payload).returning('id');
-    const createdId = typeof id === 'object' ? id.id : id;
-    const priceList = await this.priceListRepo.findById(createdId || data.id);
+    const createdId = randomUUID();
+    await this.db('price_lists').insert({ ...payload, id: createdId });
+    const priceList = await this.priceListRepo.findById(createdId);
 
     this.logger.info({ priceListId: priceList?.id }, 'Price list created');
     return priceList || { id: createdId, ...data };
@@ -381,9 +397,9 @@ export class ProductService {
       updated_at: new Date(),
     };
 
-    const [id] = await this.db('price_list_items').insert(payload).returning('id');
-    const createdId = typeof id === 'object' ? id.id : id;
-    const item = await this.priceListItemRepo.findById(createdId || data.id);
+    const createdId = randomUUID();
+    await this.db('price_list_items').insert({ ...payload, id: createdId });
+    const item = await this.priceListItemRepo.findById(createdId);
 
     return item || { id: createdId, ...data };
   }

@@ -21,22 +21,26 @@ export class ProductRepository extends BaseRepository {
     const { page = 1, limit = 20, orderBy = 'created_at', orderDir = 'desc' } = options;
     const offset = (page - 1) * limit;
 
-    let query = this.db('products').where({ deleted_at: null });
+    // Joined so every row carries its category name — the catalog UI and the
+    // edit form both need the human-readable category, not just category_id.
+    let query = this.db('products as p')
+      .leftJoin('product_categories as pc', 'p.category_id', 'pc.id')
+      .where({ 'p.deleted_at': null });
 
-    if (filters.category_id) query = query.where('category_id', filters.category_id);
-    if (filters.is_active !== undefined) query = query.where('is_active', filters.is_active);
+    if (filters.category_id) query = query.where('p.category_id', filters.category_id);
+    if (filters.is_active !== undefined) query = query.where('p.is_active', filters.is_active);
     if (filters.search) {
       const term = `%${filters.search}%`;
       query = query.where(function() {
-        this.where('name', 'like', term).orWhere('sku', 'like', term).orWhere('description', 'like', term);
+        this.where('p.name', 'like', term).orWhere('p.sku', 'like', term).orWhere('p.description', 'like', term);
       });
     }
-    if (filters.min_price !== undefined) query = query.where('base_price', '>=', filters.min_price);
-    if (filters.max_price !== undefined) query = query.where('base_price', '<=', filters.max_price);
+    if (filters.min_price !== undefined) query = query.where('p.base_price', '>=', filters.min_price);
+    if (filters.max_price !== undefined) query = query.where('p.base_price', '<=', filters.max_price);
 
     const [data, totalResult] = await Promise.all([
-      query.clone().orderBy(orderBy, orderDir).limit(limit).offset(offset).select('*'),
-      query.clone().count('* as count').first(),
+      query.clone().orderBy(`p.${orderBy}`, orderDir).limit(limit).offset(offset).select('p.*', 'pc.name as category_name'),
+      query.clone().count('p.id as count').first(),
     ]);
 
     const total = Number(totalResult?.count || 0);

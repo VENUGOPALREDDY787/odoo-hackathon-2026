@@ -38,7 +38,7 @@ export class DiscountService {
     await this.auditTrailRepo.logChange({
       tableName: 'discount_tiers',
       recordId: createdId || data.id,
-      operation: 'CREATE',
+      operation: 'INSERT',
       changedBy: user?.id || null,
       changedByRole: user?.role || null,
       oldValues: null,
@@ -132,7 +132,7 @@ export class DiscountService {
     await this.auditTrailRepo.logChange({
       tableName: 'approval_chains',
       recordId: createdId || data.id,
-      operation: 'CREATE',
+      operation: 'INSERT',
       changedBy: user?.id || null,
       changedByRole: user?.role || null,
       oldValues: null,

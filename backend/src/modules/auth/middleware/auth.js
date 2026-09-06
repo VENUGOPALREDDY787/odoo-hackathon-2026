@@ -1,8 +1,15 @@
 import { container } from '../../../container/index.js';
 import { AuthenticationError, AuthorizationError } from '../../../errors/AppError.js';
 
+// Express 4 does NOT route rejected promises from async middleware to the
+// error handler — the rejection vanishes and the request hangs forever
+// (e.g. an expired token on GET /auth/profile left the frontend stuck on
+// "Checking authentication..."). Wrap every async middleware so rejections
+// reach next(error) and the error handler can respond.
+const wrapAsync = (fn) => (req, res, next) => Promise.resolve(fn(req, res, next)).catch(next);
+
 export function authenticate() {
-  return async (req, res, next) => {
+  return wrapAsync(async (req, res, next) => {
     const authHeader = req.headers.authorization;
     if (!authHeader?.startsWith('Bearer ')) {
       throw new AuthenticationError('Authorization header required');
@@ -26,7 +33,7 @@ export function authenticate() {
       }
       throw error;
     }
-  };
+  });
 }
 
 export function requireRole(...allowedRoles) {
@@ -81,7 +88,7 @@ export function requireCustomer() {
 }
 
 export function requireOwnershipOrRole(resourceUserIdField = 'assigned_rep_id', ...allowedRoles) {
-  return async (req, res, next) => {
+  return wrapAsync(async (req, res, next) => {
     if (!req.user) {
       throw new AuthenticationError('Authentication required');
     }
@@ -112,11 +119,11 @@ export function requireOwnershipOrRole(resourceUserIdField = 'assigned_rep_id', 
     }
 
     next();
-  };
+  });
 }
 
 export function requireQuotationAccess(...managerRoles) {
-  return async (req, res, next) => {
+  return wrapAsync(async (req, res, next) => {
     if (!req.user) { throw new AuthenticationError('Authentication required'); }
     if (managerRoles.includes(req.user.role)) { return next(); }
 
@@ -136,11 +143,11 @@ export function requireQuotationAccess(...managerRoles) {
       : req.user.role === 'customer' && quotation.customer_user_id === req.user.id;
     if (!permitted) { throw new AuthorizationError('You cannot access this quotation'); }
     next();
-  };
+  });
 }
 
 export function optionalAuth() {
-  return async (req, res, next) => {
+  return wrapAsync(async (req, res, next) => {
     const authHeader = req.headers.authorization;
     if (!authHeader?.startsWith('Bearer ')) {
       return next();
@@ -158,7 +165,7 @@ export function optionalAuth() {
     }
 
     next();
-  };
+  });
 }
 
 export const canManageUsers = requireRole('admin');

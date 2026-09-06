@@ -30,6 +30,11 @@ export class ProductController {
     res.json({ data: result });
   });
 
+  listCategories = asyncHandler(async (req, res) => {
+    const categories = await this.service.listCategories();
+    res.json({ data: categories });
+  });
+
   list = asyncHandler(async (req, res) => {
     const filters = {
       category_id: req.query.category_id,

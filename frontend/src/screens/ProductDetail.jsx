@@ -1,14 +1,15 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import Card from '../components/Card';
 import PillButton from '../components/PillButton';
 import Tag from '../components/Tag';
+import { listProductCategories } from '../api/client';
 
 export default function ProductDetail({ product, onBack, onSave, canEdit = false }) {
   const { t } = useTranslation();
   const [sku, setSku] = useState(product?.sku || '');
   const [name, setName] = useState(product?.name || '');
-  const [category, setCategory] = useState(product?.category || 'SaaS Licenses');
+  const [category, setCategory] = useState(product?.category || '');
   const [price, setPrice] = useState(product?.price || 0);
   const [unit, setUnit] = useState(product?.unit || 'seat/yr');
   const [tax, setTax] = useState(product?.tax || 0);
@@ -17,6 +18,33 @@ export default function ProductDetail({ product, onBack, onSave, canEdit = false
   const [recurringCycle, setRecurringCycle] = useState(product?.recurringCycle || 'yearly');
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState('');
+  const [categories, setCategories] = useState([]);
+
+  // Categories come from the backend (product_categories table). The save
+  // endpoint resolves the category by name, so the dropdown must offer the
+  // exact rows in the DB — hardcoded options always fail with
+  // "Unknown product category".
+  useEffect(() => {
+    let active = true;
+    listProductCategories()
+      .then((rows) => {
+        if (!active) return;
+        const names = (rows || []).map((row) => row.name).filter(Boolean);
+        setCategories(names);
+        // Keep the current selection if valid, otherwise take the first
+        // category from the DB so a fresh form is always submittable.
+        setCategory((current) => {
+          if (current && names.includes(current)) return current;
+          return names[0] || '';
+        });
+      })
+      .catch(() => {
+        // Non-fatal: the select simply keeps its current value.
+      });
+    return () => {
+      active = false;
+    };
+  }, []);
 
   const [variants, setVariants] = useState(
     product?.variants || [
@@ -159,11 +187,16 @@ export default function ProductDetail({ product, onBack, onSave, canEdit = false
                 value={category}
                 onChange={(e) => setCategory(e.target.value)}
                 className="w-full aether-input bg-surface-interactive"
+                required
               >
-                <option value="Enterprise Hardware">Enterprise Hardware</option>
-                <option value="SaaS Licenses">SaaS Licenses</option>
-                <option value="Professional Services">Professional Services</option>
-                <option value="Cloud Infrastructure">Cloud Infrastructure</option>
+                {categories.length === 0 && (
+                  <option value="">Loading categories...</option>
+                )}
+                {categories.map((cat) => (
+                  <option key={cat} value={cat}>
+                    {cat}
+                  </option>
+                ))}
               </select>
             </div>
 

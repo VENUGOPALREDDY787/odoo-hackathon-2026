@@ -69,7 +69,7 @@ export class QuotationService {
     await this.auditTrailRepo.logChange({
       tableName: 'quotations',
       recordId: payload.id,
-      operation: 'CREATE',
+      operation: 'INSERT',
       changedBy: user?.id || null,
       changedByRole: user?.role || null,
       oldValues: null,

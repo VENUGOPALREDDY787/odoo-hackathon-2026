@@ -72,8 +72,12 @@ export default function App() {
   const autoTourStartedRef = useRef(false);
 
   useEffect(() => {
-    recoverSession().then((user) => {
-      setCurrentUser(user);
+    // Watchdog: if session recovery hangs (backend down, network black hole),
+    // fall through to the sign-in screen instead of staying on
+    // "Checking authentication..." forever.
+    const timeout = new Promise((resolve) => setTimeout(() => resolve(null), 8000));
+    Promise.race([recoverSession().catch(() => null), timeout]).then((user) => {
+      setCurrentUser(user || null);
       setAuthStatus(user ? 'authenticated' : 'anonymous');
       if (user) {
         const routeParts = getRouteParts(window.location.hash);
