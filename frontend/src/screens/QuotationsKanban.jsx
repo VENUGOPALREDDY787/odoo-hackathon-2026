@@ -4,7 +4,6 @@ import Card from '../components/Card';
 import PillButton from '../components/PillButton';
 import StatusBadge from '../components/StatusBadge';
 import Tag from '../components/Tag';
-import { calculateQuotationTotals } from '../utils/quotationCalculations';
 import Skeleton from '../components/Skeleton';
 
 export default function QuotationsKanban({
@@ -19,12 +18,15 @@ export default function QuotationsKanban({
   const [searchQuery, setSearchQuery] = useState('');
   const [tierFilter, setTierFilter] = useState('ALL');
 
+  // Columns mirror the real quotation lifecycle statuses used by the backend
+  // (draft → pending_approval → approved → sent → accepted). Terminal states
+  // (rejected / expired / cancelled) are deliberately excluded from the board.
   const columns = [
     { id: 'draft', label: t('quotations.columnDraft', 'Draft'), color: 'text-text-secondary' },
     { id: 'pending_approval', label: t('quotations.columnPending', 'Pending Approval'), color: 'text-status-warning' },
     { id: 'approved', label: t('quotations.columnApproved', 'Approved'), color: 'text-status-live' },
-    { id: 'negotiation', label: t('status.negotiation', 'Negotiation'), color: 'text-accent-blue' },
-    { id: 'confirmed', label: t('status.confirmed', 'Confirmed'), color: 'text-status-live' },
+    { id: 'sent', label: t('status.sent', 'Sent'), color: 'text-accent-blue' },
+    { id: 'accepted', label: t('status.accepted', 'Accepted'), color: 'text-status-live' },
   ];
 
   const filteredQuotations = quotations.filter((q) => {
@@ -138,11 +140,11 @@ export default function QuotationsKanban({
                 <div className="flex items-center justify-between pb-3 border-b border-border-subtle/70 px-1">
                   <div className="flex items-center gap-2">
                     <span className={`w-2 h-2 rounded-full ${
-                      col.id === 'approved' || col.id === 'confirmed'
+                      col.id === 'approved' || col.id === 'accepted'
                         ? 'bg-status-live'
                         : col.id === 'pending_approval'
                         ? 'bg-status-warning'
-                        : col.id === 'negotiation'
+                        : col.id === 'sent'
                         ? 'bg-accent-blue'
                         : 'bg-text-secondary'
                     }`} />
@@ -163,7 +165,12 @@ export default function QuotationsKanban({
                     </div>
                   ) : (
                     colQuotes.map((q) => {
-                      const totals = calculateQuotationTotals(q.lines);
+                      // List rows don't carry lines — the board shows the
+                      // server-computed grand_total instead of recalculating.
+                      const grandTotal = Number(q.grand_total || q.total || 0);
+                      // List rows carry the server-side line_count; only fall back
+                      // to the loaded lines array when the detail fetch is used.
+                      const lineCount = q.line_count != null ? Number(q.line_count) : (q.lines?.length ?? 0);
                       const isHighRisk = q.blended_risk_score > 60;
                       return (
                         <div
@@ -186,16 +193,16 @@ export default function QuotationsKanban({
 
                           <div className="my-3 flex items-baseline justify-between">
                             <span className="font-kpi-value text-2xl font-bold text-text-primary">
-                              ₹{(totals.total / 1000).toFixed(1)}k
+                              ₹{(grandTotal / 1000).toFixed(1)}k
                             </span>
                             <span className="font-mono-tag text-xs text-text-secondary">
-                              {q.lines.length} {q.lines.length === 1 ? 'line' : 'lines'}
+                              {lineCount} {lineCount === 1 ? 'line' : 'lines'}
                             </span>
                           </div>
 
                           {/* Risk Score Pill & Rep */}
                           <div className="pt-3 border-t border-border-subtle flex items-center justify-between">
-                            <div className="flex items-center gap-1.5">
+                            <div className="flex items-center gap-1.5 whitespace-nowrap">
                               <span className="font-label-caps text-[10px] text-text-secondary uppercase">
                                 Risk
                               </span>
@@ -242,7 +249,7 @@ export default function QuotationsKanban({
               </thead>
               <tbody className="divide-y divide-border-subtle text-sm">
                 {filteredQuotations.map((q) => {
-                  const totals = calculateQuotationTotals(q.lines);
+                  const grandTotal = Number(q.grand_total || q.total || 0);
                   return (
                     <tr
                       key={q.id}
@@ -273,11 +280,11 @@ export default function QuotationsKanban({
                               : 'bg-accent-blue/20 text-accent-blue'
                           }`}
                         >
-                          Score: {q.blended_risk_score}
+                          Deal Risk Score: {q.blended_risk_score}
                         </span>
                       </td>
                       <td className="py-4 px-6 font-mono-data font-semibold text-text-primary">
-                                ₹{totals.total.toLocaleString()}
+                                ₹{grandTotal.toLocaleString()}
                       </td>
                       <td className="py-4 px-6 text-text-secondary">{q.assignedTo}</td>
                       <td className="py-4 px-6 text-right">

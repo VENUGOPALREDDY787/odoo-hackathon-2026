@@ -4,7 +4,7 @@ import Card from '../components/Card';
 import PillButton from '../components/PillButton';
 import Tag from '../components/Tag';
 import StatusBadge from '../components/StatusBadge';
-import { listProducts } from '../auth/authApi';
+import { listProducts } from '../api/client';
 
 function mapProduct(product) {
   return {

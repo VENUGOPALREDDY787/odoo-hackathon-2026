@@ -28,7 +28,7 @@ export class QuotationService {
   // ==================== QUOTATION CRUD ====================
 
   async createQuotation(data, user = null) {
-    const customer = await this.db('customers').where({ id: data.customer_id, deleted_at: null }).first();
+    const customer = await this.resolveQuotationCustomer(data);
     if (!customer) {
       throw new ValidationError('Invalid customer ID');
     }
@@ -38,7 +38,7 @@ export class QuotationService {
     const payload = {
       id: uuidv4(),
       quotation_number: quotationNumber,
-      customer_id: data.customer_id,
+      customer_id: customer.id,
       assigned_rep_id: data.assigned_rep_id || user?.id || null,
       status: 'draft',
       currency: data.currency || customer.currency || 'USD',
@@ -65,9 +65,54 @@ export class QuotationService {
 
     await this.db('quotations').insert(payload);
 
+    // Role-attributed audit entry: who created this quotation (CREATE op)
+    await this.auditTrailRepo.logChange({
+      tableName: 'quotations',
+      recordId: payload.id,
+      operation: 'CREATE',
+      changedBy: user?.id || null,
+      changedByRole: user?.role || null,
+      oldValues: null,
+      newValues: { quotation_number: quotationNumber, customer_id: customer.id, status: 'draft' },
+      changedFields: ['quotation_number', 'customer_id', 'status'],
+    });
+
     const created = await this.quotationRepo.findWithDetails(payload.id);
     this.logger.info({ quotationId: created?.id, quotationNumber }, 'Draft quotation created');
     return created;
+  }
+
+  async resolveQuotationCustomer(data) {
+    if (data.customer_id) {
+      return this.db('customers').where({ id: data.customer_id, deleted_at: null }).first();
+    }
+
+    const customerName = data.customer_name || data.metadata?.customer_name;
+    if (!customerName) {
+      return null;
+    }
+
+    const existing = await this.db('customers')
+      .where({ company_name: customerName, deleted_at: null })
+      .first();
+    if (existing) {
+      return existing;
+    }
+
+    const payload = {
+      id: uuidv4(),
+      company_name: customerName,
+      tier: data.customer_tier || 'Bronze',
+      currency: data.currency || 'USD',
+      payment_terms_days: data.payment_terms_days || 30,
+      billing_address: JSON.stringify({}),
+      shipping_address: JSON.stringify({}),
+      created_at: new Date(),
+      updated_at: new Date(),
+    };
+
+    await this.db('customers').insert(payload);
+    return this.db('customers').where({ id: payload.id }).first();
   }
 
   async getQuotation(id) {
@@ -262,6 +307,24 @@ export class QuotationService {
         .where({ id: lineId })
         .update(updateLinePayload);
 
+      // Role-attributed audit entry: which fields the actor changed on the line
+      await this.auditTrailRepo.logChange({
+        tableName: 'quotation_lines',
+        recordId: lineId,
+        operation: 'UPDATE',
+        changedBy: user?.id || null,
+        changedByRole: user?.role || null,
+        oldValues: { quantity: existingLine.quantity, list_price: existingLine.list_price, discount_percent: existingLine.discount_percent },
+        newValues: {
+          quantity: updateLinePayload.quantity !== undefined ? Number(updateLinePayload.quantity) : existingLine.quantity,
+          list_price: updateLinePayload.list_price !== undefined ? Number(updateLinePayload.list_price) : existingLine.list_price,
+          discount_percent: updateLinePayload.discount_percent !== undefined ? Number(updateLinePayload.discount_percent) : existingLine.discount_percent,
+        },
+        changedFields: Object.keys(lineData).filter((key) => !['expected_version', 'is_upsell'].includes(key)),
+        ipAddress: reqMeta.ip || null,
+        userAgent: reqMeta.userAgent || null,
+      });
+
       const currentLines = await trx('quotation_lines as ql')
         .leftJoin('products as p', 'ql.product_id', 'p.id')
         .leftJoin('product_variants as pv', 'ql.variant_id', 'pv.id')
@@ -342,9 +405,27 @@ export class QuotationService {
         );
       }
 
+      const lineToDelete = await trx('quotation_lines')
+        .where({ id: lineId, quotation_id: quotationId, deleted_at: null })
+        .first();
+
       await trx('quotation_lines')
         .where({ id: lineId, quotation_id: quotationId })
         .update({ deleted_at: new Date(), updated_at: new Date() });
+
+      // Role-attributed audit entry: soft delete of a quotation line
+      await this.auditTrailRepo.logChange({
+        tableName: 'quotation_lines',
+        recordId: lineId,
+        operation: 'DELETE',
+        changedBy: user?.id || null,
+        changedByRole: user?.role || null,
+        oldValues: { quantity: lineToDelete ? lineToDelete.quantity : null, custom_name: lineToDelete ? lineToDelete.custom_name : null, quotation_id: quotationId },
+        newValues: { deleted_at: new Date().toISOString() },
+        changedFields: ['deleted_at'],
+        ipAddress: reqMeta.ip || null,
+        userAgent: reqMeta.userAgent || null,
+      });
 
       const currentLines = await trx('quotation_lines as ql')
         .leftJoin('products as p', 'ql.product_id', 'p.id')
@@ -551,6 +632,19 @@ export class QuotationService {
       throw new ValidationError(`Quotation cannot be accepted from status '${quotation.status}'.`);
     }
     await this.db('quotations').where({ id: quotationId }).update({ status: 'accepted', updated_at: new Date(), version: this.db.raw('version + 1') });
+
+    // Role-attributed audit entry: customer formally accepted the offer
+    await this.auditTrailRepo.logChange({
+      tableName: 'quotations',
+      recordId: quotationId,
+      operation: 'UPDATE',
+      changedBy: user.id,
+      changedByRole: user.role,
+      oldValues: { status: quotation.status },
+      newValues: { status: 'accepted' },
+      changedFields: ['status', 'version'],
+    });
+
     return this.quotationRepo.findWithDetails(quotationId);
   }
 }

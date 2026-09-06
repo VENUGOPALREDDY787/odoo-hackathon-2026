@@ -38,6 +38,11 @@ function unwrapList(body) {
   return Array.isArray(value) ? value : []
 }
 
+function unwrapQuotationPayload(body) {
+  const value = body?.data
+  return value?.quotation || value?.data?.quotation || value
+}
+
 export function normalizeQuotation(quotation) {
   const rawLines = quotation.lines || quotation.quotation_lines || []
 
@@ -69,12 +74,53 @@ export function normalizeQuotation(quotation) {
 export { normalizeProduct }
 
 export async function listQuotations() {
-  return unwrapList(await request('/quotations?limit=100')).map(normalizeQuotation)
+  const firstPage = await request('/quotations?limit=100&page=1')
+  const items = unwrapList(firstPage)
+  const totalPages = firstPage?.pagination?.totalPages || 1
+
+  if (totalPages > 1) {
+    const remainingPages = await Promise.all(
+      Array.from({ length: totalPages - 1 }, (_, index) =>
+        request(`/quotations?limit=100&page=${index + 2}`)
+      )
+    )
+    for (const page of remainingPages) {
+      items.push(...unwrapList(page))
+    }
+  }
+
+  return items.map(normalizeQuotation)
 }
 
 export async function listProducts(params = {}) {
-  const query = new URLSearchParams(Object.entries(params).filter(([, value]) => value !== undefined && value !== ''))
-  return request(`/products${query.toString() ? `?${query}` : ''}`)
+  const normalizedParams = { limit: 100, ...params }
+  const query = new URLSearchParams(Object.entries(normalizedParams).filter(([, value]) => value !== undefined && value !== ''))
+  const firstPage = await request(`/products${query.toString() ? `?${query}` : ''}`)
+  const items = unwrapList(firstPage)
+  const totalPages = firstPage?.pagination?.totalPages || 1
+
+  if (!params.page && totalPages > 1) {
+    const remainingPages = await Promise.all(
+      Array.from({ length: totalPages - 1 }, (_, index) => {
+        const nextQuery = new URLSearchParams({ ...normalizedParams, page: index + 2 })
+        return request(`/products?${nextQuery}`)
+      })
+    )
+    for (const page of remainingPages) {
+      items.push(...unwrapList(page))
+    }
+  }
+
+  return {
+    ...firstPage,
+    data: items.map(normalizeProduct),
+    pagination: {
+      ...(firstPage.pagination || {}),
+      page: params.page || 1,
+      total: firstPage?.pagination?.total || items.length,
+      totalPages,
+    },
+  }
 }
 
 export async function getQuotation(id) {
@@ -86,19 +132,19 @@ export async function createQuotation(payload) {
 }
 
 export async function addQuotationLine(quotationId, payload) {
-  return normalizeQuotation((await request(`/quotations/${quotationId}/lines`, { method: 'POST', body: JSON.stringify(payload) })).data)
+  return normalizeQuotation(unwrapQuotationPayload(await request(`/quotations/${quotationId}/lines`, { method: 'POST', body: JSON.stringify(payload) })))
 }
 
 export async function updateQuotationLine(quotationId, lineId, payload) {
-  return normalizeQuotation((await request(`/quotations/${quotationId}/lines/${lineId}`, { method: 'PUT', body: JSON.stringify(payload) })).data)
+  return normalizeQuotation(unwrapQuotationPayload(await request(`/quotations/${quotationId}/lines/${lineId}`, { method: 'PUT', body: JSON.stringify(payload) })))
 }
 
 export async function removeQuotationLine(quotationId, lineId) {
-  return normalizeQuotation((await request(`/quotations/${quotationId}/lines/${lineId}`, { method: 'DELETE' })).data)
+  return normalizeQuotation(unwrapQuotationPayload(await request(`/quotations/${quotationId}/lines/${lineId}`, { method: 'DELETE' })))
 }
 
 export async function submitQuotation(quotationId, payload = {}) {
-  return normalizeQuotation((await request(`/quotations/${quotationId}/submit`, { method: 'POST', body: JSON.stringify(payload) })).data)
+  return normalizeQuotation(unwrapQuotationPayload(await request(`/quotations/${quotationId}/submit`, { method: 'POST', body: JSON.stringify(payload) })))
 }
 
 export async function acceptQuotation(quotationId) {
@@ -137,8 +183,16 @@ export async function saveDiscountTier(payload) {
   return (await request('/discounts/tiers', { method: 'POST', body: JSON.stringify(payload) })).data
 }
 
+export async function updateDiscountTier(tierId, payload) {
+  return (await request(`/discounts/tiers/${tierId}`, { method: 'PUT', body: JSON.stringify(payload) })).data
+}
+
 export async function saveApprovalChain(payload) {
   return (await request('/discounts/approval-chains', { method: 'POST', body: JSON.stringify(payload) })).data
+}
+
+export async function updateApprovalChain(chainId, payload) {
+  return (await request(`/discounts/approval-chains/${chainId}`, { method: 'PUT', body: JSON.stringify(payload) })).data
 }
 
 export async function getUpsellSuggestions(quotationId) {
@@ -210,6 +264,20 @@ export async function acknowledgeDealHealthAlert(alertId) {
 export async function getSalesReport(params = {}) {
   const query = new URLSearchParams(Object.entries(params).filter(([, value]) => value !== undefined && value !== ''))
   return request(`/reporting/sales?${query}`)
+}
+
+// ---------------------------------------------------------------------------
+// AUDIT TRAIL — real, role-attributed operation ledger (backend audit_trails)
+// Every CREATE / UPDATE / DELETE performed by any role is stored server-side
+// with changed_by / changed_by_role and reflected back through this endpoint.
+// ---------------------------------------------------------------------------
+export async function listAuditTrails(params = {}) {
+  const query = new URLSearchParams(Object.entries(params).filter(([, value]) => value !== undefined && value !== ''))
+  return unwrapList(await request(`/audit?${query}`))
+}
+
+export async function listQuotationAuditTrails(quotationId) {
+  return listAuditTrails({ table_name: 'quotations', record_id: quotationId, limit: 20 })
 }
 
 function normalizeProduct(product) {

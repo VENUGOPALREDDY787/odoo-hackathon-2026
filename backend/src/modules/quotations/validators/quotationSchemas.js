@@ -10,7 +10,9 @@ export const lineIdParamSchema = z.object({
 });
 
 export const createQuotationSchema = z.object({
-  customer_id: z.string().uuid('Customer ID must be a valid UUID'),
+  customer_id: z.string().uuid('Customer ID must be a valid UUID').optional(),
+  customer_name: z.string().min(1).max(255).optional(),
+  customer_tier: z.enum(['Bronze', 'Silver', 'Gold']).default('Bronze'),
   assigned_rep_id: z.string().uuid().optional().nullable(),
   currency: z.string().length(3).default('USD'),
   payment_terms_days: z.number().int().positive().default(30),
@@ -20,6 +22,9 @@ export const createQuotationSchema = z.object({
   customer_notes: z.string().optional().nullable(),
   tags: z.array(z.string()).default([]),
   metadata: z.record(z.any()).default({}),
+}).refine((data) => data.customer_id || data.customer_name || data.metadata?.customer_name, {
+  message: 'Either customer_id or customer_name is required',
+  path: ['customer_id'],
 });
 
 export const quotationQuerySchema = z.object({

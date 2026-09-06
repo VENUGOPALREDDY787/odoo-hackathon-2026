@@ -8,7 +8,8 @@ export class ProductController {
   // ==================== PRODUCTS ====================
 
   create = asyncHandler(async (req, res) => {
-    const product = await this.service.createProduct(req.body, req.user);
+    const reqMeta = { ip: req.ip, userAgent: req.headers['user-agent'] };
+    const product = await this.service.createProduct(req.body, req.user, reqMeta);
     res.status(201).json({ data: product });
   });
 
@@ -18,12 +19,14 @@ export class ProductController {
   });
 
   update = asyncHandler(async (req, res) => {
-    const product = await this.service.updateProduct(req.params.id, req.body, req.user);
+    const reqMeta = { ip: req.ip, userAgent: req.headers['user-agent'] };
+    const product = await this.service.updateProduct(req.params.id, req.body, req.user, reqMeta);
     res.json({ data: product });
   });
 
   delete = asyncHandler(async (req, res) => {
-    const result = await this.service.deleteProduct(req.params.id);
+    const reqMeta = { ip: req.ip, userAgent: req.headers['user-agent'] };
+    const result = await this.service.deleteProduct(req.params.id, req.user, reqMeta);
     res.json({ data: result });
   });
 
@@ -76,7 +79,8 @@ export class ProductController {
   });
 
   createVariant = asyncHandler(async (req, res) => {
-    const variant = await this.service.createVariant(req.params.id, req.body);
+    const reqMeta = { ip: req.ip, userAgent: req.headers['user-agent'] };
+    const variant = await this.service.createVariant(req.params.id, req.body, req.user, reqMeta);
     res.status(201).json({ data: variant });
   });
 

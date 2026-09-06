@@ -18,6 +18,22 @@ export default function SalesDashboard({
   const { t } = useTranslation();
   const activeQuotations = quotations.filter((quote) => !['rejected', 'cancelled', 'expired'].includes(quote.status));
   const pipelineValue = activeQuotations.reduce((total, quote) => total + Number(quote.grand_total || quote.total || 0), 0);
+
+  // Real rep telemetry computed from the quotations payload (assignedTo now
+  // carries the rep's name via the API's users join).
+  const repDealCounts = new Map();
+  for (const quote of quotations) {
+    const rep = quote.assignedTo || 'Unassigned';
+    repDealCounts.set(rep, (repDealCounts.get(rep) || 0) + 1);
+  }
+  const activeReps = repDealCounts.size;
+  const topReps = [...repDealCounts.entries()]
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 4)
+    .map(([name]) => name.split(' ').map((part) => part[0] || '').join('').slice(0, 2).toUpperCase() || 'RP');
+  const dealsInFlight = activeQuotations.length;
+  const dealsInFlightLabel = `${dealsInFlight} ${t('dashboard.dealsInFlight', 'Deal(s) in Flight')} →`;
+
   const recentActivities = quotations.slice(0, 4).map((quote) => ({
     user: quote.assignedTo || 'Assigned representative',
     role: quote.status,
@@ -182,18 +198,18 @@ export default function SalesDashboard({
 
             <div className="my-4 flex-1 flex flex-col justify-center">
               <div className="font-kpi-value text-5xl md:text-kpi-value text-text-primary font-bold tracking-tighter leading-none">
-                18
+                {activeReps}
               </div>
               <p className="font-body-sm text-body-sm text-text-secondary mt-1.5 flex items-center gap-1">
-                <span className="text-status-live font-mono font-medium">▲ +3</span>
-                <span>active reps vs yesterday</span>
+                <span className="text-status-live font-mono font-medium">LIVE</span>
+                <span>{t('dashboard.activeRepsSub', 'reps with quotations in the pipeline')}</span>
               </p>
             </div>
 
             {/* Rep Activity Pills */}
             <div className="pt-2 border-t border-border-subtle flex items-center justify-between">
               <div className="flex -space-x-2 overflow-hidden">
-                {['MV', 'ER', 'DM', 'SL'].map((initials, i) => (
+                {(topReps.length ? topReps : ['RP']).map((initials, i) => (
                   <div
                     key={i}
                     className="w-7 h-7 rounded-full bg-surface-interactive border-2 border-surface-card flex items-center justify-center text-[10px] font-mono text-accent-blue font-bold"
@@ -203,7 +219,7 @@ export default function SalesDashboard({
                 ))}
               </div>
               <span className="font-mono-tag text-[11px] text-accent-blue">
-                12 Deals in Flight →
+                {dealsInFlightLabel}
               </span>
             </div>
           </div>

@@ -41,8 +41,10 @@ export default function ApprovalsHub({
   });
 
   const pendingCount = quotations.filter((q) => q.status === 'pending_approval').length;
-  const approvedCount = quotations.filter((q) => q.status === 'approved' || q.status === 'confirmed').length;
-  const returnedCount = quotations.filter((q) => q.status === 'draft' && q.auditTrails?.some(a => a.action.includes('Return'))).length || 2;
+  const approvedCount = quotations.filter((q) => q.status === 'approved' || q.status === 'accepted').length;
+  // The list API reports each quotation's most recent approval action, so the
+  // "returned" count is real data (quotations moved back to draft by a manager).
+  const returnedCount = quotations.filter((q) => q.last_approval_action === 'returned').length;
 
   const handleAction = (type) => {
     if (!selectedQuote) return;
@@ -51,7 +53,11 @@ export default function ApprovalsHub({
     action(selectedQuote.id, actionReason).then(() => {
       onUpdateQuotationStatus?.(selectedQuote.id, type === 'approve' ? 'approved' : 'draft', '', {});
       onRefreshQuotations?.();
-      setSelectedQuote(null);
+      // Re-fetch the selected quote's real risk + approval logs so the audit
+      // trail card shows the entry we just created server-side.
+      return getApproval(selectedQuote.id).then(setApproval).catch(() => {});
+    }).then(() => {
+      setSelectedQuote((current) => (current ? { ...current, status: type === 'approve' ? 'approved' : 'draft' } : null));
       setActionModal(null);
       setActionReason('');
     }).catch((requestError) => setError(requestError.message));
@@ -334,27 +340,39 @@ export default function ApprovalsHub({
           {/* Audit Log (List Items: User, Action, Date, Note) */}
           <Card className="p-6">
             <h3 className="font-headline-sm text-lg font-bold text-text-primary pb-3 border-b border-border-subtle mb-2">
-              Quotation Audit Trail (audit_trails)
+              Quotation Audit Trail (approval_logs)
             </h3>
             <div className="divide-y divide-border-subtle">
-              {selectedQuote.auditTrails?.map((at, i) => (
-                <ListItem key={i} className="py-3.5">
-                  <div>
-                    <div className="flex items-center gap-2">
-                      <span className="font-semibold text-sm text-text-primary">{at.user}</span>
-                      <span className="font-mono-tag text-xs text-accent-blue bg-surface-interactive px-2 py-0.5 rounded">
-                        {at.action}
-                      </span>
-                    </div>
-                    <p className="text-body-sm text-text-secondary text-xs mt-1">
-                      {at.note}
-                    </p>
-                  </div>
-                  <span className="font-mono-tag text-xs text-text-secondary whitespace-nowrap">
-                    {at.date}
-                  </span>
-                </ListItem>
-              ))}
+              {(approval?.approval_logs || selectedQuote.approval_logs || selectedQuote.auditTrails || [])
+                .filter(Boolean)
+                .map((log, i) => {
+                  const userName = log.approver_name || log.user || (log.role_at_approval ? log.role_at_approval : 'System');
+                  const action = log.action || 'updated';
+                  const note = log.comments || log.note || (log.discount_percent_at_review != null ? `Blended risk score at review: ${log.discount_percent_at_review}` : 'No comment recorded');
+                  const date = log.created_at || log.date;
+                  return (
+                    <ListItem key={log.id || i} className="py-3.5">
+                      <div>
+                        <div className="flex items-center gap-2">
+                          <span className="font-semibold text-sm text-text-primary capitalize">
+                            {String(userName).replace(/_/g, ' ')}
+                          </span>
+                          <span className="font-mono-tag text-xs text-accent-blue bg-surface-interactive px-2 py-0.5 rounded">
+                            {String(action).replace(/_/g, ' ')}
+                          </span>
+                        </div>
+                        <p className="text-body-sm text-text-secondary text-xs mt-1">
+                          {note}
+                        </p>
+                      </div>
+                      {date && (
+                        <span className="font-mono-tag text-xs text-text-secondary whitespace-nowrap">
+                          {new Date(date).toLocaleString()}
+                        </span>
+                      )}
+                    </ListItem>
+                  );
+                })}
             </div>
           </Card>
         </div>

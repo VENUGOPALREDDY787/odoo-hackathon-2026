@@ -11,6 +11,7 @@ import { socketAuth } from './middleware/socketAuth.js';
 
 import { registerAuthModule } from './modules/auth/index.js';
 import { registerProductModule } from './modules/products/index.js';
+import { registerAuditModule } from './modules/audit/index.js';
 
 async function bootstrap() {
   try {
@@ -137,6 +138,7 @@ function registerServices(container) {
 async function registerModules(container) {
   registerAuthModule(container);
   registerProductModule(container);
+  registerAuditModule(container);
 
   const moduleNames = [
     'discounts',

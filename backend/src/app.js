@@ -152,6 +152,7 @@ function registerRoutes(app) {
     'negotiation',
     'dealHealth',
     'reporting',
+    'audit',
   ];
 
   for (const moduleName of modules) {

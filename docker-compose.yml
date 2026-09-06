@@ -31,6 +31,30 @@ services:
       timeout: 3s
       retries: 10
 
+  db-seed:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    restart: 'no'
+    command: ['node', 'src/scripts/seed.js']
+    environment:
+      NODE_ENV: production
+      DB_HOST: mysql
+      DB_PORT: 3306
+      DB_USER: dealflow
+      DB_PASSWORD: dealflow_pass_2026
+      DB_NAME: dealflow360
+      DB_CONNECTION_LIMIT: 10
+      DB_SSL: 'false'
+      JWT_SECRET: dealflow-review-access-secret-2026-change-me
+      JWT_REFRESH_SECRET: dealflow-review-refresh-secret-2026-change-me
+      BCRYPT_ROUNDS: 12
+      LOG_LEVEL: info
+      LOG_PRETTY: 'true'
+    depends_on:
+      mysql:
+        condition: service_healthy
+
   backend:
     build:
       context: ./backend
@@ -63,6 +87,8 @@ services:
         condition: service_healthy
       redis:
         condition: service_healthy
+      db-seed:
+        condition: service_completed_successfully
     healthcheck:
       test: ['CMD', 'node', '-e', "fetch('http://127.0.0.1:3000/ready').then(r => { if (!r.ok) process.exit(1); }).catch(() => process.exit(1))"]
       interval: 10s

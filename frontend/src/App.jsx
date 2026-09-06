@@ -284,6 +284,8 @@ export default function App() {
         ? normalizeQuotation(quote)
         : await createQuotationApi({
           customer_id: quote.customer_id || currentUser?.customer_id,
+          customer_name: quote.customer,
+          customer_tier: quote.customerTier || 'Bronze',
           currency: 'INR',
           valid_until: quote.expiresAt || new Date(Date.now() + 30 * 86400000).toISOString(),
           metadata: { customer_name: quote.customer },
@@ -299,7 +301,10 @@ export default function App() {
 
   const handleSubmitApproval = async (quote) => {
     try {
-      const updated = await submitQuotationApi(quote.id, { expected_version: quote.version });
+      const alreadySubmitted = ['pending_approval', 'approved'].includes(quote.status);
+      const updated = alreadySubmitted
+        ? normalizeQuotation(quote)
+        : await submitQuotationApi(quote.id, { expected_version: quote.version });
       setQuotations((prev) => prev.map((item) => item.id === updated.id ? updated : item));
       showToast(`Quotation ${quote.id} submitted for policy approval!`);
       handleTabChange('approvals');

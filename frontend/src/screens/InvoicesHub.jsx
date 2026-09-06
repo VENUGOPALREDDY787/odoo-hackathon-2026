@@ -17,8 +17,8 @@ export default function InvoicesHub() {
       </div>
       <EmptyState
         icon="receipt_long"
-        title="Invoice module unavailable"
-        description="The current backend exposes billing schedules but no invoice or payment endpoints. No fabricated invoices are shown."
+        title="Invoice module not available yet"
+        description="The current backend does not expose invoice or payment endpoints (only subscription billing schedules). Record Payment / Download PDF therefore have no real backend to call — no fabricated invoices are shown."
       />
     </div>
   );

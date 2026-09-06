@@ -8,7 +8,8 @@ export class DiscountController {
   // ==================== DISCOUNT TIERS ====================
 
   createDiscountTier = asyncHandler(async (req, res) => {
-    const tier = await this.service.createDiscountTier(req.body);
+    const reqMeta = { ip: req.ip, userAgent: req.headers['user-agent'] };
+    const tier = await this.service.createDiscountTier(req.body, req.user, reqMeta);
     res.status(201).json({ data: tier });
   });
 
@@ -33,19 +34,22 @@ export class DiscountController {
   });
 
   updateDiscountTier = asyncHandler(async (req, res) => {
-    const tier = await this.service.updateDiscountTier(req.params.id, req.body);
+    const reqMeta = { ip: req.ip, userAgent: req.headers['user-agent'] };
+    const tier = await this.service.updateDiscountTier(req.params.id, req.body, req.user, reqMeta);
     res.json({ data: tier });
   });
 
   deleteDiscountTier = asyncHandler(async (req, res) => {
-    const result = await this.service.deleteDiscountTier(req.params.id);
+    const reqMeta = { ip: req.ip, userAgent: req.headers['user-agent'] };
+    const result = await this.service.deleteDiscountTier(req.params.id, req.user, reqMeta);
     res.json({ data: result });
   });
 
   // ==================== APPROVAL CHAINS ====================
 
   createApprovalChain = asyncHandler(async (req, res) => {
-    const chain = await this.service.createApprovalChain(req.body);
+    const reqMeta = { ip: req.ip, userAgent: req.headers['user-agent'] };
+    const chain = await this.service.createApprovalChain(req.body, req.user, reqMeta);
     res.status(201).json({ data: chain });
   });
 
@@ -67,12 +71,14 @@ export class DiscountController {
   });
 
   updateApprovalChain = asyncHandler(async (req, res) => {
-    const chain = await this.service.updateApprovalChain(req.params.id, req.body);
+    const reqMeta = { ip: req.ip, userAgent: req.headers['user-agent'] };
+    const chain = await this.service.updateApprovalChain(req.params.id, req.body, req.user, reqMeta);
     res.json({ data: chain });
   });
 
   deleteApprovalChain = asyncHandler(async (req, res) => {
-    const result = await this.service.deleteApprovalChain(req.params.id);
+    const reqMeta = { ip: req.ip, userAgent: req.headers['user-agent'] };
+    const result = await this.service.deleteApprovalChain(req.params.id, req.user, reqMeta);
     res.json({ data: result });
   });
 

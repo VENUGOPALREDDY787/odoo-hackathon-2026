@@ -23,7 +23,7 @@ export class DiscountService {
 
   // ==================== DISCOUNT TIERS CRUD ====================
 
-  async createDiscountTier(data) {
+  async createDiscountTier(data, user = null, reqMeta = {}) {
     const payload = {
       ...data,
       created_at: new Date(),
@@ -33,6 +33,20 @@ export class DiscountService {
     const [id] = await this.db('discount_tiers').insert(payload).returning('id');
     const createdId = typeof id === 'object' ? id.id : id;
     const tier = await this.discountTierRepo.findById(createdId || data.id);
+
+    // Role-attributed audit entry: discount policy created
+    await this.auditTrailRepo.logChange({
+      tableName: 'discount_tiers',
+      recordId: createdId || data.id,
+      operation: 'CREATE',
+      changedBy: user?.id || null,
+      changedByRole: user?.role || null,
+      oldValues: null,
+      newValues: { customer_tier: data.customer_tier, discount_percent: data.discount_percent, is_active: data.is_active },
+      changedFields: ['customer_tier', 'discount_percent'],
+      ipAddress: reqMeta?.ip || null,
+      userAgent: reqMeta?.userAgent || null,
+    });
 
     this.logger.info({ discountTierId: tier?.id }, 'Discount tier created');
     if (this.cache) await this.cache.delPattern('discounts:tiers:*');
@@ -47,19 +61,49 @@ export class DiscountService {
     return tier;
   }
 
-  async updateDiscountTier(id, data) {
-    await this.getDiscountTier(id);
+  async updateDiscountTier(id, data, user = null, reqMeta = {}) {
+    const existingTier = await this.getDiscountTier(id);
     await this.db('discount_tiers')
       .where({ id, deleted_at: null })
       .update({ ...data, updated_at: new Date() });
+
+    // Role-attributed audit entry: ceiling change recorded with old → new values
+    await this.auditTrailRepo.logChange({
+      tableName: 'discount_tiers',
+      recordId: id,
+      operation: 'UPDATE',
+      changedBy: user?.id || null,
+      changedByRole: user?.role || null,
+      oldValues: { discount_percent: existingTier.discount_percent, is_active: existingTier.is_active },
+      newValues: {
+        discount_percent: data.discount_percent !== undefined ? data.discount_percent : existingTier.discount_percent,
+        is_active: data.is_active !== undefined ? data.is_active : existingTier.is_active,
+      },
+      changedFields: Object.keys(data).filter((key) => key !== 'updated_at'),
+      ipAddress: reqMeta?.ip || null,
+      userAgent: reqMeta?.userAgent || null,
+    });
 
     if (this.cache) await this.cache.delPattern('discounts:tiers:*');
     return this.discountTierRepo.findById(id);
   }
 
-  async deleteDiscountTier(id) {
-    await this.getDiscountTier(id);
+  async deleteDiscountTier(id, user = null, reqMeta = {}) {
+    const existingTier = await this.getDiscountTier(id);
     await this.discountTierRepo.softDelete(id);
+    // Role-attributed audit entry: policy rule removed
+    await this.auditTrailRepo.logChange({
+      tableName: 'discount_tiers',
+      recordId: id,
+      operation: 'DELETE',
+      changedBy: user?.id || null,
+      changedByRole: user?.role || null,
+      oldValues: { discount_percent: existingTier.discount_percent, customer_tier: existingTier.customer_tier },
+      newValues: { deleted_at: new Date().toISOString() },
+      changedFields: ['deleted_at'],
+      ipAddress: reqMeta?.ip || null,
+      userAgent: reqMeta?.userAgent || null,
+    });
     if (this.cache) await this.cache.delPattern('discounts:tiers:*');
     return { success: true };
   }
@@ -70,7 +114,7 @@ export class DiscountService {
 
   // ==================== APPROVAL CHAINS CRUD ====================
 
-  async createApprovalChain(data) {
+  async createApprovalChain(data, user = null, reqMeta = {}) {
     const payload = {
       ...data,
       required_approver_roles: Array.isArray(data.required_approver_roles)
@@ -83,6 +127,20 @@ export class DiscountService {
     const [id] = await this.db('approval_chains').insert(payload).returning('id');
     const createdId = typeof id === 'object' ? id.id : id;
     const chain = await this.approvalChainRepo.findById(createdId || data.id);
+
+    // Role-attributed audit entry: approval chain created
+    await this.auditTrailRepo.logChange({
+      tableName: 'approval_chains',
+      recordId: createdId || data.id,
+      operation: 'CREATE',
+      changedBy: user?.id || null,
+      changedByRole: user?.role || null,
+      oldValues: null,
+      newValues: { min_discount_percent: data.min_discount_percent, max_discount_percent: data.max_discount_percent, is_active: data.is_active },
+      changedFields: ['min_discount_percent', 'max_discount_percent'],
+      ipAddress: reqMeta?.ip || null,
+      userAgent: reqMeta?.userAgent || null,
+    });
 
     this.logger.info({ approvalChainId: chain?.id }, 'Approval chain created');
     if (this.cache) await this.cache.delPattern('discounts:chains:*');
@@ -97,8 +155,8 @@ export class DiscountService {
     return chain;
   }
 
-  async updateApprovalChain(id, data) {
-    await this.getApprovalChain(id);
+  async updateApprovalChain(id, data, user = null, reqMeta = {}) {
+    const existingChain = await this.getApprovalChain(id);
     const updatePayload = { ...data, updated_at: new Date() };
     if (Array.isArray(data.required_approver_roles)) {
       updatePayload.required_approver_roles = JSON.stringify(data.required_approver_roles);
@@ -108,13 +166,44 @@ export class DiscountService {
       .where({ id, deleted_at: null })
       .update(updatePayload);
 
+    // Role-attributed audit entry: sign-off threshold change recorded
+    await this.auditTrailRepo.logChange({
+      tableName: 'approval_chains',
+      recordId: id,
+      operation: 'UPDATE',
+      changedBy: user?.id || null,
+      changedByRole: user?.role || null,
+      oldValues: { min_discount_percent: existingChain.min_discount_percent, max_discount_percent: existingChain.max_discount_percent, is_active: existingChain.is_active },
+      newValues: {
+        min_discount_percent: data.min_discount_percent !== undefined ? data.min_discount_percent : existingChain.min_discount_percent,
+        max_discount_percent: data.max_discount_percent !== undefined ? data.max_discount_percent : existingChain.max_discount_percent,
+        is_active: data.is_active !== undefined ? data.is_active : existingChain.is_active,
+      },
+      changedFields: Object.keys(data).filter((key) => key !== 'updated_at'),
+      ipAddress: reqMeta?.ip || null,
+      userAgent: reqMeta?.userAgent || null,
+    });
+
     if (this.cache) await this.cache.delPattern('discounts:chains:*');
     return this.approvalChainRepo.findById(id);
   }
 
-  async deleteApprovalChain(id) {
-    await this.getApprovalChain(id);
+  async deleteApprovalChain(id, user = null, reqMeta = {}) {
+    const existingChain = await this.getApprovalChain(id);
     await this.approvalChainRepo.softDelete(id);
+    // Role-attributed audit entry: approval chain removed
+    await this.auditTrailRepo.logChange({
+      tableName: 'approval_chains',
+      recordId: id,
+      operation: 'DELETE',
+      changedBy: user?.id || null,
+      changedByRole: user?.role || null,
+      oldValues: { min_discount_percent: existingChain.min_discount_percent, max_discount_percent: existingChain.max_discount_percent },
+      newValues: { deleted_at: new Date().toISOString() },
+      changedFields: ['deleted_at'],
+      ipAddress: reqMeta?.ip || null,
+      userAgent: reqMeta?.userAgent || null,
+    });
     if (this.cache) await this.cache.delPattern('discounts:chains:*');
     return { success: true };
   }

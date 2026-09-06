@@ -26,16 +26,23 @@ export class DiscountTierRepository extends BaseRepository {
     const { page = 1, limit = 20, orderBy = 'priority', orderDir = 'desc' } = options;
     const offset = (page - 1) * limit;
 
-    let query = this.db('discount_tiers').where({ deleted_at: null });
+    let query = this.db('discount_tiers as dt')
+      .leftJoin('product_categories as pc', 'dt.category_id', 'pc.id')
+      .where({ 'dt.deleted_at': null });
 
-    if (filters.customer_tier) query = query.where('customer_tier', filters.customer_tier);
-    if (filters.category_id) query = query.where('category_id', filters.category_id);
-    if (filters.product_id) query = query.where('product_id', filters.product_id);
-    if (filters.is_active !== undefined) query = query.where('is_active', filters.is_active);
+    if (filters.customer_tier) query = query.where('dt.customer_tier', filters.customer_tier);
+    if (filters.category_id) query = query.where('dt.category_id', filters.category_id);
+    if (filters.product_id) query = query.where('dt.product_id', filters.product_id);
+    if (filters.is_active !== undefined) query = query.where('dt.is_active', filters.is_active);
 
     const [data, totalResult] = await Promise.all([
-      query.clone().orderBy(orderBy, orderDir).limit(limit).offset(offset).select('*'),
-      query.clone().count('* as count').first(),
+      query
+        .clone()
+        .orderBy(`dt.${orderBy}`, orderDir)
+        .limit(limit)
+        .offset(offset)
+        .select('dt.*', 'pc.name as category_name', 'pc.id as category_id'),
+      query.clone().count('dt.id as count').first(),
     ]);
 
     const total = Number(totalResult?.count || 0);

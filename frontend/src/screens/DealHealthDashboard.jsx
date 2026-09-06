@@ -10,7 +10,7 @@ import Tag from '../components/Tag';
 import Skeleton from '../components/Skeleton';
 import { acknowledgeDealHealthAlert, getDealHealthDashboard, listDealHealthAlerts } from '../api/client';
 
-export default function DealHealthDashboard({ _onNavigate }) {
+export default function DealHealthDashboard({ onNavigate }) {
   const { t } = useTranslation();
   const [anomalies, setAnomalies] = useState([]);
   const [dashboard, setDashboard] = useState({});
@@ -235,9 +235,14 @@ export default function DealHealthDashboard({ _onNavigate }) {
               {anomalies.map((item) => (
                 <tr key={item.id} className="hover:bg-surface-interactive/30">
                   <td className="py-3 px-3">
-                    <span className="font-mono-tag text-xs font-bold text-accent-blue bg-surface-interactive px-2.5 py-1 rounded">
+                    <button
+                      type="button"
+                      onClick={() => onNavigate?.('quotations')}
+                      title="Open Quotations pipeline"
+                      className="font-mono-tag text-xs font-bold text-accent-blue bg-surface-interactive px-2.5 py-1 rounded hover:border-accent-blue cursor-pointer"
+                    >
                       {item.dealId}
-                    </span>
+                    </button>
                   </td>
                   <td className="py-3 px-3">
                     <div>

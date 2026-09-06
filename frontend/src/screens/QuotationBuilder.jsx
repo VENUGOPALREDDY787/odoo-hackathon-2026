@@ -12,7 +12,19 @@ import {
   TIER_DISCOUNT_CEILINGS,
 } from '../utils/quotationCalculations';
 import Skeleton from '../components/Skeleton';
-import { addQuotationLine, createQuotation, getUpsellSuggestions, listProducts, removeQuotationLine, submitQuotation, updateQuotationLine } from '../api/client';
+import { addQuotationLine, createQuotation, getQuotation, getUpsellSuggestions, listProducts, listQuotationAuditTrails, removeQuotationLine, submitQuotation, updateQuotationLine } from '../api/client';
+
+// Audit rows store changed_fields as a JSON string in MySQL; parse defensively
+// so both array payloads (API) and string payloads (raw column) render.
+function formatAuditFields(fields) {
+  if (Array.isArray(fields)) return fields.join(', ');
+  try {
+    const parsed = JSON.parse(fields);
+    return Array.isArray(parsed) ? parsed.join(', ') : String(fields);
+  } catch {
+    return String(fields);
+  }
+}
 
 export default function QuotationBuilder({
   initialQuotation,
@@ -23,55 +35,22 @@ export default function QuotationBuilder({
 }) {
   const { t } = useTranslation();
   const lineCounterRef = useRef(0);
+  // Optimistic-lock version kept in sync with the server after every persisted
+  // mutation (via versionRef.current) so submit sends a valid expected_version.
+  const versionRef = useRef(initialQuotation?.version ?? null);
   const [quotationId] = useState(() =>
     initialQuotation?.id || `QT-2026-${Math.floor(1000 + Math.random() * 9000)}`
   );
   const [persistedQuotationId, setPersistedQuotationId] = useState(initialQuotation?.id || null);
-  const [customer, setCustomer] = useState(initialQuotation?.customer || 'Apex Global Logistics');
-  const [customerTier, setCustomerTier] = useState(initialQuotation?.customerTier || 'Gold');
-  const [lines, setLines] = useState(
-    initialQuotation?.lines || [
-      {
-        id: 'ln-1',
-        productId: 'prod-01',
-        product: 'AETHER Edge Compute Node X4',
-        category: 'Enterprise Hardware',
-        qty: 8,
-        unitPrice: 14500,
-        discountPct: 22,
-        categoryLimitPct: 12,
-        tierLimitPct: 25,
-        isRecurring: false,
-      },
-      {
-        id: 'ln-2',
-        productId: 'prod-02',
-        product: 'DealFlow360 Enterprise Core License',
-        category: 'SaaS Licenses',
-        qty: 2,
-        unitPrice: 36000,
-        discountPct: 28,
-        categoryLimitPct: 20,
-        tierLimitPct: 25,
-        isRecurring: true,
-      },
-      {
-        id: 'ln-3',
-        productId: 'prod-04',
-        product: 'Enterprise Architecture Deployment Sprint',
-        category: 'Professional Services',
-        qty: 1,
-        unitPrice: 28000,
-        discountPct: 10,
-        categoryLimitPct: 15,
-        tierLimitPct: 25,
-        isRecurring: false,
-      },
-    ]
-  );
+  const [customer, setCustomer] = useState(initialQuotation?.customer || '');
+  const [customerTier, setCustomerTier] = useState(initialQuotation?.customerTier || 'Bronze');
+  // New quotations start empty — every line must come from the real catalog
+  // (or an upsell suggestion). Existing quotations load their persisted lines.
+  const [lines, setLines] = useState(initialQuotation?.lines || []);
 
   const [upsells, setUpsells] = useState([]);
   const [products, setProducts] = useState([]);
+  const [auditTrails, setAuditTrails] = useState([]);
   const [loading, setLoading] = useState(Boolean(initialQuotation?.id));
   const [error, setError] = useState('');
   const [saving, setSaving] = useState(false);
@@ -80,16 +59,41 @@ export default function QuotationBuilder({
 
   const activeQuotationId = persistedQuotationId || quotationId;
   const isPersisted = Boolean(persistedQuotationId && /^[0-9a-f-]{36}$/i.test(persistedQuotationId));
+  const isUuid = (value) => /^[0-9a-f-]{36}$/i.test(String(value || ''));
+  const toLinePayload = (line, extra = {}) => ({
+    ...(isUuid(line.productId) ? { product_id: line.productId } : {}),
+    custom_name: line.product,
+    custom_description: line.category,
+    quantity: line.qty,
+    list_price: line.unitPrice,
+    discount_percent: line.discountPct,
+    line_type: line.isRecurring ? 'recurring' : 'one_time',
+    ...extra,
+  });
 
   useEffect(() => {
     let active = true;
+    const quoteId = initialQuotation?.id;
     Promise.all([
       listProducts({ limit: 100 }),
-      initialQuotation?.id ? getUpsellSuggestions(initialQuotation.id) : Promise.resolve([]),
-    ]).then(([response, suggestions]) => {
+      // The list endpoint does not return lines, so when opening an existing
+      // quotation we fetch its full detail (lines, audit trail, fresh version).
+      quoteId ? getQuotation(quoteId) : Promise.resolve(null),
+      quoteId ? getUpsellSuggestions(quoteId) : Promise.resolve([]),
+      // Real role-attributed operation ledger for this quotation
+      // (created/edited/approved — who, which role, when).
+      quoteId ? listQuotationAuditTrails(quoteId).catch(() => []) : Promise.resolve([]),
+    ]).then(([response, fullQuote, suggestions, trails]) => {
       if (!active) return;
       setProducts(response?.data?.items || response?.data || []);
       setUpsells(suggestions);
+      setAuditTrails(trails || []);
+      if (fullQuote) {
+        setLines(fullQuote.lines || []);
+        if (fullQuote.customer) setCustomer(fullQuote.customer);
+        if (fullQuote.customerTier) setCustomerTier(fullQuote.customerTier);
+        versionRef.current = fullQuote.version ?? versionRef.current;
+      }
     }).catch((requestError) => {
       if (active) setError(requestError.message);
     }).finally(() => {
@@ -120,6 +124,7 @@ export default function QuotationBuilder({
     if (isPersisted) {
       const line = lines.find((item) => item.id === id);
       if (line) updateQuotationLine(activeQuotationId, id, { [field === 'qty' ? 'quantity' : field === 'discountPct' ? 'discount_percent' : field]: value })
+        .then((updated) => { if (updated?.version != null) versionRef.current = updated.version; })
         .catch((requestError) => setError(requestError.message));
     }
     triggerRiskHighlight();
@@ -127,7 +132,9 @@ export default function QuotationBuilder({
 
   const handleRemoveLine = (id) => {
     setLines((prev) => prev.filter((ln) => ln.id !== id));
-    if (isPersisted) removeQuotationLine(activeQuotationId, id).catch((requestError) => setError(requestError.message));
+    if (isPersisted) removeQuotationLine(activeQuotationId, id)
+      .then((updated) => { if (updated?.version != null) versionRef.current = updated.version; })
+      .catch((requestError) => setError(requestError.message));
     triggerRiskHighlight();
   };
 
@@ -161,12 +168,11 @@ export default function QuotationBuilder({
     setLines((prev) => [...prev, newLine]);
     setUpsells((prev) => prev.filter((u) => u.id !== upsell.id));
     if (isPersisted) addQuotationLine(activeQuotationId, {
-      product_id: newLine.productId,
-      quantity: newLine.qty,
-      discount_percent: newLine.discountPct,
-      line_type: newLine.isRecurring ? 'recurring' : 'one_time',
+      ...toLinePayload(newLine),
       is_upsell: true,
-    }).catch((requestError) => setError(requestError.message));
+    })
+      .then((updated) => { if (updated?.version != null) versionRef.current = updated.version; })
+      .catch((requestError) => setError(requestError.message));
     triggerRiskHighlight();
   };
 
@@ -185,12 +191,9 @@ export default function QuotationBuilder({
     };
 
     setLines((prev) => [...prev, newLine]);
-    if (isPersisted) addQuotationLine(activeQuotationId, {
-      product_id: newLine.productId,
-      quantity: newLine.qty,
-      discount_percent: newLine.discountPct,
-      line_type: newLine.isRecurring ? 'recurring' : 'one_time',
-    }).catch((requestError) => setError(requestError.message));
+    if (isPersisted) addQuotationLine(activeQuotationId, toLinePayload(newLine))
+      .then((updated) => { if (updated?.version != null) versionRef.current = updated.version; })
+      .catch((requestError) => setError(requestError.message));
     setShowProductPicker(false);
     triggerRiskHighlight();
   };
@@ -202,20 +205,19 @@ export default function QuotationBuilder({
       if (!isPersisted) {
         savedQuotation = await createQuotation({
           customer_id: initialQuotation?.customer_id || currentUser?.customer_id,
+          customer_name: customer,
+          customer_tier: customerTier,
           currency: 'INR',
           valid_until: new Date(Date.now() + 30 * 86400000).toISOString(),
           metadata: { customer_name: customer },
         });
         setPersistedQuotationId(savedQuotation.id);
+        versionRef.current = savedQuotation?.version ?? versionRef.current;
         for (const line of lines) {
-          savedQuotation = await addQuotationLine(savedQuotation.id, {
-            product_id: line.productId,
-            custom_name: line.product,
-            quantity: line.qty,
-            list_price: line.unitPrice,
-            discount_percent: line.discountPct,
-            line_type: line.isRecurring ? 'recurring' : 'one_time',
-          });
+          savedQuotation = await addQuotationLine(savedQuotation.id, toLinePayload(line));
+          // Each line addition bumps the server version — track it so a
+          // subsequent submit passes the current expected_version.
+          versionRef.current = savedQuotation?.version ?? versionRef.current;
         }
       }
       return savedQuotation;
@@ -244,7 +246,7 @@ export default function QuotationBuilder({
   const handleSubmit = async () => {
     try {
       const saved = await persistDraft();
-      const submitted = await submitQuotation(saved?.id || activeQuotationId, { expected_version: saved?.version });
+      const submitted = await submitQuotation(saved?.id || activeQuotationId, { expected_version: versionRef.current ?? saved?.version });
       onSubmitApproval?.({
         ...submitted,
         id: submitted?.id || saved?.id || activeQuotationId,
@@ -700,7 +702,7 @@ export default function QuotationBuilder({
               </div>
               <div>
                 <span className="font-label-caps text-[10px] text-text-secondary uppercase block mb-1">Finance Approval</span>
-                <div className="font-mono-tag font-semibold {riskAnalysis.requiresFinance ? 'text-status-danger' : 'text-status-live'}">
+                <div className={`font-mono-tag font-semibold ${riskAnalysis.requiresFinance ? 'text-status-danger' : 'text-status-live'}`}>
                   {riskAnalysis.requiresFinance ? 'REQUIRED' : 'Not Required'}
                 </div>
               </div>
@@ -792,35 +794,51 @@ export default function QuotationBuilder({
             </div>
           </Card>
 
-          {/* Approval Information Card */}
-          {initialQuotation?.auditTrails && initialQuotation.auditTrails.length > 0 && (
-            <Card className="p-5 sm:p-6 border-l-4 border-status-warning">
-              <h4 className="font-label-caps text-xs uppercase tracking-wider text-text-secondary mb-3 flex items-center gap-2">
-                <span className="material-symbols-outlined text-[16px] text-status-warning">gavel</span>
-                Approval Information
-              </h4>
-              <div className="space-y-2 max-h-48 overflow-y-auto">
-                {initialQuotation.auditTrails.slice(0, 5).map((audit, idx) => (
-                  <div key={idx} className="p-3 bg-surface-interactive/50 border border-border-subtle/50 rounded-xl text-xs">
-                    <div className="flex items-start justify-between gap-2">
-                      <div className="min-w-0">
-                        <div className="font-medium text-text-primary">{audit.action}</div>
-                        <div className="font-mono-tag text-[10px] text-text-secondary mt-0.5">
-                          {audit.user}
+          {/* Approval & Operations Audit — real backend audit_trails entries */}
+          {(() => {
+            // Prefer the server-side audit ledger (role-attributed operations),
+            // falling back to approval logs carried on the quotation payload.
+            const trails = auditTrails.length
+              ? auditTrails
+              : (initialQuotation?.auditTrails || []).filter(Boolean);
+            if (!trails.length) return null;
+            return (
+              <Card className="p-5 sm:p-6 border-l-4 border-status-warning">
+                <h4 className="font-label-caps text-xs uppercase tracking-wider text-text-secondary mb-3 flex items-center gap-2">
+                  <span className="material-symbols-outlined text-[16px] text-status-warning">gavel</span>
+                  Approval &amp; Operations Audit
+                </h4>
+                <div className="space-y-2 max-h-64 overflow-y-auto">
+                  {trails.slice(0, 8).map((audit, idx) => {
+                    const actor = audit.actor_name || audit.user || audit.changed_by_role || 'System';
+                    const role = audit.changed_by_role || audit.role || '';
+                    const op = (audit.operation || audit.action || 'updated').toString().toLowerCase();
+                    const when = audit.created_at || audit.date;
+                    return (
+                      <div key={audit.id || idx} className="p-3 bg-surface-interactive/50 border border-border-subtle/50 rounded-xl text-xs">
+                        <div className="flex items-start justify-between gap-2">
+                          <div className="min-w-0">
+                            <div className="font-medium text-text-primary capitalize">{op.replace(/_/g, ' ')}</div>
+                            <div className="font-mono-tag text-[10px] text-text-secondary mt-0.5">
+                              {String(actor).replace(/_/g, ' ')}{role ? ` • ${String(role).toUpperCase()}` : ''}
+                            </div>
+                          </div>
+                          <span className="font-mono-tag text-[10px] text-text-secondary whitespace-nowrap">
+                            {when ? new Date(when).toLocaleString() : ''}
+                          </span>
                         </div>
+                        {audit.changed_fields && (
+                          <p className="text-text-secondary text-xs mt-1 leading-relaxed">
+                            Fields: {formatAuditFields(audit.changed_fields)}
+                          </p>
+                        )}
                       </div>
-                      <span className="font-mono-tag text-[10px] text-text-secondary whitespace-nowrap">
-                        {audit.date}
-                      </span>
-                    </div>
-                    {audit.note && (
-                      <p className="text-text-secondary text-xs mt-1 leading-relaxed">{audit.note}</p>
-                    )}
-                  </div>
-                ))}
-              </div>
-            </Card>
-          )}
+                    );
+                  })}
+                </div>
+              </Card>
+            );
+          })()}
 
           {/* Fulfillment Information Card */}
           {initialQuotation?.id && (

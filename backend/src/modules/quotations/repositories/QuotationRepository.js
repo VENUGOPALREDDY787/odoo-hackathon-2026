@@ -98,6 +98,7 @@ export class QuotationRepository extends BaseRepository {
 
     let query = this.db('quotations as q')
       .join('customers as c', 'q.customer_id', 'c.id')
+      .leftJoin('users as u', 'q.assigned_rep_id', 'u.id')
       .where({ 'q.deleted_at': null });
 
     if (filters.customer_id) query = query.where('q.customer_id', filters.customer_id);
@@ -107,7 +108,14 @@ export class QuotationRepository extends BaseRepository {
     const [data, totalResult] = await Promise.all([
       query
         .clone()
-        .select('q.*', 'c.company_name as customer_name', 'c.tier as customer_tier')
+        .select(
+          'q.*',
+          'c.company_name as customer_name',
+          'c.tier as customer_tier',
+          'u.full_name as rep_name',
+          this.db.raw('(SELECT COUNT(*) FROM quotation_lines ql WHERE ql.quotation_id = q.id AND ql.deleted_at IS NULL) as line_count'),
+          this.db.raw('(SELECT al.action FROM approval_logs al WHERE al.quotation_id = q.id AND al.deleted_at IS NULL ORDER BY al.created_at DESC LIMIT 1) as last_approval_action')
+        )
         .orderBy(`q.${orderBy}`, orderDir)
         .limit(limit)
         .offset(offset),

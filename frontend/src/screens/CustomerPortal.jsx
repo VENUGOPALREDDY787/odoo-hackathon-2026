@@ -225,6 +225,7 @@ export default function CustomerPortal({ onReturnToInternal }) {
               <div className="p-3.5 bg-surface-interactive border border-border-subtle rounded-xl text-xs text-text-secondary leading-relaxed">
                 <strong className="text-text-primary">Governance Notice: </strong>
                 {t('portal.governanceNotice', 'Confirming quotation terms exceeding standard discount ceilings will automatically route through internal Sales Manager & Finance signoff rather than instant order confirmation.')}
+                {' '}Confirming is only possible while the offer is in Approved / Sent / Negotiation state and is verified server-side.
               </div>
 
               <div className="flex flex-wrap items-center justify-end gap-3 pt-2">
